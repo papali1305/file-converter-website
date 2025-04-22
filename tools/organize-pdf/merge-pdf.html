@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Merge PDF - FilePro</title>
+  <link rel="stylesheet" href="../../style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="logo">⚡ FilePro</div>
+    <nav>
+      <a href="../../index.html">Home</a>
+      <a href="../../tools.html">Tools</a>
+      <a href="../../about.html">About</a>
+      <a href="../../contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <div class="page">
+    <h1>Merge PDF</h1>
+    <p>Use this tool to merge multiple PDF files into a single document.</p>
+
+    <!-- File Upload Section -->
+    <div class="upload-section">
+      <label for="pdf-upload">Choose PDF files:</label>
+      <input type="file" id="pdf-upload" multiple accept=".pdf" onchange="displayFiles()" />
+      <button class="tool-btn" onclick="mergePDF()">Merge PDF</button>
+    </div>
+
+    <!-- Display Selected File Names -->
+    <div id="file-list" style="margin-top: 10px;">
+      <!-- Selected files will be listed here -->
+    </div>
+
+    <!-- Download Link Section -->
+    <div id="download-section" style="display: none;">
+      <a id="download-link" href="#" download="merged.pdf">
+        <button class="tool-btn">Download Merged PDF</button>
+      </a>
+    </div>
+
+    <!-- Instructions Section -->
+    <section class="instructions">
+      <h2>How to Merge PDF Files</h2>
+      <ul>
+        <li>Click "Choose PDF files" to select your files.</li>
+        <li>Click "Merge PDF" to start merging.</li>
+        <li>Click "Download Merged PDF" once the process is complete.</li>
+      </ul>
+    </section>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 FilePro. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // Function to display the names of selected files
+    function displayFiles() {
+      const files = document.getElementById('pdf-upload').files;
+      const fileList = document.getElementById('file-list');
+      fileList.innerHTML = '';  // Clear previous list
+
+      if (files.length > 0) {
+        const ul = document.createElement('ul');
+        for (let i = 0; i < files.length; i++) {
+          const li = document.createElement('li');
+          li.textContent = files[i].name;
+          ul.appendChild(li);
+        }
+        fileList.appendChild(ul);
+      } else {
+        fileList.textContent = 'No files selected.';
+      }
+    }
+
+    async function mergePDF() {
+      const files = document.getElementById('pdf-upload').files;
+      if (files.length < 2) {
+        alert('Please select at least two PDFs to merge.');
+        return;
+      }
+
+      const pdfDocs = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const arrayBuffer = await files[i].arrayBuffer();
+        const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+        pdfDocs.push(pdfDoc);
+      }
+
+      const mergedPdf = await PDFLib.PDFDocument.create();
+
+      for (const pdfDoc of pdfDocs) {
+        const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPages().map((_, index) => index));
+        copiedPages.forEach(page => mergedPdf.addPage(page));
+      }
+
+      const mergedPdfBytes = await mergedPdf.save();
+
+      // Create a Blob from the merged PDF bytes and generate a download link
+      const mergedPdfBlob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+      const downloadUrl = URL.createObjectURL(mergedPdfBlob);
+
+      // Show download link
+      const downloadLink = document.getElementById('download-link');
+      downloadLink.href = downloadUrl;
+      document.getElementById('download-section').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
