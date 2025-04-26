@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Organize PDF - FilePro</title>
+  <link rel="stylesheet" href="../../style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      margin: 0;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #38bdf8;
+    }
+
+    nav a {
+      color: #cbd5e1;
+      text-decoration: none;
+      margin: 0 15px;
+    }
+
+    nav a:hover {
+      color: #38bdf8;
+    }
+
+    .page {
+      padding: 2rem;
+    }
+
+    .upload-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .preview-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .page-thumbnail {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 10px;
+      width: 160px;
+      text-align: center;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      cursor: move;
+    }
+
+    .page-thumbnail img {
+      width: 100%;
+      border-radius: 8px;
+    }
+
+    .controls button {
+      background: #0ea5e9;
+      border: none;
+      margin: 4px;
+      border-radius: 6px;
+      padding: 6px 10px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .controls button:hover {
+      background: #0284c7;
+    }
+
+    .tool-btn {
+      background: #0ea5e9;
+      color: white;
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .tool-btn:hover {
+      background: #0369a1;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">⚡ FilePro</div>
+    <nav>
+      <a href="../../index.html">Home</a>
+      <a href="../../tools.html">Tools</a>
+      <a href="../../about.html">About</a>
+      <a href="../../contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <div class="page">
+    <h1>Organize PDF</h1>
+    <p>Visually reorder, rotate, and delete pages in your PDF with ease.</p>
+
+    <div class="upload-section">
+      <label for="pdf-upload">Choose PDF file:</label>
+      <input type="file" id="pdf-upload" accept=".pdf" onchange="loadPDF()" />
+    </div>
+
+    <div id="preview-container" class="preview-grid"></div>
+
+    <button class="tool-btn" onclick="generateOrganizedPDF()">Download Organized PDF</button>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 FilePro. All rights reserved.</p>
+  </footer>
+
+  <script>
+    let pdfDocLib, pdfDocJs, pageOrder = [], rotations = [];
+
+    async function loadPDF() {
+      const file = document.getElementById('pdf-upload').files[0];
+      if (!file) return;
+
+      const arrayBuffer = await file.arrayBuffer();
+      pdfDocLib = await PDFLib.PDFDocument.load(arrayBuffer);
+      pdfDocJs = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+      const totalPages = pdfDocLib.getPageCount();
+      pageOrder = Array.from({ length: totalPages }, (_, i) => i);
+      rotations = Array(totalPages).fill(0);
+
+      renderThumbnails();
+    }
+
+    async function renderThumbnails() {
+      const container = document.getElementById('preview-container');
+      container.innerHTML = '';
+
+      for (let i = 0; i < pageOrder.length; i++) {
+        const pageIndex = pageOrder[i];
+        const page = await pdfDocJs.getPage(pageIndex + 1);
+        const viewport = page.getViewport({ scale: 0.3 });
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const rotation = rotations[i];
+        let width = viewport.width;
+        let height = viewport.height;
+
+        // Adjust canvas size based on rotation
+        if (rotation === 90 || rotation === 270) {
+          canvas.width = height;
+          canvas.height = width;
+        } else {
+          canvas.width = width;
+          canvas.height = height;
+        }
+
+        ctx.save();
+        // Apply rotation and translation
+        if (rotation === 90) {
+          ctx.translate(canvas.width, 0);
+          ctx.rotate(Math.PI / 2);
+        } else if (rotation === 180) {
+          ctx.translate(canvas.width, canvas.height);
+          ctx.rotate(Math.PI);
+        } else if (rotation === 270) {
+          ctx.translate(0, canvas.height);
+          ctx.rotate(3 * Math.PI / 2);
+        }
+
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        ctx.restore();
+
+        const thumb = document.createElement('div');
+        thumb.className = 'page-thumbnail';
+        thumb.draggable = true;
+        thumb.dataset.index = i;
+
+        thumb.innerHTML = `
+          <img src="${canvas.toDataURL()}" />
+          <div class="controls">
+            <button onclick="rotate(${i})">⟳ Rotate</button>
+            <button onclick="remove(${i})">✖ Delete</button>
+          </div>
+          <p>Page ${i + 1}</p>
+        `;
+
+        thumb.addEventListener('dragstart', (e) => {
+          e.dataTransfer.setData('text/plain', i);
+        });
+
+        thumb.addEventListener('dragover', (e) => e.preventDefault());
+        thumb.addEventListener('drop', (e) => {
+          e.preventDefault();
+          const from = +e.dataTransfer.getData('text/plain');
+          const to = +thumb.dataset.index;
+          swapPages(from, to);
+        });
+
+        container.appendChild(thumb);
+      }
+    }
+
+    function rotate(index) {
+      rotations[index] = (rotations[index] + 90) % 360;
+      renderThumbnails();
+    }
+
+    function remove(index) {
+      if (pageOrder.length <= 1) {
+        alert("Cannot remove the last page.");
+        return;
+      }
+      pageOrder.splice(index, 1);
+      rotations.splice(index, 1);
+      renderThumbnails();
+    }
+
+    function swapPages(from, to) {
+      const tempOrder = pageOrder[from];
+      const tempRotation = rotations[from];
+      pageOrder[from] = pageOrder[to];
+      rotations[from] = rotations[to];
+      pageOrder[to] = tempOrder;
+      rotations[to] = tempRotation;
+      renderThumbnails();
+    }
+
+    async function generateOrganizedPDF() {
+      const newPDF = await PDFLib.PDFDocument.create();
+      const { degrees } = PDFLib;
+
+      for (let i = 0; i < pageOrder.length; i++) {
+        const [copied] = await newPDF.copyPages(pdfDocLib, [pageOrder[i]]);
+        copied.setRotation(degrees(rotations[i]));
+        newPDF.addPage(copied);
+      }
+
+      const pdfBytes = await newPDF.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'organized.pdf';
+      link.click();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Scans - FilePro</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #3b82f6;
+      --primary-dark: #2563eb;
+      --secondary: #10b981;
+      --dark: #1e293b;
+      --darker: #0f172a;
+      --light: #f8fafc;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      background: linear-gradient(135deg, var(--darker), #1a2a3a);
+      color: var(--light);
+      font-family: 'Segoe UI', 'Roboto', sans-serif;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    
+    header {
+      margin-bottom: 2rem;
+      text-align: center;
+      position: relative;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    
+    .subtitle {
+      color: #94a3b8;
+      font-size: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .editor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+    
+    .editor-item {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 1.2rem;
+      position: relative;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    .editor-item:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 25px rgba(0,0,0,0.3);
+    }
+    
+    .editor-item img {
+      width: 100%;
+      border-radius: 8px;
+      display: block;
+      margin-bottom: 1rem;
+      aspect-ratio: 1/1.414; /* Standard paper ratio */
+      object-fit: contain;
+      background: #2d3748;
+      transition: all 0.3s ease;
+    }
+    
+    .editor-actions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+    }
+    
+    .action-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    
+    button {
+      background: var(--primary);
+      border: none;
+      padding: 0.6rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      color: white;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    button:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+    
+    button i {
+      font-size: 0.9rem;
+    }
+    
+    .btn-danger {
+      background: var(--danger);
+    }
+    
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+    
+    .btn-warning {
+      background: var(--warning);
+    }
+    
+    .btn-warning:hover {
+      background: #d97706;
+    }
+    
+    .btn-success {
+      background: var(--secondary);
+    }
+    
+    .btn-success:hover {
+      background: #0d9488;
+    }
+    
+    .bottom-controls {
+      margin-top: 3rem;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    
+    .bottom-controls button {
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      min-width: 180px;
+    }
+    
+    .dragging {
+      opacity: 0.5;
+      border: 2px dashed var(--primary);
+    }
+    
+    .over {
+      border: 2px solid var(--primary);
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(5px);
+    }
+    
+    .modal-content {
+      background: var(--dark);
+      padding: 2rem;
+      border-radius: 12px;
+      max-width: 800px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .modal-title {
+      font-size: 1.5rem;
+      color: var(--primary);
+    }
+    
+    .close-modal {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    
+    .filter-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    
+    .filter-option {
+      cursor: pointer;
+      text-align: center;
+    }
+    
+    .filter-preview {
+      width: 100%;
+      height: 100px;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      object-fit: cover;
+    }
+    
+    .adjust-controls {
+      margin: 1.5rem 0;
+    }
+    
+    .adjust-slider {
+      width: 100%;
+      margin: 0.8rem 0;
+    }
+    
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.3rem;
+    }
+    
+    .markup-tools {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    
+    .markup-canvas-container {
+      position: relative;
+      margin: 1rem 0;
+    }
+    
+    #markupCanvas {
+      border: 1px solid #334155;
+      border-radius: 8px;
+      max-width: 100%;
+      background-color: white;
+    }
+    
+    .crop-container {
+      position: relative;
+      margin: 1rem 0;
+    }
+    
+    #cropCanvas {
+      border: 1px solid #334155;
+      border-radius: 8px;
+      max-width: 100%;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: #64748b;
+    }
+    
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+    
+    @media (max-width: 768px) {
+      .editor-actions {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      
+      .editor-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Document Editor</h1>
+  <p class="subtitle">Edit, enhance and organize your scanned documents</p>
+</header>
+
+<div class="editor-grid" id="editor">
+  <!-- Images will be loaded here -->
+</div>
+
+<div class="bottom-controls">
+  <button onclick="keepScanning()" class="btn-success">
+    <i class="fas fa-camera"></i> Add More Scans
+  </button>
+  <button onclick="saveFinalPDF()" class="btn-success">
+    <i class="fas fa-file-pdf"></i> Export as PDF
+  </button>
+</div>
+
+<!-- Modals for different editing functions -->
+<div id="filterModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Apply Filter</h2>
+      <button class="close-modal" onclick="closeModal('filterModal')">&times;</button>
+    </div>
+    <div class="filter-options">
+      <div class="filter-option" onclick="applySelectedFilter('none')">
+        <img src="" class="filter-preview" style="filter: none;">
+        <p>None</p>
+      </div>
+      <div class="filter-option" onclick="applySelectedFilter('grayscale')">
+        <img src="" class="filter-preview" style="filter: grayscale(100%)">
+        <p>Grayscale</p>
+      </div>
+      <div class="filter-option" onclick="applySelectedFilter('sepia')">
+        <img src="" class="filter-preview" style="filter: sepia(100%)">
+        <p>Sepia</p>
+      </div>
+      <div class="filter-option" onclick="applySelectedFilter('high-contrast')">
+        <img src="" class="filter-preview" style="filter: contrast(200%) brightness(110%)">
+        <p>High Contrast</p>
+      </div>
+      <div class="filter-option" onclick="applySelectedFilter('invert')">
+        <img src="" class="filter-preview" style="filter: invert(100%)">
+        <p>Invert</p>
+      </div>
+      <div class="filter-option" onclick="applySelectedFilter('warm')">
+        <img src="" class="filter-preview" style="filter: brightness(110%) saturate(150%) hue-rotate(-10deg)">
+        <p>Warm</p>
+      </div>
+      <div class="filter-option" onclick="applySelectedFilter('cool')">
+        <img src="" class="filter-preview" style="filter: brightness(110%) saturate(120%) hue-rotate(180deg)">
+        <p>Cool</p>
+      </div>
+      <div class="filter-option" onclick="applySelectedFilter('vintage')">
+        <img src="" class="filter-preview" style="filter: sepia(50%) contrast(120%) brightness(110%) saturate(120%) hue-rotate(-10deg)">
+        <p>Vintage</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="adjustModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Adjust Image</h2>
+      <button class="close-modal" onclick="closeModal('adjustModal')">&times;</button>
+    </div>
+    <div class="adjust-controls">
+      <div class="slider-label">
+        <span>Brightness</span>
+        <span id="brightnessValue">100%</span>
+      </div>
+      <input type="range" min="0" max="200" value="100" class="adjust-slider" id="brightnessSlider" oninput="updateAdjustPreview()">
+      
+      <div class="slider-label">
+        <span>Contrast</span>
+        <span id="contrastValue">100%</span>
+      </div>
+      <input type="range" min="0" max="200" value="100" class="adjust-slider" id="contrastSlider" oninput="updateAdjustPreview()">
+      
+      <div class="slider-label">
+        <span>Saturation</span>
+        <span id="saturationValue">100%</span>
+      </div>
+      <input type="range" min="0" max="200" value="100" class="adjust-slider" id="saturationSlider" oninput="updateAdjustPreview()">
+      
+      <div class="slider-label">
+        <span>Sharpness</span>
+        <span id="sharpnessValue">0</span>
+      </div>
+      <input type="range" min="-100" max="100" value="0" class="adjust-slider" id="sharpnessSlider" oninput="updateAdjustPreview()">
+    </div>
+    <div class="preview-container">
+      <img id="adjustPreview" style="max-width: 100%; border-radius: 8px;">
+    </div>
+    <div style="text-align: center; margin-top: 1.5rem;">
+      <button onclick="applyAdjustments()" class="btn-success">Apply Adjustments</button>
+    </div>
+  </div>
+</div>
+
+<div id="markupModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Markup Tool</h2>
+      <button class="close-modal" onclick="closeMarkupModal()">&times;</button>
+    </div>
+    <div class="markup-tools">
+      <button onclick="setTool('pen')"><i class="fas fa-pen"></i> Pen</button>
+      <button onclick="setTool('highlighter')"><i class="fas fa-highlighter"></i> Highlighter</button>
+      <button onclick="setTool('text')"><i class="fas fa-font"></i> Text</button>
+      <button onclick="setTool('rectangle')"><i class="fas fa-square"></i> Rectangle</button>
+      <button onclick="setTool('circle')"><i class="fas fa-circle"></i> Circle</button>
+      <button onclick="setTool('arrow')"><i class="fas fa-arrow-right"></i> Arrow</button>
+      <button onclick="clearMarkup()" class="btn-danger"><i class="fas fa-trash"></i> Clear</button>
+    </div>
+    <div class="color-picker" style="margin-bottom: 1rem;">
+      <label>Color: </label>
+      <input type="color" id="markupColor" value="#FF0000" onchange="changeMarkupColor(this.value)">
+    </div>
+    <div class="size-control" style="margin-bottom: 1rem;">
+      <label>Size: </label>
+      <input type="range" id="markupSize" min="1" max="20" value="3" onchange="changeMarkupSize(this.value)">
+    </div>
+    <div class="markup-canvas-container">
+      <canvas id="markupCanvas"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 1.5rem;">
+      <button onclick="saveMarkup()" class="btn-success">Save Markup</button>
+    </div>
+  </div>
+</div>
+
+<div id="cropModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Crop Image</h2>
+      <button class="close-modal" onclick="closeModal('cropModal')">&times;</button>
+    </div>
+    <div class="crop-container">
+      <canvas id="cropCanvas"></canvas>
+    </div>
+    <div style="text-align: center; margin-top: 1.5rem;">
+      <button onclick="applyCrop()" class="btn-success">Crop Image</button>
+    </div>
+  </div>
+</div>
+
+<div id="textModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Add Text</h2>
+      <button class="close-modal" onclick="closeModal('textModal')">&times;</button>
+    </div>
+    <div style="margin-bottom: 1rem;">
+      <label>Text:</label>
+      <textarea id="textInput" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: white; min-height: 100px; margin-top: 0.5rem;"></textarea>
+    </div>
+    <div style="margin-bottom: 1rem;">
+      <label>Font Size:</label>
+      <input type="range" id="textSize" min="10" max="72" value="24" style="width: 100%">
+    </div>
+    <div style="margin-bottom: 1rem;">
+      <label>Color:</label>
+      <input type="color" id="textColor" value="#000000">
+    </div>
+    <div style="margin-bottom: 1rem;">
+      <label>Position X:</label>
+      <input type="range" id="textX" min="0" max="1000" value="50" style="width: 100%">
+    </div>
+    <div style="margin-bottom: 1rem;">
+      <label>Position Y:</label>
+      <input type="range" id="textY" min="0" max="1000" value="50" style="width: 100%">
+    </div>
+    <div style="text-align: center; margin-top: 1.5rem;">
+      <button onclick="applyText()" class="btn-success">Add Text</button>
+    </div>
+  </div>
+</div>
+
+<div id="resizeModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Resize Image</h2>
+      <button class="close-modal" onclick="closeModal('resizeModal')">&times;</button>
+    </div>
+    <div style="margin-bottom: 1rem;">
+      <label>Width (px):</label>
+      <input type="number" id="resizeWidth" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: white;">
+    </div>
+    <div style="margin-bottom: 1rem;">
+      <label>Height (px):</label>
+      <input type="number" id="resizeHeight" style="width: 100%; padding: 0.5rem; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: white;">
+    </div>
+    <div style="margin-bottom: 1rem;">
+      <label>
+        <input type="checkbox" id="maintainAspect" checked> Maintain aspect ratio
+      </label>
+    </div>
+    <div style="text-align: center; margin-top: 1.5rem;">
+      <button onclick="applyResize()" class="btn-success">Resize Image</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cropperjs/dist/cropper.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs/dist/cropper.min.css">
+<script>
+  // Global variables
+  let images = JSON.parse(localStorage.getItem('scannedImages')) || [];
+  let currentEditingIndex = -1;
+  let cropper = null;
+  let markupCtx = null;
+  let currentTool = 'pen';
+  let isDrawing = false;
+  let lastX = 0;
+  let lastY = 0;
+  
+  // Initialize editor when DOM is loaded
+  document.addEventListener('DOMContentLoaded', () => {
+    loadEditor();
+    setupFilterPreviews();
+    
+    // Setup event listeners for markup canvas
+    const markupCanvas = document.getElementById('markupCanvas');
+    markupCanvas.addEventListener('mousedown', startDrawing);
+    markupCanvas.addEventListener('mousemove', draw);
+    markupCanvas.addEventListener('mouseup', stopDrawing);
+    markupCanvas.addEventListener('mouseout', stopDrawing);
+    markupCanvas.addEventListener('touchstart', handleTouch);
+    markupCanvas.addEventListener('touchmove', handleTouch);
+    markupCanvas.addEventListener('touchend', stopDrawing);
+  });
+  
+  // Load all images into the editor
+  function loadEditor() {
+    const editor = document.getElementById('editor');
+    
+    if (images.length === 0) {
+      editor.innerHTML = `
+        <div class="empty-state">
+          <i class="fas fa-images"></i>
+          <h3>No scans found</h3>
+          <p>Start by scanning some documents</p>
+          <button onclick="keepScanning()" class="btn-success" style="margin-top: 1rem;">
+            <i class="fas fa-camera"></i> Start Scanning
+          </button>
+        </div>
+      `;
+      return;
+    }
+    
+    editor.innerHTML = "";
+    images.forEach((src, idx) => {
+      const item = document.createElement('div');
+      item.className = 'editor-item';
+      item.setAttribute('draggable', 'true');
+      item.dataset.index = idx;
+      item.innerHTML = `
+        <img src="${src}" id="img-${idx}" data-rotation="0">
+        <div class="action-group">
+          <div class="editor-actions">
+            <button onclick="rotate(${idx}, 90)" title="Rotate 90°"><i class="fas fa-redo"></i></button>
+            <button onclick="rotate(${idx}, -90)" title="Rotate -90°"><i class="fas fa-undo"></i></button>
+            <button onclick="openCropModal(${idx})" title="Crop"><i class="fas fa-crop"></i></button>
+            
+            <button onclick="openTextModal(${idx})" title="Add Text"><i class="fas fa-font"></i></button>
+            <button onclick="openFilterModal(${idx})" title="Filters"><i class="fas fa-adjust"></i></button>
+            <button onclick="openAdjustModal(${idx})" title="Adjust"><i class="fas fa-sliders-h"></i></button>
+            
+            <button onclick="cleanup(${idx})" title="Auto Enhance"><i class="fas fa-magic"></i></button>
+            <button onclick="openMarkupModal(${idx})" title="Markup"><i class="fas fa-pencil-alt"></i></button>
+            <button onclick="openResizeModal(${idx})" title="Resize"><i class="fas fa-expand"></i></button>
+            
+            <button onclick="retake(${idx})" class="btn-warning" title="Retake"><i class="fas fa-camera-retro"></i></button>
+            <button onclick="deleteImage(${idx})" class="btn-danger" title="Delete"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      `;
+      editor.appendChild(item);
+      
+      // Add drag events for reordering
+      item.addEventListener('dragstart', dragStart);
+      item.addEventListener('dragover', dragOver);
+      item.addEventListener('dragleave', dragLeave);
+      item.addEventListener('drop', drop);
+      item.addEventListener('dragend', dragEnd);
+    });
+  }
+  
+  // Rotate image by specified degrees
+  function rotate(index, degrees) {
+    const img = document.getElementById(`img-${index}`);
+    const currentRotation = img.dataset.rotation ? parseInt(img.dataset.rotation) : 0;
+    const newRotation = (currentRotation + degrees) % 360;
+    img.style.transform = `rotate(${newRotation}deg)`;
+    img.dataset.rotation = newRotation;
+    
+    // Update the image data with rotation
+    applyRotationToImage(index, degrees);
+  }
+  
+  // Apply rotation to the actual image data
+  function applyRotationToImage(index, degrees) {
+    const img = document.getElementById(`img-${index}`);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const image = new Image();
+    
+    image.onload = function() {
+      if (degrees === 90 || degrees === -90) {
+        canvas.width = image.height;
+        canvas.height = image.width;
+      } else {
+        canvas.width = image.width;
+        canvas.height = image.height;
+      }
+      
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate(degrees * Math.PI / 180);
+      
+      if (degrees === 90) {
+        ctx.drawImage(image, -image.height / 2, -image.width / 2, image.height, image.width);
+      } else if (degrees === -90) {
+        ctx.drawImage(image, -image.height / 2, -image.width / 2, image.height, image.width);
+      } else {
+        ctx.drawImage(image, -image.width / 2, -image.height / 2, image.width, image.height);
+      }
+      
+      img.src = canvas.toDataURL();
+      images[index] = img.src;
+      localStorage.setItem('scannedImages', JSON.stringify(images));
+    };
+    
+    image.src = images[index];
+  }
+  
+  // Open crop modal
+  function openCropModal(index) {
+    currentEditingIndex = index;
+    const modal = document.getElementById('cropModal');
+    const canvas = document.getElementById('cropCanvas');
+    const img = document.getElementById(`img-${index}`);
+    
+    // Set canvas size
+    const tempImg = new Image();
+    tempImg.onload = function() {
+      canvas.width = tempImg.width;
+      canvas.height = tempImg.height;
+      
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(tempImg, 0, 0);
+      
+      // Initialize cropper
+      if (cropper) {
+        cropper.destroy();
+      }
+      
+      // Use the image directly for cropper
+      cropper = new Cropper(canvas, {
+        aspectRatio: NaN, // Free ratio
+        viewMode: 1,
+        autoCropArea: 0.8,
+        responsive: true,
+        guides: true,
+        center: true,
+        background: false,
+        movable: true,
+        rotatable: true,
+        scalable: true,
+        zoomable: true,
+        cropBoxMovable: true,
+        cropBoxResizable: true,
+      });
+      
+      modal.style.display = 'flex';
+    };
+    tempImg.src = img.src;
+  }
+  
+  // Apply crop to image
+  function applyCrop() {
+    if (cropper) {
+      const canvas = cropper.getCroppedCanvas();
+      const img = document.getElementById(`img-${currentEditingIndex}`);
+      img.src = canvas.toDataURL();
+      images[currentEditingIndex] = img.src;
+      localStorage.setItem('scannedImages', JSON.stringify(images));
+      closeModal('cropModal');
+      cropper.destroy();
+      cropper = null;
+    }
+  }
+  
+  // Open text modal
+  function openTextModal(index) {
+    currentEditingIndex = index;
+    document.getElementById('textModal').style.display = 'flex';
+  }
+  
+  // Apply text to image
+  function applyText() {
+    const text = document.getElementById('textInput').value;
+    if (!text) return;
+    
+    const img = document.getElementById(`img-${currentEditingIndex}`);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const image = new Image();
+    
+    image.onload = function() {
+      canvas.width = image.width;
+      canvas.height = image.height;
+      ctx.drawImage(image, 0, 0);
+      
+      // Text styling
+      const fontSize = parseInt(document.getElementById('textSize').value);
+      const color = document.getElementById('textColor').value;
+      const x = parseInt(document.getElementById('textX').value);
+      const y = parseInt(document.getElementById('textY').value);
+      
+      ctx.font = `${fontSize}px Arial`;
+      ctx.fillStyle = color;
+      ctx.fillText(text, x, y);
+      
+      img.src = canvas.toDataURL();
+      images[currentEditingIndex] = img.src;
+      localStorage.setItem('scannedImages', JSON.stringify(images));
+      closeModal('textModal');
+    };
+    
+    image.src = images[currentEditingIndex];
+  }
+  
+  // Open filter modal
+  function openFilterModal(index) {
+    currentEditingIndex = index;
+    const modal = document.getElementById('filterModal');
+    const previews = modal.querySelectorAll('.filter-preview');
+    
+    // Set all preview images to current image
+    previews.forEach(preview => {
+      preview.src = images[index];
+    });
+    
+    modal.style.display = 'flex';
+  }
+  
+  // Setup filter preview images
+  function setupFilterPreviews() {
+    // Create a sample image for previews
+    const canvas = document.createElement('canvas');
+    canvas.width = 100;
+    canvas.height = 100;
+    const ctx = canvas.getContext('2d');
+    
+    // Draw a sample image (gradient with text)
+    const gradient = ctx.createLinearGradient(0, 0, 100, 100);
+    gradient.addColorStop(0, '#3b82f6');
+    gradient.addColorStop(1, '#10b981');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 100, 100);
+    ctx.fillStyle = 'white';
+    ctx.font = '12px Arial';
+    ctx.fillText('Preview', 20, 50);
+    
+    const previewImage = canvas.toDataURL();
+    
+    // Set all preview images
+    const previews = document.querySelectorAll('.filter-preview');
+    previews.forEach(preview => {
+      preview.src = previewImage;
+    });
+  }
+  
+  // Apply selected filter
+  function applySelectedFilter(filterType) {
+    const img = document.getElementById(`img-${currentEditingIndex}`);
+    let filter = '';
+    
+    switch(filterType) {
+      case 'grayscale':
+        filter = 'grayscale(100%)';
+        break;
+      case 'sepia':
+        filter = 'sepia(100%)';
+        break;
+      case 'high-contrast':
+        filter = 'contrast(200%) brightness(110%)';
+        break;
+      case 'invert':
+        filter = 'invert(100%)';
+        break;
+      case 'warm':
+        filter = 'brightness(110%) saturate(150%) hue-rotate(-10deg)';
+        break;
+      case 'cool':
+        filter = 'brightness(110%) saturate(120%) hue-rotate(180deg)';
+        break;
+      case 'vintage':
+        filter = 'sepia(50%) contrast(120%) brightness(110%) saturate(120%) hue-rotate(-10deg)';
+        break;
+      default:
+        filter = 'none';
+    }
+    
+    // Apply filter to actual image data (not just CSS)
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const image = new Image();
+    
+    image.onload = function() {
+      canvas.width = image.width;
+      canvas.height = image.height;
+      
+      // Apply filter
+      if (filter !== 'none') {
+        ctx.filter = filter;
+      }
+      
+      ctx.drawImage(image, 0, 0);
+      
+      img.src = canvas.toDataURL();
+      images[currentEditingIndex] = img.src;
+      localStorage.setItem('scannedImages', JSON.stringify(images));
+    };
+    
+    image.src = images[currentEditingIndex];
+    closeModal('filterModal');
+  }
+  
+  // Open adjust modal
+  function openAdjustModal(index) {
+    currentEditingIndex = index;
+    const modal = document.getElementById('adjustModal');
+    const preview = document.getElementById('adjustPreview');
+    
+    preview.src = images[index];
+    modal.style.display = 'flex';
+    
+    // Reset sliders
+    document.getElementById('brightnessSlider').value = 100;
+    document.getElementById('contrastSlider').value = 100;
+    document.getElementById('saturationSlider').value = 100;
+    document.getElementById('sharpnessSlider').value = 0;
+    
+    document.getElementById('brightnessValue').textContent = '100%';
+    document.getElementById('contrastValue').textContent = '100%';
+    document.getElementById('saturationValue').textContent = '100%';
+    document.getElementById('sharpnessValue').textContent = '0';
+  }
+  
+  // Update adjust preview
+  function updateAdjustPreview() {
+    const brightness = document.getElementById('brightnessSlider').value;
+    const contrast = document.getElementById('contrastSlider').value;
+    const saturation = document.getElementById('saturationSlider').value;
+    const sharpness = document.getElementById('sharpnessSlider').value;
+    
+    document.getElementById('brightnessValue').textContent = brightness + '%';
+    document.getElementById('contrastValue').textContent = contrast + '%';
+    document.getElementById('saturationValue').textContent = saturation + '%';
+    document.getElementById('sharpnessValue').textContent = sharpness;
+    
+    const preview = document.getElementById('adjustPreview');
+    preview.style.filter = `
+      brightness(${brightness}%)
+      contrast(${contrast}%)
+      saturate(${saturation}%)
+    `;
+    
+    // Sharpness would require more complex processing
+  }
+  
+  // Apply adjustments to image
+  function applyAdjustments() {
+    const brightness = document.getElementById('brightnessSlider').value;
+    const contrast = document.getElementById('contrastSlider').value;
+    const saturation = document.getElementById('saturationSlider').value;
+    
+    const img = document.getElementById(`img-${currentEditingIndex}`);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const image = new Image();
+    
+    image.onload = function() {
+      canvas.width = image.width;
+      canvas.height = image.height;
+      
+      // Apply filters
+      ctx.filter = `
+        brightness(${brightness}%)
+        contrast(${contrast}%)
+        saturate(${saturation}%)
+      `;
+      
+      ctx.drawImage(image, 0, 0);
+      
+      // Apply sharpness (simplified)
+      if (document.getElementById('sharpnessSlider').value != 0) {
+        // This is a simplified sharpness effect
+        ctx.globalCompositeOperation = 'overlay';
+        ctx.filter = 'blur(0.5px)';
+        ctx.drawImage(canvas, 0, 0);
+        ctx.globalCompositeOperation = 'source-over';
+      }
+      
+      img.src = canvas.toDataURL();
+      images[currentEditingIndex] = img.src;
+      localStorage.setItem('scannedImages', JSON.stringify(images));
+      closeModal('adjustModal');
+    };
+    
+    image.src = images[currentEditingIndex];
+  }
+  
+  // Auto enhance image
+  function cleanup(index) {
+    const img = document.getElementById(`img-${index}`);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const image = new Image();
+    
+    image.onload = function() {
+      canvas.width = image.width;
+      canvas.height = image.height;
+      
+      // Auto enhance with some basic filters
+      ctx.filter = 'contrast(120%) brightness(110%) saturate(110%)';
+      ctx.drawImage(image, 0, 0);
+      
+      img.src = canvas.toDataURL();
+      images[index] = img.src;
+      localStorage.setItem('scannedImages', JSON.stringify(images));
+      
+      // Show success message
+      showToast('Image enhanced successfully');
+    };
+    
+    image.src = images[index];
+  }
+  
+  // Open markup modal
+  function openMarkupModal(index) {
+    currentEditingIndex = index;
+    const modal = document.getElementById('markupModal');
+    const canvas = document.getElementById('markupCanvas');
+    const img = document.getElementById(`img-${index}`);
+    
+    // Set canvas size to match image
+    const tempImg = new Image();
+    tempImg.onload = function() {
+      canvas.width = tempImg.width;
+      canvas.height = tempImg.height;
+      
+      markupCtx = canvas.getContext('2d');
+      markupCtx.drawImage(tempImg, 0, 0);
+      
+      // Initialize drawing state
+      isDrawing = false;
+      currentTool = 'pen';
+      
+      modal.style.display = 'flex';
+    };
+    tempImg.src = img.src;
+  }
+
+  // Close markup modal
+  function closeMarkupModal() {
+    closeModal('markupModal');
+  }
+
+  // Set current drawing tool
+  function setTool(tool) {
+    currentTool = tool;
+  }
+
+  // Change markup color
+  function changeMarkupColor(color) {
+    if (markupCtx) {
+      markupCtx.strokeStyle = color;
+      markupCtx.fillStyle = color;
+    }
+  }
+
+  // Change markup size
+  function changeMarkupSize(size) {
+    if (markupCtx) {
+      markupCtx.lineWidth = size;
+    }
+  }
+
+  // Start drawing
+  function startDrawing(e) {
+    isDrawing = true;
+    const canvas = document.getElementById('markupCanvas');
+    const rect = canvas.getBoundingClientRect();
+    
+    if (e.type === 'mousedown') {
+      lastX = e.clientX - rect.left;
+      lastY = e.clientY - rect.top;
+    }
+    
+    markupCtx.beginPath();
+    markupCtx.moveTo(lastX, lastY);
+  }
+
+  // Handle touch events
+  function handleTouch(e) {
+    e.preventDefault();
+    const canvas = document.getElementById('markupCanvas');
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    
+    if (e.type === 'touchstart') {
+      isDrawing = true;
+      lastX = touch.clientX - rect.left;
+      lastY = touch.clientY - rect.top;
+      markupCtx.beginPath();
+      markupCtx.moveTo(lastX, lastY);
+    } else if (e.type === 'touchmove' && isDrawing) {
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      
+      switch(currentTool) {
+        case 'pen':
+          markupCtx.lineTo(x, y);
+          markupCtx.stroke();
+          break;
+        case 'highlighter':
+          markupCtx.globalAlpha = 0.4;
+          markupCtx.lineTo(x, y);
+          markupCtx.stroke();
+          markupCtx.globalAlpha = 1.0;
+          break;
+      }
+      
+      lastX = x;
+      lastY = y;
+    }
+  }
+
+  // Draw based on current tool
+  function draw(e) {
+    if (!isDrawing) return;
+    
+    const canvas = document.getElementById('markupCanvas');
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    switch(currentTool) {
+      case 'pen':
+        markupCtx.lineTo(x, y);
+        markupCtx.stroke();
+        break;
+      case 'highlighter':
+        markupCtx.globalAlpha = 0.4;
+        markupCtx.lineTo(x, y);
+        markupCtx.stroke();
+        markupCtx.globalAlpha = 1.0;
+        break;
+      case 'rectangle':
+        markupCtx.clearRect(0, 0, canvas.width, canvas.height);
+        markupCtx.drawImage(document.getElementById(`img-${currentEditingIndex}`), 0, 0);
+        markupCtx.strokeRect(lastX, lastY, x - lastX, y - lastY);
+        break;
+      case 'circle':
+        markupCtx.clearRect(0, 0, canvas.width, canvas.height);
+        markupCtx.drawImage(document.getElementById(`img-${currentEditingIndex}`), 0, 0);
+        markupCtx.beginPath();
+        markupCtx.arc(lastX, lastY, Math.sqrt(Math.pow(x - lastX, 2) + Math.pow(y - lastY, 2)), 0, Math.PI * 2);
+        markupCtx.stroke();
+        break;
+      case 'arrow':
+        markupCtx.clearRect(0, 0, canvas.width, canvas.height);
+        markupCtx.drawImage(document.getElementById(`img-${currentEditingIndex}`), 0, 0);
+        drawArrow(lastX, lastY, x, y);
+        break;
+    }
+    
+    lastX = x;
+    lastY = y;
+  }
+
+  // Draw arrow
+  function drawArrow(fromX, fromY, toX, toY) {
+    const headLength = 15;
+    const angle = Math.atan2(toY - fromY, toX - fromX);
+    
+    markupCtx.beginPath();
+    markupCtx.moveTo(fromX, fromY);
+    markupCtx.lineTo(toX, toY);
+    markupCtx.lineTo(toX - headLength * Math.cos(angle - Math.PI/6), toY - headLength * Math.sin(angle - Math.PI/6));
+    markupCtx.moveTo(toX, toY);
+    markupCtx.lineTo(toX - headLength * Math.cos(angle + Math.PI/6), toY - headLength * Math.sin(angle + Math.PI/6));
+    markupCtx.stroke();
+  }
+
+  // Stop drawing
+  function stopDrawing() {
+    isDrawing = false;
+  }
+
+  // Clear markup
+  function clearMarkup() {
+    const canvas = document.getElementById('markupCanvas');
+    markupCtx.clearRect(0, 0, canvas.width, canvas.height);
+    markupCtx.drawImage(document.getElementById(`img-${currentEditingIndex}`), 0, 0);
+  }
+
+  // Save markup
+  function saveMarkup() {
+    const canvas = document.getElementById('markupCanvas');
+    const img = document.getElementById(`img-${currentEditingIndex}`);
+    img.src = canvas.toDataURL();
+    images[currentEditingIndex] = img.src;
+    localStorage.setItem('scannedImages', JSON.stringify(images));
+    closeMarkupModal();
+  }
+
+  // Open resize modal
+  function openResizeModal(index) {
+    currentEditingIndex = index;
+    const img = document.getElementById(`img-${index}`);
+    const modal = document.getElementById('resizeModal');
+    
+    // Set current dimensions
+    const tempImg = new Image();
+    tempImg.onload = function() {
+      document.getElementById('resizeWidth').value = tempImg.width;
+      document.getElementById('resizeHeight').value = tempImg.height;
+      modal.style.display = 'flex';
+    };
+    tempImg.src = img.src;
+  }
+
+  // Apply resize
+  function applyResize() {
+    const width = parseInt(document.getElementById('resizeWidth').value);
+    const height = parseInt(document.getElementById('resizeHeight').value);
+    const maintainAspect = document.getElementById('maintainAspect').checked;
+    
+    if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
+      showToast('Please enter valid dimensions');
+      return;
+    }
+    
+    const img = document.getElementById(`img-${currentEditingIndex}`);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const image = new Image();
+    
+    image.onload = function() {
+      let newWidth = width;
+      let newHeight = height;
+      
+      if (maintainAspect) {
+        const aspect = image.width / image.height;
+        if (width / height > aspect) {
+          newWidth = height * aspect;
+        } else {
+          newHeight = width / aspect;
+        }
+      }
+      
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+      ctx.drawImage(image, 0, 0, newWidth, newHeight);
+      
+      img.src = canvas.toDataURL();
+      images[currentEditingIndex] = img.src;
+      localStorage.setItem('scannedImages', JSON.stringify(images));
+      closeModal('resizeModal');
+    };
+    
+    image.src = images[currentEditingIndex];
+  }
+
+  // Delete image
+  function deleteImage(index) {
+    if (confirm('Are you sure you want to delete this image?')) {
+      images.splice(index, 1);
+      localStorage.setItem('scannedImages', JSON.stringify(images));
+      loadEditor();
+      showToast('Image deleted');
+    }
+  }
+
+  // Retake image
+  function retake(index) {
+    if (confirm('Retake this image? The current version will be deleted.')) {
+      deleteImage(index);
+      keepScanning();
+    }
+  }
+
+  // Close modal
+  function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+  }
+
+  // Keep scanning (redirect to scanner)
+  function keepScanning() {
+    // In a real app, this would redirect to the scanning interface
+    alert('Redirecting to scanner...');
+    // window.location.href = 'scanner.html';
+  }
+
+  // Save final PDF
+  async function saveFinalPDF() {
+    if (images.length === 0) {
+      showToast('No images to export');
+      return;
+    }
+    
+    showToast('Generating PDF...');
+    
+    try {
+      const { PDFDocument, rgb } = PDFLib;
+      const pdfDoc = await PDFDocument.create();
+      
+      for (const imgSrc of images) {
+        const img = await fetch(imgSrc).then(res => res.blob());
+        const imgBytes = await new Response(img).arrayBuffer();
+        
+        let pdfImage;
+        if (imgSrc.startsWith('data:image/jpeg')) {
+          pdfImage = await pdfDoc.embedJpg(imgBytes);
+        } else {
+          pdfImage = await pdfDoc.embedPng(imgBytes);
+        }
+        
+        const page = pdfDoc.addPage([pdfImage.width, pdfImage.height]);
+        page.drawImage(pdfImage, {
+          x: 0,
+          y: 0,
+          width: pdfImage.width,
+          height: pdfImage.height,
+        });
+      }
+      
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'document-scans.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      showToast('PDF downloaded successfully');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      showToast('Error generating PDF');
+    }
+  }
+
+  // Show toast notification
+  function showToast(message) {
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.style.position = 'fixed';
+    toast.style.bottom = '20px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.backgroundColor = 'var(--dark)';
+    toast.style.color = 'white';
+    toast.style.padding = '10px 20px';
+    toast.style.borderRadius = '5px';
+    toast.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+    toast.style.zIndex = '1000';
+    toast.style.transition = 'opacity 0.3s';
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => {
+        document.body.removeChild(toast);
+      }, 300);
+    }, 3000);
+  }
+
+  // Drag and drop functions for reordering
+  function dragStart(e) {
+    e.dataTransfer.setData('text/plain', e.target.dataset.index);
+    e.currentTarget.classList.add('dragging');
+  }
+
+  function dragOver(e) {
+    e.preventDefault();
+    e.currentTarget.classList.add('over');
+  }
+
+  function dragLeave(e) {
+    e.currentTarget.classList.remove('over');
+  }
+
+  function drop(e) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('over');
+    
+    const fromIndex = e.dataTransfer.getData('text/plain');
+    const toIndex = e.currentTarget.dataset.index;
+    
+    if (fromIndex !== toIndex) {
+      // Swap images in array
+      [images[fromIndex], images[toIndex]] = [images[toIndex], images[fromIndex]];
+      localStorage.setItem('scannedImages', JSON.stringify(images));
+      loadEditor();
+    }
+  }
+
+  function dragEnd(e) {
+    e.currentTarget.classList.remove('dragging');
+    document.querySelectorAll('.editor-item').forEach(item => {
+      item.classList.remove('over');
+    });
+  }
+</script>
+</body>
+</html>

@@ -2,27 +2,647 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Contact - FilePro</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alternate Mix PDF - FilePro</title>
+  <link rel="stylesheet" href="../../style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js"></script>
+  <style>
+    /* Basic reset and body styling */
+    body, h1, p, ul, li, button, a {
+      margin: 0;
+      padding: 0;
+      font-family: 'Roboto', sans-serif;
+      box-sizing: border-box;
+    }
+    body {
+      background-color: #f4f7fb;
+      color: #333;
+      font-size: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    .page {
+      max-width: 960px;
+      padding: 2rem;
+      background: white;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      margin-top: 40px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      background-color: #1a73e8;
+      padding: 16px 32px;
+      color: white;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    header .logo {
+      font-size: 24px;
+      font-weight: 600;
+    }
+    header nav a {
+      color: white;
+      text-decoration: none;
+      margin-left: 20px;
+      font-size: 16px;
+      transition: color 0.3s ease;
+    }
+    header nav a:hover {
+      color: #ff9800;
+    }
+    .tool-btn {
+      background-color: #1a73e8;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    .tool-btn:hover {
+      background-color: #ff9800;
+      transform: scale(1.05);
+    }
+    .upload-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 20px;
+    }
+    #file-list ul {
+      margin-top: 10px;
+      list-style: none;
+      padding: 0;
+    }
+    #file-list li {
+      background: #eee;
+      padding: 8px;
+      margin: 4px 0;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .instructions {
+      margin-top: 20px;
+      background: #f5f5f5;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    .instructions h2 {
+      font-size: 20px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .instructions ul {
+      list-style: none;
+      padding: 0;
+    }
+    .instructions li {
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+    footer {
+      margin-top: 40px;
+      font-size: 14px;
+      color: #888;
+    }
+    footer p {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .loading-spinner {
+      display: none;
+      width: 30px;
+      height: 30px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #1a73e8;
+      border-radius: 50%;
+      animation: spin 2s linear infinite;
+      margin-top: 20px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Futuristic effect for the file upload input */
+    #pdf-upload {
+      padding: 10px;
+      border: 2px solid #1a73e8;
+      border-radius: 8px;
+      outline: none;
+      background-color: #fff;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      margin-bottom: 15px;
+    }
+
+    #pdf-upload:focus {
+      border-color: #ff9800;
+      box-shadow: 0 0 8px rgba(255, 152, 0, 0.8);
+    }
+
+    #pdf-upload:hover {
+      border-color: #ff9800;
+      background-color: #f0f8ff;
+    }
+
+    /* Glowing animation for file upload */
+    .upload-section label {
+      font-size: 16px;
+      margin-bottom: 8px;
+      transition: color 0.3s ease;
+    }
+
+    #pdf-upload:focus + label,
+    #pdf-upload:hover + label {
+      color: #ff9800;
+    }
+    
+    /* Progress bar */
+    .progress-container {
+      width: 100%;
+      margin: 20px 0;
+      display: none;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 10px;
+      background-color: #e0e0e0;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    
+    .progress {
+      height: 100%;
+      background-color: #1a73e8;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    
+    .progress-text {
+      text-align: center;
+      margin-top: 5px;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .file-info {
+      font-size: 12px;
+      color: #666;
+      margin-left: 10px;
+    }
+    
+    .remove-file {
+      background: #ff4444;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 2px 6px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    
+    .remove-file:hover {
+      background: #cc0000;
+    }
+    
+    .status-message {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 4px;
+      display: none;
+    }
+    
+    .success {
+      background-color: #dff0d8;
+      color: #3c763d;
+    }
+    
+    .error {
+      background-color: #f2dede;
+      color: #a94442;
+    }
+    
+    /* Preview section */
+    .preview-section {
+      margin: 20px 0;
+      display: none;
+    }
+    
+    .preview-container {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      background: #f9f9f9;
+      margin-bottom: 15px;
+    }
+    
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .preview-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #1a73e8;
+    }
+    
+    .preview-controls {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .preview-btn {
+      background: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    .preview-btn:hover {
+      background: #0d5bba;
+    }
+    
+    .preview-canvas-container {
+      display: flex;
+      justify-content: center;
+      overflow-x: auto;
+      padding: 10px 0;
+    }
+    
+    .preview-canvas {
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin: 0 5px;
+    }
+    
+    .page-info {
+      text-align: center;
+      margin-top: 5px;
+      font-size: 14px;
+      color: #666;
+    }
+  </style>
 </head>
 <body>
+
   <header>
     <div class="logo">⚡ FilePro</div>
     <nav>
-      <a href="index.html">Home</a>
-      <a href="tools.html">Tools</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
+      <a href="../../index.html">Home</a>
+      <a href="../../tools.html">Tools</a>
+      <a href="../../about.html">About</a>
+      <a href="../../contact.html">Contact</a>
     </nav>
   </header>
 
   <div class="page">
-    <h1>Contact Us</h1>
-    <p>Email: support@filepro.io<br>Phone: +91-123-456-7890</p>
+    <h1>Alternate Mix PDF</h1>
+    <p>Use this tool to alternate or mix pages from multiple PDFs into a new document.</p>
+
+    <!-- File Upload Section -->
+    <div class="upload-section">
+      <label for="pdf-upload">Choose PDF files:</label>
+      <input type="file" id="pdf-upload" multiple accept=".pdf" onchange="displayFiles()" />
+      <button class="tool-btn" id="mix-btn" onclick="alternateMixPDF()">Create Mixed PDF</button>
+      <div class="loading-spinner" id="loading-spinner"></div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-container" id="progress-container">
+      <div class="progress-bar">
+        <div class="progress" id="progress-bar"></div>
+      </div>
+      <div class="progress-text" id="progress-text">0%</div>
+    </div>
+
+    <!-- Status Message -->
+    <div class="status-message" id="status-message"></div>
+
+    <!-- Display Selected File Names -->
+    <div id="file-list"></div>
+
+    <!-- Preview Section -->
+    <div class="preview-section" id="preview-section">
+      <div class="preview-container">
+        <div class="preview-header">
+          <div class="preview-title">PDF Preview</div>
+          <div class="preview-controls">
+            <button class="preview-btn" id="prev-page">Previous</button>
+            <button class="preview-btn" id="next-page">Next</button>
+          </div>
+        </div>
+        <div class="preview-canvas-container">
+          <canvas id="preview-canvas" class="preview-canvas"></canvas>
+        </div>
+        <div class="page-info" id="page-info">Page 1 of 1</div>
+      </div>
+    </div>
+
+    <!-- Download Link Section -->
+    <div id="download-section" style="display: none;">
+      <a id="download-link" href="#" download="alternate-mixed.pdf">
+        <button class="tool-btn">Download Mixed PDF</button>
+      </a>
+    </div>
+
+    <!-- Instructions Section -->
+    <section class="instructions">
+      <h2>How to Alternate or Mix PDF Pages</h2>
+      <ul>
+        <li>Click "Choose PDF files" to select your files (minimum 2 required).</li>
+        <li>Click "Create Mixed PDF" to start the alternation/mixing process.</li>
+        <li>Preview the mixed PDF before downloading.</li>
+        <li>Click "Download Mixed PDF" once you're satisfied with the result.</li>
+      </ul>
+      <p><strong>Tip:</strong> For best performance, avoid mixing very large PDFs (100+ pages each) in a single operation.</p>
+    </section>
   </div>
 
   <footer>
     <p>&copy; 2025 FilePro. All rights reserved.</p>
   </footer>
+
+  <script>
+    // Store file data for processing
+    let fileData = [];
+    let pdfBlob = null;
+    let pdfDoc = null;
+    let currentPage = 1;
+    let pageCount = 0;
+    
+    // Initialize PDF.js worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.worker.min.js';
+    
+    // Function to display the names of selected files
+    function displayFiles() {
+      const files = document.getElementById('pdf-upload').files;
+      const fileList = document.getElementById('file-list');
+      fileList.innerHTML = '';  // Clear previous list
+      fileData = []; // Reset file data
+
+      if (files.length > 0) {
+        const ul = document.createElement('ul');
+        for (let i = 0; i < files.length; i++) {
+          const li = document.createElement('li');
+          li.innerHTML = `
+            <span>${files[i].name}</span>
+            <span class="file-info">${formatFileSize(files[i].size)}</span>
+            <button class="remove-file" onclick="removeFile(${i})">×</button>
+          `;
+          ul.appendChild(li);
+          
+          // Store file data
+          fileData.push(files[i]);
+        }
+        fileList.appendChild(ul);
+      } else {
+        fileList.textContent = 'No files selected.';
+      }
+      
+      updateMixButtonState();
+    }
+    
+    // Function to format file size
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Function to remove a file
+    function removeFile(index) {
+      fileData.splice(index, 1);
+      
+      // Update the file input (this is a bit hacky since we can't directly modify file input)
+      const dataTransfer = new DataTransfer();
+      fileData.forEach(file => dataTransfer.items.add(file));
+      document.getElementById('pdf-upload').files = dataTransfer.files;
+      
+      // Refresh the display
+      displayFiles();
+    }
+    
+    // Function to update mix button state
+    function updateMixButtonState() {
+      const mixBtn = document.getElementById('mix-btn');
+      mixBtn.disabled = fileData.length < 2;
+    }
+    
+    // Function to show status message
+    function showStatus(message, isError = false) {
+      const statusElement = document.getElementById('status-message');
+      statusElement.textContent = message;
+      statusElement.className = isError ? 'status-message error' : 'status-message success';
+      statusElement.style.display = 'block';
+      
+      if (!isError) {
+        setTimeout(() => {
+          statusElement.style.display = 'none';
+        }, 5000);
+      }
+    }
+    
+    // Function to update progress
+    function updateProgress(percent, message = '') {
+      const progressBar = document.getElementById('progress-bar');
+      const progressText = document.getElementById('progress-text');
+      const progressContainer = document.getElementById('progress-container');
+      
+      progressBar.style.width = `${percent}%`;
+      progressText.textContent = message || `${percent}%`;
+      
+      if (percent > 0) {
+        progressContainer.style.display = 'block';
+      }
+    }
+    
+    // Function to render PDF page
+    async function renderPage(pageNum) {
+      if (!pdfDoc) return;
+      
+      try {
+        const page = await pdfDoc.getPage(pageNum);
+        const viewport = page.getViewport({ scale: 1.0 });
+        const canvas = document.getElementById('preview-canvas');
+        const context = canvas.getContext('2d');
+        
+        // Adjust canvas size
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        
+        // Render PDF page
+        await page.render({
+          canvasContext: context,
+          viewport: viewport
+        }).promise;
+        
+        // Update page info
+        document.getElementById('page-info').textContent = `Page ${pageNum} of ${pageCount}`;
+        currentPage = pageNum;
+        
+        // Update button states
+        document.getElementById('prev-page').disabled = pageNum <= 1;
+        document.getElementById('next-page').disabled = pageNum >= pageCount;
+      } catch (error) {
+        console.error('Error rendering page:', error);
+        showStatus('Error rendering PDF preview', true);
+      }
+    }
+    
+    // Function to initialize preview
+    async function initPreview(blob) {
+      pdfBlob = blob;
+      
+      try {
+        // Load the PDF for preview
+        const arrayBuffer = await blob.arrayBuffer();
+        pdfDoc = await pdfjsLib.getDocument(arrayBuffer).promise;
+        pageCount = pdfDoc.numPages;
+        
+        // Show preview section
+        document.getElementById('preview-section').style.display = 'block';
+        
+        // Render first page
+        await renderPage(1);
+        
+        // Set up navigation buttons
+        document.getElementById('prev-page').addEventListener('click', async () => {
+          if (currentPage > 1) {
+            await renderPage(currentPage - 1);
+          }
+        });
+        
+        document.getElementById('next-page').addEventListener('click', async () => {
+          if (currentPage < pageCount) {
+            await renderPage(currentPage + 1);
+          }
+        });
+      } catch (error) {
+        console.error('Error initializing preview:', error);
+        showStatus('Error initializing PDF preview', true);
+      }
+    }
+
+    async function alternateMixPDF() {
+      if (fileData.length < 2) {
+        showStatus('Please select at least two PDFs to mix.', true);
+        return;
+      }
+
+      try {
+        // Show loading state
+        document.getElementById('loading-spinner').style.display = 'block';
+        document.getElementById('mix-btn').disabled = true;
+        showStatus('Starting PDF mixing process...');
+        
+        // Hide previous preview and download sections
+        document.getElementById('preview-section').style.display = 'none';
+        document.getElementById('download-section').style.display = 'none';
+        
+        // Load all PDFs in parallel for better performance
+        updateProgress(10, 'Loading PDF files...');
+        const pdfDocs = await Promise.all(
+          fileData.map(async (file, index) => {
+            try {
+              const arrayBuffer = await file.arrayBuffer();
+              const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+              updateProgress(10 + (index * 30 / fileData.length), `Processing ${file.name}...`);
+              return pdfDoc;
+            } catch (error) {
+              console.error(`Error loading PDF ${file.name}:`, error);
+              throw new Error(`Failed to load PDF: ${file.name}. It may be corrupt or not a valid PDF.`);
+            }
+          })
+        );
+        
+        // Create the mixed PDF
+        updateProgress(70, 'Mixing pages...');
+        const mixedPdfBytes = await createMixedPdf(pdfDocs);
+        
+        // Create download link
+        updateProgress(90, 'Preparing preview...');
+        const mixedPdfBlob = new Blob([mixedPdfBytes], { type: 'application/pdf' });
+        const downloadUrl = URL.createObjectURL(mixedPdfBlob);
+
+        // Initialize preview
+        await initPreview(mixedPdfBlob);
+        
+        // Show download link
+        document.getElementById('loading-spinner').style.display = 'none';
+        const downloadLink = document.getElementById('download-link');
+        downloadLink.href = downloadUrl;
+        document.getElementById('download-section').style.display = 'block';
+        
+        // Update UI
+        updateProgress(100, 'Done! Ready to preview and download.');
+        showStatus('PDF mixing completed successfully!');
+        
+        // Clean up after download
+        downloadLink.onclick = () => {
+          setTimeout(() => {
+            URL.revokeObjectURL(downloadUrl);
+            document.getElementById('download-section').style.display = 'none';
+            updateProgress(0);
+          }, 100);
+        };
+      } catch (error) {
+        console.error('Error mixing PDFs:', error);
+        showStatus(error.message || 'An error occurred while mixing PDFs.', true);
+        updateProgress(0);
+      } finally {
+        document.getElementById('mix-btn').disabled = false;
+        document.getElementById('loading-spinner').style.display = 'none';
+      }
+    }
+
+    async function createMixedPdf(pdfDocs) {
+      const mixedPdf = await PDFLib.PDFDocument.create();
+      
+      // First get all page counts to determine the maximum
+      const pageCounts = pdfDocs.map(doc => doc.getPageCount());
+      const maxPages = Math.max(...pageCounts);
+      const totalPages = pageCounts.reduce((sum, count) => sum + count, 0);
+      
+      let pagesProcessed = 0;
+      
+      // Process pages in batches for better performance
+      for (let pageIndex = 0; pageIndex < maxPages; pageIndex++) {
+        // Process each document for this page index
+        for (let docIndex = 0; docIndex < pdfDocs.length; docIndex++) {
+          const pdfDoc = pdfDocs[docIndex];
+          if (pageIndex < pdfDoc.getPageCount()) {
+            const [copiedPage] = await mixedPdf.copyPages(pdfDoc, [pageIndex]);
+            mixedPdf.addPage(copiedPage);
+            pagesProcessed++;
+            
+            // Update progress more frequently for better feedback
+            const progress = 70 + (pagesProcessed / totalPages * 20);
+            updateProgress(Math.floor(progress), `Adding page ${pagesProcessed} of ${totalPages}...`);
+          }
+        }
+      }
+      
+      return mixedPdf.save();
+    }
+  </script>
 </body>
 </html>

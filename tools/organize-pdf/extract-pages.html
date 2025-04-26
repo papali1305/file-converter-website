@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Extract Pages - FilePro</title>
+  <link rel="stylesheet" href="../../style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js"></script>
+  <style>
+    .upload-section {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 500px;
+    }
+    input[type="text"], input[type="file"] {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+    .tool-btn {
+      padding: 10px 16px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background-color: #4f46e5;
+      color: #fff;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .tool-btn:hover {
+      background-color: #3730a3;
+    }
+    #file-name {
+      font-style: italic;
+      color: #555;
+    }
+    #pdf-preview {
+      margin-top: 20px;
+      max-width: 100%;
+      max-height: 500px;
+      object-fit: contain;
+      display: block;
+    }
+    .manual-selection {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+    .manual-selection button {
+      padding: 8px;
+      background-color: #e7e7e7;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .manual-selection button.selected {
+      background-color: #4f46e5;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">⚡ FilePro</div>
+    <nav>
+      <a href="../../index.html">Home</a>
+      <a href="../../tools.html">Tools</a>
+      <a href="../../about.html">About</a>
+      <a href="../../contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <div class="page">
+    <h1>Extract Pages from PDF</h1>
+    <p>Select a PDF file and choose how to extract pages.</p>
+
+    <div class="upload-section">
+      <input type="file" id="pdf-upload" accept=".pdf" onchange="handleFileChange()" />
+      <div id="file-name"></div>
+
+      <div>
+        <label for="page-numbers" style="margin-top: 1rem;">Enter page numbers to extract (e.g., 1,3-5):</label>
+        <input type="text" id="page-numbers" placeholder="e.g., 1,3-5" />
+      </div>
+
+      <div>
+        <label>Choose extraction method:</label>
+        <div>
+          <label><input type="radio" name="extract-method" value="manual" onclick="toggleExtractMethod('manual')" /> Manually select pages</label>
+          <label><input type="radio" name="extract-method" value="auto" onclick="toggleExtractMethod('auto')" checked /> Automatically by page number</label>
+        </div>
+      </div>
+
+      <button class="tool-btn" onclick="extractPages()">Extract Pages</button>
+
+      <div id="download-section" style="display: none; margin-top: 1.5rem;">
+        <a id="download-link" href="#" download="extracted.pdf">
+          <button class="tool-btn">Download Extracted PDF</button>
+        </a>
+      </div>
+
+      <div id="manual-selection" class="manual-selection" style="display: none;">
+        <!-- Buttons for manual selection of pages will appear here -->
+      </div>
+    </div>
+
+    <section class="instructions" style="margin-top: 2rem;">
+      <h2>How to Use</h2>
+      <ul>
+        <li>Select a PDF file using the file input.</li>
+        <li>Choose your extraction method.</li>
+        <li>If "Manually select pages" is chosen, click on the pages you want to extract in the preview.</li>
+        <li>If "Automatically by page number" is chosen, enter page numbers (e.g., 1,3,5-7).</li>
+        <li>Click "Extract Pages" and download your new PDF.</li>
+      </ul>
+    </section>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 FilePro. All rights reserved.</p>
+  </footer>
+
+  <script>
+    let uploadedFile;
+    let totalPages;
+    let selectedPages = [];
+
+    function handleFileChange() {
+      uploadedFile = document.getElementById('pdf-upload').files[0];
+      const fileNameDiv = document.getElementById('file-name');
+      fileNameDiv.textContent = uploadedFile ? `Selected File: ${uploadedFile.name}` : '';
+      document.getElementById('download-section').style.display = 'none';
+
+      if (uploadedFile) {
+        const reader = new FileReader();
+        reader.onload = async function() {
+          const arrayBuffer = reader.result;
+          const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+          totalPages = pdfDoc.getPageCount();
+          showPreview(pdfDoc);
+        };
+        reader.readAsArrayBuffer(uploadedFile);
+      }
+    }
+
+    function showPreview(pdfDoc) {
+      const pdfPreview = document.getElementById('pdf-preview');
+      pdfPreview.style.display = 'block';  // Ensure the preview is visible
+
+      const pagePreview = document.createElement('canvas');
+      const ctx = pagePreview.getContext('2d');
+      const page = pdfDoc.getPage(0); // Preview the first page
+      const viewport = page.getViewport({ scale: 1.5 });
+
+      pagePreview.width = viewport.width;
+      pagePreview.height = viewport.height;
+
+      page.render({
+        canvasContext: ctx,
+        viewport: viewport,
+      }).promise.then(() => {
+        pdfPreview.src = pagePreview.toDataURL();
+        createManualSelectionButtons(); // Now ensure buttons are created
+      });
+    }
+
+    function createManualSelectionButtons() {
+      const manualSelectionDiv = document.getElementById('manual-selection');
+      manualSelectionDiv.innerHTML = '';
+
+      for (let i = 1; i <= totalPages; i++) {
+        const button = document.createElement('button');
+        button.textContent = `Page ${i}`;
+        button.onclick = () => togglePageSelection(i);
+        manualSelectionDiv.appendChild(button);
+      }
+
+      manualSelectionDiv.style.display = 'flex';
+    }
+
+    function togglePageSelection(pageNumber) {
+      if (selectedPages.includes(pageNumber)) {
+        selectedPages = selectedPages.filter(p => p !== pageNumber);
+        document.querySelector(`#manual-selection button:nth-child(${pageNumber})`).classList.remove('selected');
+      } else {
+        selectedPages.push(pageNumber);
+        document.querySelector(`#manual-selection button:nth-child(${pageNumber})`).classList.add('selected');
+      }
+    }
+
+    function toggleExtractMethod(method) {
+      if (method === 'manual') {
+        document.getElementById('manual-selection').style.display = 'flex';
+        document.getElementById('page-numbers').disabled = true;
+      } else {
+        document.getElementById('manual-selection').style.display = 'none';
+        document.getElementById('page-numbers').disabled = false;
+      }
+    }
+
+    function parsePageRanges(input, maxPages) {
+      const pages = new Set();
+      const segments = input.replace(/\s/g, '').split(',');
+
+      for (const segment of segments) {
+        if (segment.includes('-')) {
+          const [start, end] = segment.split('-').map(Number);
+          if (isNaN(start) || isNaN(end) || start < 1 || end > maxPages || start > end) {
+            throw new Error(`Invalid range: ${segment}`);
+          }
+          for (let i = start; i <= end; i++) pages.add(i - 1);
+        } else {
+          const page = Number(segment);
+          if (isNaN(page) || page < 1 || page > maxPages) {
+            throw new Error(`Invalid page number: ${segment}`);
+          }
+          pages.add(page - 1);
+        }
+      }
+
+      return Array.from(pages).sort((a, b) => a - b);
+    }
+
+    async function extractPages() {
+      try {
+        if (!uploadedFile) throw new Error('Please upload a PDF file.');
+
+        let pageIndices;
+        if (document.querySelector('input[name="extract-method"]:checked').value === 'manual') {
+          if (selectedPages.length === 0) throw new Error('Please select pages manually.');
+          pageIndices = selectedPages.map(page => page - 1);
+        } else {
+          const input = document.getElementById('page-numbers').value.trim();
+          if (!input) throw new Error('Please enter pages to extract.');
+          pageIndices = parsePageRanges(input, totalPages);
+        }
+
+        const arrayBuffer = await uploadedFile.arrayBuffer();
+        const originalPdf = await PDFLib.PDFDocument.load(arrayBuffer);
+        const newPdf = await PDFLib.PDFDocument.create();
+
+        const copiedPages = await newPdf.copyPages(originalPdf, pageIndices);
+        copiedPages.forEach(p => newPdf.addPage(p));
+
+        const newPdfBytes = await newPdf.save();
+        const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+
+        const downloadLink = document.getElementById('download-link');
+        downloadLink.href = url;
+        document.getElementById('download-section').style.display = 'block';
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+  </script>
+</body>
+</html>

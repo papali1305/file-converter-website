@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Split PDF by Bookmarks - FilePro</title>
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+  <style>
+    /* === Basic Reset === */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #f0f0f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 20px 50px;
+      box-shadow: 0 2px 10px rgba(0, 255, 255, 0.2);
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #00f2fe;
+    }
+
+    nav a {
+      margin-left: 25px;
+      text-decoration: none;
+      color: #ffffff;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+
+    nav a:hover {
+      color: #00f2fe;
+    }
+
+    .page {
+      flex: 1;
+      padding: 40px 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.8rem;
+      margin-bottom: 10px;
+      color: #4facfe;
+    }
+
+    p {
+      font-size: 1.1rem;
+      margin-bottom: 30px;
+      color: #ccc;
+    }
+
+    .upload-section {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 25px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 15px;
+      margin-bottom: 30px;
+      backdrop-filter: blur(10px);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 500;
+      font-size: 1.1rem;
+    }
+
+    input[type="file"] {
+      margin-bottom: 15px;
+      padding: 8px;
+      border-radius: 10px;
+      border: 1px solid #4facfe;
+      background-color: #0f2027;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .tool-btn {
+      background: linear-gradient(135deg, #00f2fe, #4facfe);
+      border: none;
+      padding: 12px 30px;
+      font-size: 1rem;
+      border-radius: 12px;
+      color: white;
+      cursor: pointer;
+      transition: background 0.4s;
+      margin-top: 10px;
+    }
+
+    .tool-btn:hover {
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
+    }
+
+    #file-name {
+      margin-top: 15px;
+      font-size: 1rem;
+      color: #aaa;
+    }
+
+    .bookmark-list {
+      margin-top: 30px;
+      text-align: left;
+    }
+
+    .bookmark-item {
+      background: rgba(255, 255, 255, 0.08);
+      margin-bottom: 15px;
+      padding: 15px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(8px);
+      transition: background 0.3s ease;
+    }
+
+    .bookmark-item:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .bookmark-title {
+      font-size: 1rem;
+      color: #f0f0f0;
+    }
+
+    .split-btn {
+      background: linear-gradient(135deg, #00f2fe, #4facfe);
+      border: none;
+      padding: 8px 15px;
+      font-size: 0.9rem;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .split-btn:hover {
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
+    }
+
+    footer {
+      background: rgba(0, 0, 0, 0.7);
+      padding: 15px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #aaa;
+      margin-top: auto;
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="logo">⚡ FilePro</div>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../../tools.html">Tools</a>
+    <a href="../../about.html">About</a>
+    <a href="../../contact.html">Contact</a>
+  </nav>
+</header>
+
+<div class="page">
+  <h1>Split PDF by Bookmarks</h1>
+  <p>Upload a PDF and split it based on bookmarks automatically!</p>
+
+  <div class="upload-section">
+    <label for="pdf-upload">Choose a PDF file:</label>
+    <input type="file" id="pdf-upload" accept=".pdf" onchange="handleFile()" />
+    <div id="file-name"></div>
+  </div>
+
+  <div class="bookmark-list" id="bookmark-list" style="display: none;"></div>
+</div>
+
+<footer>
+  <p>&copy; 2025 FilePro. All rights reserved.</p>
+</footer>
+
+<script>
+  let pdfDocGlobal = null;
+  let originalPdfBytes = null;
+
+  async function handleFile() {
+    const fileInput = document.getElementById('pdf-upload');
+    const file = fileInput.files[0];
+    const fileNameDiv = document.getElementById('file-name');
+    const bookmarkList = document.getElementById('bookmark-list');
+    bookmarkList.innerHTML = '';
+    fileNameDiv.innerHTML = '';
+
+    if (!file) {
+      fileNameDiv.textContent = 'No file selected.';
+      return;
+    }
+
+    fileNameDiv.textContent = file.name;
+
+    const fileReader = new FileReader();
+    fileReader.onload = async function() {
+      originalPdfBytes = new Uint8Array(this.result);
+      const loadingTask = pdfjsLib.getDocument({data: originalPdfBytes});
+      const pdf = await loadingTask.promise;
+      pdfDocGlobal = await PDFLib.PDFDocument.load(originalPdfBytes.buffer);
+
+      const outline = await pdf.getOutline();
+      if (!outline) {
+        bookmarkList.innerHTML = '<p>No bookmarks found in this PDF.</p>';
+        bookmarkList.style.display = 'block';
+        return;
+      }
+
+      outline.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'bookmark-item';
+        div.innerHTML = `
+          <span class="bookmark-title">${item.title}</span>
+          <button class="split-btn" onclick="splitByBookmark(${index})">Split</button>
+        `;
+        bookmarkList.appendChild(div);
+      });
+
+      window.bookmarks = outline;
+      bookmarkList.style.display = 'block';
+    };
+    fileReader.readAsArrayBuffer(file);
+  }
+
+  async function splitByBookmark(index) {
+    if (!pdfDocGlobal || !window.bookmarks) return;
+
+    const bookmark = window.bookmarks[index];
+    if (!bookmark || !bookmark.dest) {
+      alert('Cannot find bookmark destination.');
+      return;
+    }
+
+    const dest = bookmark.dest;
+    let pageIndex = dest instanceof Array ? dest[0].num : dest.num;
+    if (typeof pageIndex !== 'number') pageIndex = dest;
+
+    const newPdf = await PDFLib.PDFDocument.create();
+    const totalPages = pdfDocGlobal.getPageCount();
+
+    for (let i = pageIndex; i < totalPages; i++) {
+      const [copiedPage] = await newPdf.copyPages(pdfDocGlobal, [i]);
+      newPdf.addPage(copiedPage);
+
+      if (i + 1 < totalPages && window.bookmarks.some(bm => {
+        const bmPage = bm.dest instanceof Array ? bm.dest[0].num : bm.dest.num;
+        return bmPage === i + 1;
+      })) {
+        break;
+      }
+    }
+
+    const newPdfBytes = await newPdf.save();
+    const blob = new Blob([newPdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${bookmark.title.replace(/\s+/g, '_')}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+</script>
+</body>
+</html>

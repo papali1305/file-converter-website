@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Split PDF - FilePro</title>
+  <link rel="stylesheet" href="../../style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="logo">⚡ FilePro</div>
+    <nav>
+      <a href="../../index.html">Home</a>
+      <a href="../../tools.html">Tools</a>
+      <a href="../../about.html">About</a>
+      <a href="../../contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <div class="page">
+    <h1>Split PDF</h1>
+    <p>Use this tool to split each page of a PDF into separate files.</p>
+
+    <!-- File Upload Section -->
+    <div class="upload-section">
+      <label for="pdf-upload">Choose a PDF file:</label>
+      <input type="file" id="pdf-upload" accept=".pdf" onchange="displayFileName()" />
+      <button class="tool-btn" onclick="splitPDF()">Split PDF</button>
+    </div>
+
+    <!-- Display Selected File Name -->
+    <div id="file-name" style="margin-top: 10px;"></div>
+
+    <!-- Download Link Section -->
+    <div id="download-section" style="display: none;">
+      <a id="download-link" href="#" download="split-pages.zip">
+        <button class="tool-btn">Download Split ZIP</button>
+      </a>
+    </div>
+
+    <!-- Instructions Section -->
+    <section class="instructions">
+      <h2>How to Split a PDF File</h2>
+      <ul>
+        <li>Click "Choose a PDF file" and select a file.</li>
+        <li>Click "Split PDF" to generate separate pages.</li>
+        <li>Click "Download Split ZIP" to download a ZIP of all pages.</li>
+      </ul>
+    </section>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 FilePro. All rights reserved.</p>
+  </footer>
+
+  <script>
+    function displayFileName() {
+      const file = document.getElementById('pdf-upload').files[0];
+      const fileNameDiv = document.getElementById('file-name');
+      fileNameDiv.textContent = file ? `Selected: ${file.name}` : 'No file selected.';
+    }
+
+    async function splitPDF() {
+      const file = document.getElementById('pdf-upload').files[0];
+      if (!file) {
+        alert('Please select a PDF file to split.');
+        return;
+      }
+
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+      const totalPages = pdfDoc.getPageCount();
+      const zip = new JSZip();
+
+      for (let i = 0; i < totalPages; i++) {
+        const newPdf = await PDFLib.PDFDocument.create();
+        const [copiedPage] = await newPdf.copyPages(pdfDoc, [i]);
+        newPdf.addPage(copiedPage);
+        const pdfBytes = await newPdf.save();
+        zip.file(`page-${i + 1}.pdf`, pdfBytes);
+      }
+
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const zipUrl = URL.createObjectURL(zipBlob);
+
+      const downloadLink = document.getElementById('download-link');
+      downloadLink.href = zipUrl;
+      document.getElementById('download-section').style.display = 'block';
+    }
+  </script>
+</body>
+</html>

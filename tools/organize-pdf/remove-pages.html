@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Remove Pages - FilePro</title>
+  <link rel="stylesheet" href="../../style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.7.107/pdf.min.js"></script>
+  <style>
+    .preview-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .preview-item {
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: border-color 0.3s;
+    }
+    .preview-item.selected {
+      border-color: red;
+    }
+    canvas {
+      max-width: 200px;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">⚡ FilePro</div>
+    <nav>
+      <a href="../../index.html">Home</a>
+      <a href="../../tools.html">Tools</a>
+      <a href="../../about.html">About</a>
+      <a href="../../contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <div class="page">
+    <h1>Remove Pages</h1>
+    <p>Click on page previews to select pages you want to remove from your PDF.</p>
+
+    <!-- File Upload Section -->
+    <div class="upload-section">
+      <label for="pdf-upload">Choose a PDF file:</label>
+      <input type="file" id="pdf-upload" accept=".pdf" onchange="handlePDFUpload()" />
+      <button class="tool-btn" onclick="removeSelectedPages()">Remove Selected Pages</button>
+    </div>
+
+    <!-- Display Selected File Name -->
+    <div id="file-name" style="margin-top: 10px;"></div>
+
+    <!-- Page Previews -->
+    <div id="preview-container" class="preview-grid"></div>
+
+    <!-- Download Link Section -->
+    <div id="download-section" style="display: none;">
+      <a id="download-link" href="#" download="updated.pdf">
+        <button class="tool-btn">Download Updated PDF</button>
+      </a>
+    </div>
+
+    <!-- Instructions Section -->
+    <section class="instructions">
+      <h2>Instructions</h2>
+      <ul>
+        <li>Upload your PDF to preview all pages.</li>
+        <li>Click on any page to mark it for removal (it will turn red).</li>
+        <li>Click "Remove Selected Pages" to generate the updated PDF.</li>
+        <li>Download the new PDF using the provided button.</li>
+      </ul>
+    </section>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 FilePro. All rights reserved.</p>
+  </footer>
+
+  <script>
+    let uploadedFile;
+    let selectedPages = new Set();
+
+    function displayFileName(file) {
+      const fileNameDiv = document.getElementById('file-name');
+      fileNameDiv.textContent = file ? `Selected: ${file.name}` : 'No file selected.';
+    }
+
+    async function handlePDFUpload() {
+      const fileInput = document.getElementById('pdf-upload');
+      uploadedFile = fileInput.files[0];
+      displayFileName(uploadedFile);
+      selectedPages.clear();
+
+      const fileReader = new FileReader();
+      fileReader.onload = async function () {
+        const typedarray = new Uint8Array(this.result);
+        const pdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
+        const previewContainer = document.getElementById('preview-container');
+        previewContainer.innerHTML = '';
+
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+          const page = await pdf.getPage(pageNum);
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          const viewport = page.getViewport({ scale: 0.5 });
+
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          await page.render({ canvasContext: context, viewport }).promise;
+
+          const wrapper = document.createElement('div');
+          wrapper.classList.add('preview-item');
+          wrapper.appendChild(canvas);
+          wrapper.dataset.pageIndex = pageNum - 1;
+
+          wrapper.addEventListener('click', () => {
+            const index = parseInt(wrapper.dataset.pageIndex);
+            if (selectedPages.has(index)) {
+              selectedPages.delete(index);
+              wrapper.classList.remove('selected');
+            } else {
+              selectedPages.add(index);
+              wrapper.classList.add('selected');
+            }
+          });
+
+          previewContainer.appendChild(wrapper);
+        }
+      };
+      fileReader.readAsArrayBuffer(uploadedFile);
+    }
+
+    async function removeSelectedPages() {
+      if (!uploadedFile || selectedPages.size === 0) {
+        alert("Please upload a PDF and select pages to remove.");
+        return;
+      }
+
+      const arrayBuffer = await uploadedFile.arrayBuffer();
+      const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+      const totalPages = pdfDoc.getPageCount();
+      const newPdf = await PDFLib.PDFDocument.create();
+
+      for (let i = 0; i < totalPages; i++) {
+        if (!selectedPages.has(i)) {
+          const [copiedPage] = await newPdf.copyPages(pdfDoc, [i]);
+          newPdf.addPage(copiedPage);
+        }
+      }
+
+      const pdfBytes = await newPdf.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+
+      const downloadLink = document.getElementById('download-link');
+      downloadLink.href = url;
+      document.getElementById('download-section').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
