@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>OCR PDF - FilePro</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    :root {
+      --primary-color: #4361ee;
+      --primary-dark: #3a56d4;
+      --secondary-color: #3f37c9;
+      --text-color: #2b2d42;
+      --light-gray: #f8f9fa;
+      --medium-gray: #e9ecef;
+      --dark-gray: #6c757d;
+      --success-color: #4bb543;
+      --warning-color: #ff9500;
+      --error-color: #ff3b30;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+      --border-radius: 8px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
+      color: var(--text-color);
+      background-color: var(--light-gray);
+    }
+
+    header {
+      background-color: white;
+      box-shadow: var(--shadow);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo::before {
+      content: "⚡";
+    }
+
+    nav {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: var(--text-color);
+      font-weight: 500;
+      transition: var(--transition);
+      padding: 0.5rem 0;
+      position: relative;
+    }
+
+    nav a:hover {
+      color: var(--primary-color);
+    }
+
+    nav a::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background-color: var(--primary-color);
+      transition: var(--transition);
+    }
+
+    nav a:hover::after {
+      width: 100%;
+    }
+
+    .page {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background-color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+    }
+
+    h1 {
+      color: var(--primary-color);
+      margin-bottom: 1rem;
+      font-size: 2rem;
+    }
+
+    p {
+      margin-bottom: 2rem;
+      color: var(--dark-gray);
+    }
+
+    .upload-section {
+      background-color: var(--light-gray);
+      border: 2px dashed var(--medium-gray);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      text-align: center;
+      margin-bottom: 2rem;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .upload-section:hover {
+      border-color: var(--primary-color);
+    }
+
+    .upload-section label {
+      display: block;
+      margin-bottom: 1rem;
+      font-weight: 500;
+      font-size: 1.1rem;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .file-input-label {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      background-color: var(--primary-color);
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-bottom: 1rem;
+    }
+
+    .file-input-label:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+
+    .tool-btn {
+      padding: 0.75rem 1.5rem;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tool-btn:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .tool-btn:disabled {
+      background-color: var(--dark-gray);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    #file-list {
+      margin: 1.5rem 0;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      background-color: var(--light-gray);
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+    }
+
+    .file-item i {
+      margin-right: 0.75rem;
+      color: var(--primary-color);
+    }
+
+    #download-section {
+      margin: 2rem 0;
+      text-align: center;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .download-btn {
+      background-color: var(--success-color);
+    }
+
+    .download-btn:hover {
+      background-color: #3fa037;
+    }
+
+    /* OCR Settings */
+    .settings-section {
+      margin: 1.5rem 0;
+      padding: 1.5rem;
+      background-color: var(--light-gray);
+      border-radius: var(--border-radius);
+    }
+
+    .settings-title {
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .settings-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .settings-group-title {
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .ocr-options {
+      margin: 1.5rem 0;
+    }
+
+    .option-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .option-item input[type="checkbox"] {
+      margin-right: 0.75rem;
+      width: 18px;
+      height: 18px;
+    }
+
+    .option-item label {
+      cursor: pointer;
+    }
+
+    .language-select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--medium-gray);
+      border-radius: 4px;
+      font-family: inherit;
+      margin-top: 0.5rem;
+    }
+
+    /* Animation classes */
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes scan {
+      0% { transform: translateY(0); opacity: 0; }
+      10% { transform: translateY(0); opacity: 1; }
+      90% { transform: translateY(100%); opacity: 1; }
+      100% { transform: translateY(100%); opacity: 0; }
+    }
+
+    @keyframes textAppear {
+      0% { opacity: 0; transform: scale(0.9); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .spinner {
+      animation: spin 1s linear infinite;
+      display: inline-block;
+    }
+
+    .pulse {
+      animation: pulse 1.5s infinite;
+    }
+
+    /* OCR Animation */
+    .ocr-animation {
+      position: relative;
+      height: 200px;
+      margin: 2rem 0;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      background-color: #f0f4f8;
+      border-radius: var(--border-radius);
+    }
+
+    .document-scan {
+      width: 80%;
+      height: 70%;
+      background-color: white;
+      border: 1px solid var(--medium-gray);
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .scan-line {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(to right, rgba(67, 97, 238, 0), var(--primary-color), rgba(67, 97, 238, 0));
+      animation: scan 2s infinite;
+      z-index: 2;
+    }
+
+    .recognized-text {
+      position: absolute;
+      width: 90%;
+      height: 90%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      opacity: 0;
+      animation: textAppear 0.5s forwards;
+      animation-delay: 1.5s;
+    }
+
+    /* Progress Indicator */
+    .progress-section {
+      display: none;
+      text-align: center;
+      margin: 2rem 0;
+    }
+
+    .progress-bar {
+      width: 100%;
+      background-color: var(--medium-gray);
+      border-radius: 4px;
+      margin-top: 1rem;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      background-color: var(--primary-color);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    /* Results section */
+    .results-container {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background-color: #f0f8ff;
+      border-radius: var(--border-radius);
+      border-left: 4px solid var(--primary-color);
+      animation: fadeIn 0.5s ease;
+    }
+
+    .results-title {
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .result-item {
+      background-color: white;
+      padding: 1rem;
+      border-radius: 4px;
+      box-shadow: var(--shadow);
+    }
+
+    .result-label {
+      font-size: 0.9rem;
+      color: var(--dark-gray);
+      margin-bottom: 0.25rem;
+    }
+
+    .result-value {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .ocr-success {
+      color: var(--success-color);
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .page {
+        padding: 1.5rem;
+        margin: 1rem;
+      }
+
+      .results-grid {
+        grid-template-columns: 1fr;
+      }
+
+      nav {
+        gap: 1rem;
+      }
+
+      .document-scan {
+        width: 90%;
+        height: 60%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">FilePro</div>
+    <nav>
+      <a href="../../index.html">Home</a>
+      <a href="../../tools.html">Tools</a>
+      <a href="../../about.html">About</a>
+      <a href="../../contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <div class="page">
+    <h1>OCR PDF Tool</h1>
+    <p>Convert scanned PDFs into searchable and editable documents using Optical Character Recognition (OCR).</p>
+
+    <!-- File Upload Section -->
+    <div class="upload-section">
+      <label for="pdf-upload">Choose a PDF file to process</label>
+      <label class="file-input-label" for="pdf-upload">
+        <i class="fas fa-file-upload"></i> Select PDF File
+      </label>
+      <input type="file" id="pdf-upload" accept=".pdf,.jpg,.jpeg,.png" onchange="displayFiles()" />
+      <p id="file-size-info" style="font-size: 0.9rem; color: var(--dark-gray); margin-top: 0.5rem;"></p>
+    </div>
+
+    <!-- Display Selected File -->
+    <div id="file-list">
+      <!-- Selected file will be listed here -->
+    </div>
+
+    <!-- OCR Settings -->
+    <div class="settings-section" id="settings-section" style="display: none;">
+      <h3 class="settings-title"><i class="fas fa-cog"></i> OCR Settings</h3>
+      
+      <div class="settings-group">
+        <h4 class="settings-group-title"><i class="fas fa-language"></i> Language Selection</h4>
+        <select id="ocr-language" class="language-select">
+          <option value="eng" selected>English</option>
+          <option value="spa">Spanish</option>
+          <option value="fra">French</option>
+          <option value="deu">German</option>
+          <option value="ita">Italian</option>
+          <option value="por">Portuguese</option>
+          <option value="rus">Russian</option>
+          <option value="chi_sim">Chinese (Simplified)</option>
+          <option value="jpn">Japanese</option>
+          <option value="ara">Arabic</option>
+        </select>
+      </div>
+      
+      <div class="settings-group">
+        <h4 class="settings-group-title"><i class="fas fa-sliders-h"></i> Processing Options</h4>
+        <div class="ocr-options">
+          <div class="option-item">
+            <input type="checkbox" id="preserve-layout" checked>
+            <label for="preserve-layout">Preserve original layout</label>
+          </div>
+          <div class="option-item">
+            <input type="checkbox" id="detect-tables" checked>
+            <label for="detect-tables">Detect tables and columns</label>
+          </div>
+          <div class="option-item">
+            <input type="checkbox" id="enhance-images">
+            <label for="enhance-images">Enhance image quality</label>
+          </div>
+          <div class="option-item">
+            <input type="checkbox" id="extract-pages">
+            <label for="extract-pages">Extract text as separate pages</label>
+          </div>
+        </div>
+      </div>
+      
+      <button class="tool-btn" id="ocr-btn">
+        <i class="fas fa-eye"></i> Perform OCR
+      </button>
+    </div>
+
+    <!-- OCR Animation -->
+    <div id="ocr-animation" class="ocr-animation">
+      <div class="document-scan">
+        <div class="scan-line"></div>
+        <div class="recognized-text">
+          <i class="fas fa-font" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
+          <p>Recognizing text...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div id="progress-section" class="progress-section">
+      <div class="spinner" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 1rem;">
+        <i class="fas fa-spinner"></i>
+      </div>
+      <p id="progress-text">Processing your PDF file...</p>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <p id="progress-details" style="font-size: 0.9rem; color: var(--dark-gray); margin-top: 0.5rem;"></p>
+    </div>
+
+    <!-- Results Section -->
+    <div id="results-section" style="display: none;">
+      <div class="results-container">
+        <h3 class="results-title">
+          <i class="fas fa-clipboard-check"></i> OCR Results
+        </h3>
+        <div class="results-grid">
+          <div class="result-item">
+            <div class="result-label">Original File</div>
+            <div class="result-value" id="original-file">-</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Pages Processed</div>
+            <div class="result-value" id="pages-processed">-</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Characters Recognized</div>
+            <div class="result-value" id="characters-recognized">-</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">OCR Status</div>
+            <div class="result-value ocr-success" id="ocr-status">-</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Processing Time</div>
+            <div class="result-value" id="processing-time">-</div>
+          </div>
+          <div class="result-item">
+            <div class="result-label">Output Quality</div>
+            <div class="result-value" id="output-quality">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Download Link Section -->
+    <div id="download-section" style="display: none; text-align: center;">
+      <a id="download-link" href="#" download="ocr_output.pdf">
+        <button class="tool-btn download-btn pulse">
+          <i class="fas fa-file-download"></i> Download Searchable PDF
+        </button>
+      </a>
+      <div style="margin-top: 1rem;">
+        <button class="tool-btn" id="download-text-btn" style="background-color: var(--secondary-color); margin-right: 0.5rem;">
+          <i class="fas fa-file-alt"></i> Download as Text
+        </button>
+        <button class="tool-btn" id="download-word-btn" style="background-color: #2b579a;">
+          <i class="fas fa-file-word"></i> Download as Word
+        </button>
+      </div>
+      <p style="margin-top: 1rem; color: var(--dark-gray);">Your searchable document is ready!</p>
+    </div>
+
+    <!-- Instructions Section -->
+    <section class="instructions">
+      <h2><i class="fas fa-info-circle"></i> How to Use OCR PDF Tool</h2>
+      <ul>
+        <li>Upload a scanned PDF or image file (JPG, PNG)</li>
+        <li>Select the document language and processing options</li>
+        <li>Click "Perform OCR" to convert images to text</li>
+        <li>Download your searchable PDF or text document</li>
+      </ul>
+      <div style="margin-top: 1.5rem; padding: 1rem; background-color: #fff8e1; border-radius: 4px;">
+        <h3 style="font-size: 1rem; margin-bottom: 0.5rem; color: #ff6d00;"><i class="fas fa-lightbulb"></i> Pro Tips</h3>
+        <ul style="font-size: 0.9rem; list-style-position: inside;">
+          <li>For best results, use high-quality scans (300 DPI or higher)</li>
+          <li>Select the correct language for better recognition accuracy</li>
+          <li>Enable "Enhance image quality" for low-quality documents</li>
+          <li>The scanning animation shows the OCR process in action</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 FilePro. All rights reserved.</p>
+  </footer>
+
+  <script>
+    let originalFileSize = 0;
+    let originalFileName = '';
+    let startTime = 0;
+    let pageCount = 0;
+
+    // Function to display the name of the selected file
+    function displayFiles() {
+      const files = document.getElementById('pdf-upload').files;
+      const fileList = document.getElementById('file-list');
+      const fileSizeInfo = document.getElementById('file-size-info');
+      fileList.innerHTML = '';  // Clear previous list
+
+      if (files.length > 0) {
+        const file = files[0];
+        originalFileSize = file.size;
+        originalFileName = file.name;
+        
+        // Display file info
+        fileSizeInfo.textContent = `Selected: ${formatFileSize(file.size)}`;
+        
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.innerHTML = `
+          <i class="fas ${file.type.includes('image') ? 'fa-image' : 'fa-file-pdf'}"></i>
+          <span>${file.name}</span>
+        `;
+        fileList.appendChild(fileItem);
+        
+        // Show settings section
+        document.getElementById('settings-section').style.display = 'block';
+        document.getElementById('ocr-btn').disabled = false;
+        
+        // Estimate page count (simulated)
+        pageCount = estimatePageCount(file);
+      } else {
+        fileList.textContent = 'No file selected.';
+        document.getElementById('settings-section').style.display = 'none';
+        document.getElementById('ocr-btn').disabled = true;
+      }
+      
+      // Hide results and download sections if they were shown
+      document.getElementById('results-section').style.display = 'none';
+      document.getElementById('download-section').style.display = 'none';
+      document.getElementById('ocr-animation').style.display = 'none';
+      document.getElementById('progress-section').style.display = 'none';
+    }
+
+    function estimatePageCount(file) {
+      // Simple estimation based on file size
+      if (file.type.includes('image')) return 1;
+      
+      const sizeMB = file.size / (1024 * 1024);
+      return Math.max(1, Math.floor(sizeMB * 2));
+    }
+
+    // Format file size in readable format
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Format time in seconds to readable format
+    function formatTime(seconds) {
+      if (seconds < 1) return '<1 sec';
+      if (seconds < 60) return `${seconds.toFixed(1)} secs`;
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins} min ${secs} secs`;
+    }
+
+    // Format number with commas
+    function formatNumber(num) {
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    // Simulate OCR process
+    async function performOCR() {
+      const fileInput = document.getElementById('pdf-upload');
+      const file = fileInput.files[0];
+      const ocrBtn = document.getElementById('ocr-btn');
+
+      if (!file) {
+        Swal.fire({
+          title: 'No File Selected',
+          text: 'Please select a PDF or image file to process.',
+          icon: 'warning'
+        });
+        return;
+      }
+
+      // Show animation
+      document.getElementById('ocr-animation').style.display = 'flex';
+      ocrBtn.disabled = true;
+      startTime = performance.now();
+      
+      // Show progress indicator after a short delay
+      setTimeout(() => {
+        document.getElementById('progress-section').style.display = 'block';
+        document.getElementById('progress-fill').style.width = '10%';
+        document.getElementById('progress-text').textContent = 'Preparing document for OCR...';
+      }, 500);
+      
+      try {
+        // Get OCR settings
+        const language = document.getElementById('ocr-language').value;
+        const preserveLayout = document.getElementById('preserve-layout').checked;
+        const detectTables = document.getElementById('detect-tables').checked;
+        const enhanceImages = document.getElementById('enhance-images').checked;
+        const extractPages = document.getElementById('extract-pages').checked;
+        
+        // Simulate processing time based on file size and options
+        let processingTime = 2 + (pageCount * 0.5);
+        if (enhanceImages) processingTime += 1;
+        if (detectTables) processingTime += 0.5;
+        
+        // Show progress based on simulated processing
+        let progress = 10;
+        const progressInterval = setInterval(() => {
+          progress += (90 / processingTime) * 0.1;
+          if (progress >= 95) {
+            clearInterval(progressInterval);
+          }
+          document.getElementById('progress-fill').style.width = `${progress}%`;
+          
+          // Update progress text
+          const elapsed = (performance.now() - startTime) / 1000;
+          document.getElementById('progress-text').textContent = getOCRStatus(progress);
+          document.getElementById('progress-details').textContent = `Elapsed: ${formatTime(elapsed)} | ${getOCRStep(progress, pageCount)}`;
+          
+        }, 100);
+        
+        // Simulate processing time for animation
+        await new Promise(resolve => setTimeout(resolve, processingTime * 1000 * 0.8));
+        
+        // Complete progress bar
+        clearInterval(progressInterval);
+        document.getElementById('progress-fill').style.width = '100%';
+        document.getElementById('progress-text').textContent = 'OCR complete!';
+        
+        // Create a simulated output PDF
+        const pdfDoc = await PDFLib.PDFDocument.create();
+        for (let i = 0; i < pageCount; i++) {
+          const page = pdfDoc.addPage([612, 792]);
+          page.drawText(`OCR Processed Page ${i + 1}\n\nThis is simulated text from the OCR process.`, {
+            x: 50,
+            y: 700,
+            size: 12,
+          });
+        }
+        
+        const pdfBytes = await pdfDoc.save();
+        const pdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const downloadUrl = URL.createObjectURL(pdfBlob);
+        const endTime = performance.now();
+        const processingTimeSeconds = (endTime - startTime) / 1000;
+
+        // Hide progress, show results and download
+        setTimeout(() => {
+          document.getElementById('progress-section').style.display = 'none';
+          document.getElementById('ocr-animation').style.display = 'none';
+          
+          // Show results
+          document.getElementById('original-file').textContent = originalFileName;
+          document.getElementById('pages-processed').textContent = pageCount;
+          document.getElementById('characters-recognized').textContent = formatNumber(pageCount * 500);
+          document.getElementById('ocr-status').textContent = 'Successfully Processed';
+          document.getElementById('processing-time').textContent = formatTime(processingTimeSeconds);
+          document.getElementById('output-quality').textContent = getOCRQuality(language, enhanceImages);
+          document.getElementById('results-section').style.display = 'block';
+          
+          // Show download link
+          const downloadLink = document.getElementById('download-link');
+          downloadLink.href = downloadUrl;
+          downloadLink.download = `ocr_${originalFileName.replace(/\.[^/.]+$/, "")}.pdf`;
+          
+          // Set up text download (simulated)
+          document.getElementById('download-text-btn').onclick = function() {
+            downloadTextFile(`This is a simulated text output from OCR processing.\n\nFile: ${originalFileName}\nPages: ${pageCount}\nCharacters: ${formatNumber(pageCount * 500)}`);
+          };
+          
+          // Set up Word download (simulated)
+          document.getElementById('download-word-btn').onclick = function() {
+            Swal.fire({
+              title: 'Word Download',
+              text: 'This would download a .docx file in a real implementation.',
+              icon: 'info'
+            });
+          };
+          
+          document.getElementById('download-section').style.display = 'block';
+          
+          // Re-enable OCR button
+          ocrBtn.disabled = false;
+        }, 800);
+        
+      } catch (error) {
+        console.error('Error performing OCR:', error);
+        document.getElementById('progress-text').textContent = 'Error processing document. Please try again.';
+        document.getElementById('progress-fill').style.backgroundColor = 'var(--error-color)';
+        ocrBtn.disabled = false;
+        
+        Swal.fire({
+          title: 'OCR Error',
+          text: 'An error occurred while processing your document. The file may be corrupted or in an unsupported format.',
+          icon: 'error'
+        });
+        
+        setTimeout(() => {
+          document.getElementById('progress-section').style.display = 'none';
+          document.getElementById('ocr-animation').style.display = 'none';
+          document.getElementById('progress-fill').style.width = '0%';
+          document.getElementById('progress-fill').style.backgroundColor = 'var(--primary-color)';
+        }, 2000);
+      }
+    }
+
+    function getOCRStatus(progress) {
+      if (progress < 30) return 'Preprocessing document...';
+      if (progress < 50) return 'Performing text recognition...';
+      if (progress < 70) return 'Processing page layouts...';
+      if (progress < 90) return 'Finalizing text output...';
+      return 'OCR complete!';
+    }
+
+    function getOCRStep(progress, pages) {
+      if (progress < 30) return `Analyzing ${pages} page${pages > 1 ? 's' : ''}`;
+      if (progress < 50) return `Recognizing text (${Math.floor(pages * progress/100)}/${pages} pages)`;
+      if (progress < 70) return `Reconstructing document structure`;
+      return `Generating searchable PDF`;
+    }
+
+    function getOCRQuality(language, enhanced) {
+      const baseQuality = language === 'eng' ? 95 : 85;
+      const quality = enhanced ? baseQuality + 5 : baseQuality - 5;
+      return `${quality}% accuracy`;
+    }
+
+    function downloadTextFile(content) {
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ocr_${originalFileName.replace(/\.[^/.]+$/, "")}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Initialize with OCR button disabled
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('ocr-btn').disabled = true;
+      document.getElementById('ocr-btn').addEventListener('click', performOCR);
+    });
+  </script>
+</body>
+</html>
