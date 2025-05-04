@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced PDF Page Deleter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4a6bff;
+            --secondary-color: #ff6b6b;
+            --dark-color: #2c3e50;
+            --light-color: #f8f9fa;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7ff;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        nav {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+            transform: translateY(-2px);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        .tool-container {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 3rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(74, 107, 255, 0.05);
+        }
+
+        .upload-area.active {
+            border-color: var(--success-color);
+            background-color: rgba(40, 167, 69, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .page-preview {
+            width: 150px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .page-preview:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .page-preview canvas {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .page-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 0.5rem;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .page-controls button {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 0.3rem;
+            border-radius: 3px;
+            transition: background 0.2s;
+        }
+
+        .page-controls button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .page-preview.selected {
+            border: 2px solid var(--secondary-color);
+            box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.3);
+        }
+
+        .page-number {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3a5bef;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(74, 107, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e65a5a;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-outline:hover {
+            background-color: rgba(74, 107, 255, 0.1);
+        }
+
+        .btn-disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        select, input[type="text"], input[type="number"] {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .status.success {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+            display: block;
+        }
+
+        .status.error {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            border: 1px solid #dc3545;
+            display: block;
+        }
+
+        .loading-animation {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(74, 107, 255, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 1rem;
+        }
+
+        .conversion-animation {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .page-count {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .advanced-options {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #eee;
+        }
+
+        .toggle-advanced {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .advanced-content {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .advanced-content.show {
+            display: block;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .checkbox-label input {
+            width: 18px;
+            height: 18px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .page-preview {
+                width: 120px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3a5bef;
+        }
+
+        /* Enhanced loading animation */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+        }
+
+        .loading-content {
+            text-align: center;
+            max-width: 400px;
+            padding: 2rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            color: var(--dark-color);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(74, 107, 255, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 1rem;
+        }
+
+        .loading-progress {
+            width: 100%;
+            height: 10px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .loading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <i class="fas fa-bolt"></i>
+            <span>FilePro</span>
+        </div>
+        <nav>
+            <a href="../../index.html">Home</a>
+            <a href="../../tools.html">Tools</a>
+            <a href="../../about.html">About</a>
+            <a href="../../contact.html">Contact</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Advanced PDF Page Deleter</h1>
+            <p class="subtitle">Remove unwanted pages from your PDF documents</p>
+        </div>
+
+        <div class="tool-container">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">
+                    <i class="fas fa-file-pdf"></i>
+                </div>
+                <h3>Drag & Drop your PDF here</h3>
+                <p>or click to browse files</p>
+                <input type="file" id="fileInput" class="file-input" accept=".pdf">
+            </div>
+
+            <div class="loading-animation" id="loadingAnimation">
+                <div class="spinner"></div>
+                <p>Loading PDF document...</p>
+            </div>
+
+            <div class="preview-container" id="previewContainer"></div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label for="pageRange">Pages to delete:</label>
+                    <input type="text" id="pageRange" placeholder="e.g., 1-3,5,7-9">
+                </div>
+
+                <button id="selectAllBtn" class="btn btn-outline">
+                    <i class="fas fa-check-square"></i> Select All
+                </button>
+
+                <button id="clearSelectionBtn" class="btn btn-outline">
+                    <i class="fas fa-times-circle"></i> Clear Selection
+                </button>
+
+                <button id="deleteBtn" class="btn btn-secondary">
+                    <i class="fas fa-trash"></i> Delete Selected
+                </button>
+
+                <button id="downloadBtn" class="btn btn-primary">
+                    <i class="fas fa-download"></i> Download PDF
+                </button>
+            </div>
+
+            <div class="advanced-options">
+                <button class="toggle-advanced" id="toggleAdvanced">
+                    <i class="fas fa-cog"></i> Advanced Options
+                    <i class="fas fa-chevron-down" id="advancedChevron"></i>
+                </button>
+
+                <div class="advanced-content" id="advancedContent">
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="optimizePdf" checked> Optimize PDF (reduce file size)
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="preserveMetadata" checked> Preserve Metadata
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="flattenAnnotations"> Flatten Annotations
+                        </label>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="outputQuality">Output Quality:</label>
+                        <select id="outputQuality">
+                            <option value="high">High</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="conversion-animation" id="conversionAnimation">
+                <div class="progress-bar">
+                    <div class="progress" id="conversionProgress"></div>
+                </div>
+                <p>Processing PDF pages...</p>
+                <p class="page-count" id="pageCount">0/0 pages processed</p>
+            </div>
+
+            <div class="status" id="statusMessage"></div>
+        </div>
+
+        <footer>
+            <p>Advanced PDF Page Deleter &copy; 2023 | Works entirely in your browser - no files are uploaded to any server</p>
+        </footer>
+    </div>
+
+    <!-- Enhanced Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h3 id="loadingTitle">Processing PDF</h3>
+            <p id="loadingMessage">Please wait while we process your document...</p>
+            <div class="loading-progress">
+                <div class="loading-progress-bar" id="loadingProgressBar"></div>
+            </div>
+            <p id="loadingDetails">Initializing...</p>
+        </div>
+    </div>
+
+    <script>
+        // Initialize PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.worker.min.js';
+        
+        // Global variables
+        let pdfDoc = null;
+        let totalPages = 0;
+        let selectedPages = new Set();
+        let pageCanvases = [];
+        let originalPdfBytes = null;
+        
+        // DOM elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const loadingAnimation = document.getElementById('loadingAnimation');
+        const conversionAnimation = document.getElementById('conversionAnimation');
+        const conversionProgress = document.getElementById('conversionProgress');
+        const pageCount = document.getElementById('pageCount');
+        const statusMessage = document.getElementById('statusMessage');
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+        const deleteBtn = document.getElementById('deleteBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const pageRange = document.getElementById('pageRange');
+        const toggleAdvanced = document.getElementById('toggleAdvanced');
+        const advancedContent = document.getElementById('advancedContent');
+        const advancedChevron = document.getElementById('advancedChevron');
+        const optimizePdf = document.getElementById('optimizePdf');
+        const preserveMetadata = document.getElementById('preserveMetadata');
+        const flattenAnnotations = document.getElementById('flattenAnnotations');
+        const outputQuality = document.getElementById('outputQuality');
+        
+        // Loading overlay elements
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingTitle = document.getElementById('loadingTitle');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const loadingProgressBar = document.getElementById('loadingProgressBar');
+        const loadingDetails = document.getElementById('loadingDetails');
+        
+        // Event listeners
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('active');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('active');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('active');
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileUpload();
+            }
+        });
+        fileInput.addEventListener('change', handleFileUpload);
+        selectAllBtn.addEventListener('click', selectAllPages);
+        clearSelectionBtn.addEventListener('click', clearSelection);
+        deleteBtn.addEventListener('click', deleteSelectedPages);
+        downloadBtn.addEventListener('click', downloadModifiedPdf);
+        toggleAdvanced.addEventListener('click', toggleAdvancedOptions);
+        pageRange.addEventListener('change', updateSelectionFromRange);
+        
+        // Initialize buttons as disabled
+        selectAllBtn.classList.add('btn-disabled');
+        clearSelectionBtn.classList.add('btn-disabled');
+        deleteBtn.classList.add('btn-disabled');
+        downloadBtn.classList.add('btn-disabled');
+        
+        // Functions
+        async function handleFileUpload() {
+            const file = fileInput.files[0];
+            if (!file || file.type !== 'application/pdf') {
+                showStatus('Please upload a valid PDF file', 'error');
+                return;
+            }
+            
+            try {
+                // Show loading animation
+                showLoadingOverlay('Loading PDF', 'Processing your document...');
+                previewContainer.innerHTML = '';
+                selectedPages.clear();
+                pageCanvases = [];
+                
+                // Read the file
+                const arrayBuffer = await file.arrayBuffer();
+                originalPdfBytes = new Uint8Array(arrayBuffer);
+                
+                // Load the PDF
+                pdfDoc = await pdfjsLib.getDocument(originalPdfBytes).promise;
+                totalPages = pdfDoc.numPages;
+                
+                // Enable buttons
+                selectAllBtn.classList.remove('btn-disabled');
+                clearSelectionBtn.classList.remove('btn-disabled');
+                deleteBtn.classList.remove('btn-disabled');
+                downloadBtn.classList.remove('btn-disabled');
+                
+                // Render page previews
+                await renderPagePreviews();
+                
+                // Hide loading animation
+                hideLoadingOverlay();
+                
+                showStatus('PDF loaded successfully!', 'success');
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                hideLoadingOverlay();
+                showStatus('Error loading PDF. Please try another file.', 'error');
+            }
+        }
+        
+        async function renderPagePreviews() {
+            previewContainer.innerHTML = '';
+            updateLoadingProgress('Rendering page previews', 0, totalPages);
+            
+            for (let i = 1; i <= totalPages; i++) {
+                // Update loading progress
+                updateLoadingProgress(`Rendering page ${i} of ${totalPages}`, i, totalPages);
+                
+                // Create preview container
+                const pagePreview = document.createElement('div');
+                pagePreview.className = 'page-preview';
+                pagePreview.dataset.pageNumber = i;
+                
+                // Create canvas for rendering
+                const canvas = document.createElement('canvas');
+                pagePreview.appendChild(canvas);
+                
+                // Add page number
+                const pageNumber = document.createElement('div');
+                pageNumber.className = 'page-number';
+                pageNumber.textContent = i;
+                pagePreview.appendChild(pageNumber);
+                
+                // Create page controls
+                const pageControls = document.createElement('div');
+                pageControls.className = 'page-controls';
+                
+                const selectBtn = document.createElement('button');
+                selectBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                selectBtn.title = 'Select for deletion';
+                selectBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    togglePageSelection(i, pagePreview);
+                });
+                
+                pageControls.appendChild(selectBtn);
+                pagePreview.appendChild(pageControls);
+                
+                // Add click handler for selection
+                pagePreview.addEventListener('click', (e) => {
+                    if (e.target.tagName !== 'BUTTON') {
+                        togglePageSelection(i, pagePreview);
+                    }
+                });
+                
+                previewContainer.appendChild(pagePreview);
+                
+                // Render the page
+                await renderPage(i, canvas);
+                pageCanvases.push(canvas);
+                
+                // Small delay to prevent UI freezing
+                await new Promise(resolve => setTimeout(resolve, 50));
+            }
+        }
+        
+        async function renderPage(pageNumber, canvas) {
+            const page = await pdfDoc.getPage(pageNumber);
+            const viewport = page.getViewport({ scale: 0.5 });
+            
+            // Prepare canvas
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            
+            // Render PDF page
+            await page.render({
+                canvasContext: context,
+                viewport: viewport
+            }).promise;
+        }
+        
+        function togglePageSelection(pageNumber, pageElement) {
+            if (selectedPages.has(pageNumber)) {
+                selectedPages.delete(pageNumber);
+                pageElement.classList.remove('selected');
+            } else {
+                selectedPages.add(pageNumber);
+                pageElement.classList.add('selected');
+            }
+            
+            // Update the page range input
+            updatePageRangeInput();
+        }
+        
+        function selectAllPages() {
+            selectedPages.clear();
+            const pagePreviews = document.querySelectorAll('.page-preview');
+            
+            for (let i = 1; i <= totalPages; i++) {
+                selectedPages.add(i);
+                const preview = document.querySelector(`.page-preview[data-page-number="${i}"]`);
+                if (preview) preview.classList.add('selected');
+            }
+            
+            updatePageRangeInput();
+        }
+        
+        function clearSelection() {
+            selectedPages.clear();
+            const pagePreviews = document.querySelectorAll('.page-preview');
+            pagePreviews.forEach(preview => {
+                preview.classList.remove('selected');
+            });
+            
+            updatePageRangeInput();
+        }
+        
+        function updatePageRangeInput() {
+            if (selectedPages.size === 0) {
+                pageRange.value = '';
+                return;
+            }
+            
+            const sortedPages = Array.from(selectedPages).sort((a, b) => a - b);
+            let ranges = [];
+            let start = sortedPages[0];
+            let prev = start;
+            
+            for (let i = 1; i < sortedPages.length; i++) {
+                if (sortedPages[i] === prev + 1) {
+                    prev = sortedPages[i];
+                } else {
+                    ranges.push(start === prev ? start : `${start}-${prev}`);
+                    start = sortedPages[i];
+                    prev = start;
+                }
+            }
+            
+            ranges.push(start === prev ? start : `${start}-${prev}`);
+            pageRange.value = ranges.join(',');
+        }
+        
+        function updateSelectionFromRange() {
+            const rangeText = pageRange.value.trim();
+            if (!rangeText) {
+                clearSelection();
+                return;
+            }
+            
+            try {
+                // Parse page range (e.g., "1-5,7,9-12")
+                const pagesToSelect = parsePageRange(rangeText, totalPages);
+                if (!pagesToSelect || pagesToSelect.length === 0) {
+                    showStatus('Invalid page range format. Use format like "1-5,7,9-12"', 'error');
+                    return;
+                }
+                
+                clearSelection();
+                pagesToSelect.forEach(pageNum => {
+                    selectedPages.add(pageNum);
+                    const preview = document.querySelector(`.page-preview[data-page-number="${pageNum}"]`);
+                    if (preview) preview.classList.add('selected');
+                });
+                
+            } catch (error) {
+                console.error('Error parsing page range:', error);
+                showStatus('Error parsing page range. Please check your input.', 'error');
+            }
+        }
+        
+        function parsePageRange(rangeText, maxPages) {
+            const parts = rangeText.split(',');
+            const pages = new Set();
+            
+            for (const part of parts) {
+                if (part.includes('-')) {
+                    const [start, end] = part.split('-').map(Number);
+                    if (isNaN(start) || isNaN(end) || start < 1 || end > maxPages || start > end) {
+                        return null;
+                    }
+                    for (let i = start; i <= end; i++) {
+                        pages.add(i);
+                    }
+                } else {
+                    const pageNum = Number(part);
+                    if (isNaN(pageNum) || pageNum < 1 || pageNum > maxPages) {
+                        return null;
+                    }
+                    pages.add(pageNum);
+                }
+            }
+            
+            return Array.from(pages);
+        }
+        
+        async function deleteSelectedPages() {
+            if (selectedPages.size === 0) {
+                showStatus('No pages selected for deletion', 'error');
+                return;
+            }
+            
+            if (selectedPages.size === totalPages) {
+                showStatus('Cannot delete all pages from a PDF', 'error');
+                return;
+            }
+            
+            try {
+                // Show loading overlay
+                showLoadingOverlay('Deleting Pages', `Processing ${selectedPages.size} pages for deletion...`);
+                
+                // Create a new PDF document
+                const { PDFDocument } = PDFLib;
+                const newPdfDoc = await PDFDocument.create();
+                
+                // Load the original PDF
+                const originalPdfDoc = await PDFDocument.load(originalPdfBytes);
+                
+                // Copy pages except the selected ones
+                let pagesProcessed = 0;
+                const totalToProcess = totalPages - selectedPages.size;
+                
+                for (let i = 0; i < totalPages; i++) {
+                    const pageNum = i + 1;
+                    if (!selectedPages.has(pageNum)) {
+                        // Copy the page
+                        const [copiedPage] = await newPdfDoc.copyPages(originalPdfDoc, [i]);
+                        newPdfDoc.addPage(copiedPage);
+                        
+                        // Update loading progress
+                        pagesProcessed++;
+                        const progress = (pagesProcessed / totalToProcess) * 100;
+                        updateLoadingProgress(
+                            `Processing page ${pageNum} (${pagesProcessed}/${totalToProcess})`,
+                            pagesProcessed,
+                            totalToProcess
+                        );
+                        
+                        // Small delay to show progress (for demo purposes)
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    }
+                }
+                
+                // Apply advanced options if selected
+                if (optimizePdf.checked) {
+                    updateLoadingMessage('Optimizing PDF...');
+                    newPdfDoc.setTitle(newPdfDoc.getTitle() + ' (Optimized)');
+                }
+                
+                if (!preserveMetadata.checked) {
+                    updateLoadingMessage('Clearing metadata...');
+                    newPdfDoc.setTitle('');
+                    newPdfDoc.setAuthor('');
+                    newPdfDoc.setSubject('');
+                    newPdfDoc.setKeywords([]);
+                    newPdfDoc.setProducer('');
+                    newPdfDoc.setCreator('');
+                }
+                
+                // Flatten annotations if requested
+                if (flattenAnnotations.checked) {
+                    updateLoadingMessage('Flattening annotations...');
+                    const pages = newPdfDoc.getPages();
+                    for (let i = 0; i < pages.length; i++) {
+                        try {
+                            pages[i].flattenAnnotations();
+                            updateLoadingProgress(
+                                `Flattening page ${i + 1} of ${pages.length}`,
+                                i + 1,
+                                pages.length
+                            );
+                            await new Promise(resolve => setTimeout(resolve, 20));
+                        } catch (e) {
+                            console.warn('Could not flatten annotations:', e);
+                        }
+                    }
+                }
+                
+                // Save the PDF
+                updateLoadingMessage('Finalizing document...');
+                const pdfBytes = await newPdfDoc.save({
+                    useObjectStreams: optimizePdf.checked
+                });
+                
+                // Update our working PDF
+                originalPdfBytes = pdfBytes;
+                pdfDoc = await pdfjsLib.getDocument(pdfBytes).promise;
+                totalPages = pdfDoc.numPages;
+                selectedPages.clear();
+                
+                // Re-render the previews
+                await renderPagePreviews();
+                
+                // Hide loading overlay
+                hideLoadingOverlay();
+                
+                showStatus(`Successfully deleted ${selectedPages.size} pages`, 'success');
+            } catch (error) {
+                console.error('Error deleting pages:', error);
+                hideLoadingOverlay();
+                showStatus('Error deleting pages. Please try again.', 'error');
+            }
+        }
+        
+        async function downloadModifiedPdf() {
+            if (!pdfDoc) {
+                showStatus('No PDF loaded. Please upload a PDF first.', 'error');
+                return;
+            }
+            
+            try {
+                // Show loading overlay
+                showLoadingOverlay('Preparing Download', 'Generating modified PDF...');
+                
+                // Create download link
+                const blob = new Blob([originalPdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'modified_' + fileInput.files[0].name.replace('.pdf', '') + '.pdf';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                // Hide loading overlay
+                hideLoadingOverlay();
+                
+                showStatus('Modified PDF downloaded successfully!', 'success');
+            } catch (error) {
+                console.error('Error generating modified PDF:', error);
+                hideLoadingOverlay();
+                showStatus('Error generating PDF. Please try again.', 'error');
+            }
+        }
+        
+        function toggleAdvancedOptions() {
+            advancedContent.classList.toggle('show');
+            advancedChevron.classList.toggle('fa-chevron-down');
+            advancedChevron.classList.toggle('fa-chevron-up');
+        }
+        
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = 'status ' + type;
+        }
+        
+        // Loading overlay functions
+        function showLoadingOverlay(title, message) {
+            loadingTitle.textContent = title;
+            loadingMessage.textContent = message;
+            loadingOverlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function hideLoadingOverlay() {
+            loadingOverlay.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+        
+        function updateLoadingMessage(message) {
+            loadingMessage.textContent = message;
+        }
+        
+        function updateLoadingProgress(message, current, total) {
+            loadingDetails.textContent = message;
+            const progress = Math.round((current / total) * 100);
+            loadingProgressBar.style.width = `${progress}%`;
+        }
+        
+        // Initialize with a demo animation
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                uploadArea.classList.add('pulse');
+                setTimeout(() => {
+                    uploadArea.classList.remove('pulse');
+                }, 2000);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

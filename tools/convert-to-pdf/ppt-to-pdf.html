@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PPT to PDF Converter - FilePro</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
+
+  <!-- External CSS -->
+  <link rel="stylesheet" href="../../style.css">
+
+  <style>
+    body {
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+    header, footer {
+      background: #111;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #00fff0;
+    }
+    nav a {
+      color: #fff;
+      margin: 0 15px;
+      text-decoration: none;
+      transition: 0.3s;
+    }
+    nav a:hover {
+      color: #00fff0;
+    }
+    .page {
+      max-width: 1100px;
+      margin: 40px auto;
+      background: rgba(255,255,255,0.05);
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 0 30px rgba(0,255,255,0.2);
+      backdrop-filter: blur(8px);
+      animation: fadeIn 1s ease forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95);}
+      to { opacity: 1; transform: scale(1);}
+    }
+    h1, h2 {
+      text-align: center;
+      color: #00fff0;
+      margin-bottom: 20px;
+    }
+    .upload-area {
+      border: 2px dashed #00fff0;
+      padding: 40px;
+      border-radius: 15px;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      margin-bottom: 30px;
+    }
+    .upload-area:hover {
+      background: rgba(0, 255, 255, 0.1);
+      transform: scale(1.03);
+    }
+    #upload-instructions {
+      font-size: 18px;
+      color: #aaa;
+    }
+    #file-name {
+      margin-top: 10px;
+      color: #00fff0;
+      font-weight: bold;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    .tool-btn {
+      background: linear-gradient(135deg, #00fff0, #00e0e0);
+      color: #000;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 20px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+    .tool-btn:hover {
+      transform: scale(1.07);
+      box-shadow: 0 0 15px #00fff0;
+    }
+    #loading {
+      display: none;
+      text-align: center;
+      margin-top: 30px;
+      animation: fadeIn 0.5s ease forwards;
+    }
+    .neon-spinner {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      margin: 30px auto;
+      border: 6px solid transparent;
+      border-top: 6px solid #00fff0;
+      border-radius: 50%;
+      animation: neonSpin 1s linear infinite;
+    }
+    @keyframes neonSpin {
+      0% { transform: rotate(0deg);}
+      100% { transform: rotate(360deg);}
+    }
+    #download-section {
+      text-align: center;
+      margin-top: 30px;
+      display: none;
+      animation: fadeIn 0.5s ease forwards;
+    }
+    footer {
+      text-align: center;
+      font-size: 14px;
+      color: #888;
+      padding: 15px 0;
+    }
+    #preview-slides img {
+      width: 180px;
+      margin: 10px;
+      border-radius: 10px;
+      border: 2px solid #00fff0;
+      transition: transform 0.3s;
+    }
+    #preview-slides img:hover {
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">⚡ FilePro</div>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../../tools.html">Tools</a>
+    <a href="../../about.html">About</a>
+    <a href="../../contact.html">Contact</a>
+  </nav>
+</header>
+
+<main class="page">
+  <h1>PPT to PDF Converter</h1>
+
+  <div class="upload-area" onclick="document.getElementById('ppt-upload').click();">
+    <input type="file" id="ppt-upload" accept=".pptx" onchange="handlePPTFile()" />
+    <p id="upload-instructions">Drag & Drop or Click to Upload PPT File</p>
+    <div id="file-name"></div>
+  </div>
+
+  <div id="preview-slides"></div>
+
+  <div style="text-align: center;">
+    <button class="tool-btn" onclick="convertPPTtoPDF()">Convert to PDF</button>
+  </div>
+
+  <div id="loading">
+    <div class="neon-spinner"></div>
+    <p>Creating your futuristic PDF...</p>
+  </div>
+
+  <div id="download-section">
+    <a id="download-link" href="#" download="presentation.pdf">
+      <button class="tool-btn">Download PDF</button>
+    </a>
+  </div>
+</main>
+
+<footer>
+  &copy; 2025 FilePro. All rights reserved.
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js"></script>
+
+<script>
+  let thumbnails = [];
+  let fileName = "presentation.pdf";
+
+  // Add drag and drop functionality
+  const uploadArea = document.querySelector('.upload-area');
+  
+  uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.style.background = 'rgba(0, 255, 255, 0.1)';
+  });
+  
+  uploadArea.addEventListener('dragleave', () => {
+    uploadArea.style.background = 'transparent';
+  });
+  
+  uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.style.background = 'transparent';
+    
+    if (e.dataTransfer.files.length > 0) {
+      document.getElementById('ppt-upload').files = e.dataTransfer.files;
+      handlePPTFile();
+    }
+  });
+
+  async function handlePPTFile() {
+    const fileInput = document.getElementById('ppt-upload');
+    const fileNameDiv = document.getElementById('file-name');
+    const previewDiv = document.getElementById('preview-slides');
+    previewDiv.innerHTML = '';
+    thumbnails = [];
+
+    if (fileInput.files.length > 0) {
+      const file = fileInput.files[0];
+      fileName = file.name.replace('.pptx', '.pdf');
+      fileNameDiv.textContent = `Selected: ${file.name}`;
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const zip = await JSZip.loadAsync(e.target.result);
+          
+          // Get slide images from the media folder
+          const mediaFiles = Object.keys(zip.files).filter(name => 
+            name.startsWith('ppt/media/') && 
+            /\.(jpeg|jpg|png)$/i.test(name)
+          );
+
+          // If no images found, check for slide XMLs
+          if (mediaFiles.length === 0) {
+            // Try to find slide content in the presentation
+            const slideFiles = Object.keys(zip.files).filter(name => 
+              name.startsWith('ppt/slides/slide')
+            );
+            
+            if (slideFiles.length === 0) {
+              alert('⚠️ Could not extract any content from this PPT file. The file might be empty or in an unsupported format.');
+              return;
+            } else {
+              // Create a placeholder for slides
+              for (let i = 0; i < slideFiles.length; i++) {
+                thumbnails.push({
+                  type: 'placeholder',
+                  slideNum: i + 1
+                });
+              }
+              previewSlides();
+              return;
+            }
+          }
+
+          // Sort media files to maintain order
+          mediaFiles.sort();
+
+          // Process each media file
+          for (const file of mediaFiles) {
+            const blob = await zip.files[file].async('blob');
+            const url = URL.createObjectURL(blob);
+            
+            // Get image dimensions
+            const img = new Image();
+            img.src = url;
+            
+            await new Promise(resolve => {
+              img.onload = () => {
+                thumbnails.push({
+                  url: url,
+                  width: img.width,
+                  height: img.height,
+                  type: 'image'
+                });
+                resolve();
+              };
+              img.onerror = () => {
+                console.error('Failed to load image:', file);
+                resolve();
+              };
+            });
+          }
+
+          previewSlides();
+        } catch (error) {
+          console.error('Error reading PPT:', error);
+          alert('⚠️ Failed to process the file. Please upload a valid PPTX.');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      fileNameDiv.textContent = '';
+    }
+  }
+
+  function previewSlides() {
+    const previewDiv = document.getElementById('preview-slides');
+    previewDiv.innerHTML = `<h2>Preview (${thumbnails.length} slides)</h2>`;
+    
+    thumbnails.forEach((thumb, index) => {
+      if (thumb.type === 'image') {
+        const img = document.createElement('img');
+        img.src = thumb.url;
+        img.alt = `Slide ${index + 1}`;
+        previewDiv.appendChild(img);
+      } else {
+        // Create a placeholder for slides without images
+        const placeholder = document.createElement('div');
+        placeholder.style.width = '180px';
+        placeholder.style.height = '135px';
+        placeholder.style.display = 'inline-block';
+        placeholder.style.background = 'rgba(0, 255, 255, 0.1)';
+        placeholder.style.borderRadius = '10px';
+        placeholder.style.border = '2px solid #00fff0';
+        placeholder.style.margin = '10px';
+        placeholder.style.textAlign = 'center';
+        placeholder.style.lineHeight = '135px';
+        placeholder.textContent = `Slide ${thumb.slideNum}`;
+        previewDiv.appendChild(placeholder);
+      }
+    });
+  }
+
+  async function convertPPTtoPDF() {
+    if (thumbnails.length === 0) {
+      alert('⚠️ Please upload a PPT first!');
+      return;
+    }
+
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('download-section').style.display = 'none';
+
+    try {
+      const { PDFDocument, PageSizes } = PDFLib;
+      const pdfDoc = await PDFDocument.create();
+      
+      for (const thumb of thumbnails) {
+        if (thumb.type === 'image') {
+          try {
+            // Determine if it's a PNG or JPEG
+            let imageData;
+            const imgResponse = await fetch(thumb.url);
+            const imgBuffer = await imgResponse.arrayBuffer();
+            
+            // Try to determine image type from the first bytes
+            const dataView = new DataView(imgBuffer);
+            const pngSignature = [137, 80, 78, 71];
+            const jpegSignature = [255, 216];
+            
+            let isJpeg = true;
+            
+            // Check for PNG signature
+            if (dataView.getUint8(0) === pngSignature[0] && 
+                dataView.getUint8(1) === pngSignature[1] &&
+                dataView.getUint8(2) === pngSignature[2] &&
+                dataView.getUint8(3) === pngSignature[3]) {
+              isJpeg = false;
+            }
+            
+            // Embed image based on type
+            if (isJpeg) {
+              imageData = await pdfDoc.embedJpg(imgBuffer);
+            } else {
+              imageData = await pdfDoc.embedPng(imgBuffer);
+            }
+            
+            // Create a page with image dimensions
+            const page = pdfDoc.addPage([imageData.width, imageData.height]);
+            
+            // Draw the image
+            page.drawImage(imageData, {
+              x: 0,
+              y: 0,
+              width: imageData.width,
+              height: imageData.height
+            });
+          } catch (imgError) {
+            console.error('Error processing image:', imgError);
+            // Add a blank page instead
+            pdfDoc.addPage(PageSizes.A4);
+          }
+        } else {
+          // Add a blank page for placeholders
+          pdfDoc.addPage(PageSizes.A4);
+        }
+      }
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+
+      const downloadLink = document.getElementById('download-link');
+      downloadLink.href = url;
+      downloadLink.download = fileName;
+      
+      document.getElementById('download-section').style.display = 'block';
+    } catch (error) {
+      console.error('Conversion Error:', error);
+      alert('⚠️ Error during conversion: ' + error.message);
+    } finally {
+      document.getElementById('loading').style.display = 'none';
+    }
+  }
+
+  // Clean up object URLs when the page unloads
+  window.addEventListener('beforeunload', () => {
+    thumbnails.forEach(thumb => {
+      if (thumb.type === 'image' && thumb.url) {
+        URL.revokeObjectURL(thumb.url);
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

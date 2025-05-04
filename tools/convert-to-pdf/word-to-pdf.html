@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Word to PDF Converter - FilePro</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header, footer {
+      background: #111;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #00fff0;
+    }
+    nav a {
+      color: #fff;
+      margin: 0 15px;
+      text-decoration: none;
+      transition: 0.3s;
+    }
+    nav a:hover {
+      color: #00fff0;
+    }
+    .page {
+      max-width: 1100px;
+      margin: 40px auto;
+      background: rgba(255,255,255,0.05);
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 0 30px rgba(0,255,255,0.2);
+      backdrop-filter: blur(8px);
+      animation: fadeIn 1s ease forwards;
+      flex: 1;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    h1, h2 {
+      text-align: center;
+      color: #00fff0;
+      margin-bottom: 20px;
+    }
+    .upload-area {
+      border: 2px dashed #00fff0;
+      padding: 40px;
+      border-radius: 15px;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      margin-bottom: 30px;
+    }
+    .upload-area:hover {
+      background: rgba(0, 255, 255, 0.1);
+      transform: scale(1.03);
+    }
+    #upload-instructions {
+      font-size: 18px;
+      color: #aaa;
+    }
+    #file-name {
+      margin-top: 10px;
+      color: #00fff0;
+      font-weight: bold;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    .tool-btn {
+      background: linear-gradient(135deg, #00fff0, #00e0e0);
+      color: #000;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 20px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+    .tool-btn:hover {
+      transform: scale(1.07);
+      box-shadow: 0 0 15px #00fff0;
+    }
+    .tool-btn:disabled {
+      background: #555;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    #loading {
+      display: none;
+      text-align: center;
+      margin-top: 30px;
+      animation: fadeIn 0.5s ease forwards;
+    }
+    .neon-spinner {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      margin: 30px auto;
+      border: 6px solid transparent;
+      border-top: 6px solid #00fff0;
+      border-radius: 50%;
+      animation: neonSpin 1s linear infinite;
+    }
+    @keyframes neonSpin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    #download-section {
+      text-align: center;
+      margin-top: 30px;
+      display: none;
+      animation: fadeIn 0.5s ease forwards;
+    }
+    footer {
+      text-align: center;
+      font-size: 14px;
+      color: #888;
+      padding: 15px 0;
+      margin-top: auto;
+    }
+    #preview-content {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 20px;
+      margin: 20px 0;
+      max-height: 300px;
+      overflow-y: auto;
+      color: #ddd;
+      font-family: Arial, sans-serif;
+    }
+    #preview-content p, #preview-content h3 {
+      margin: 10px 0;
+    }
+    #preview-content h3 {
+      color: #00fff0;
+    }
+    .settings-panel {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 15px;
+      border-radius: 10px;
+      margin: 20px 0;
+    }
+    .settings-title {
+      color: #00fff0;
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .settings-label {
+      flex: 1;
+      text-align: left;
+    }
+    .settings-control {
+      flex: 1;
+      text-align: right;
+    }
+    select, input[type="color"] {
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      border: 1px solid #00fff0;
+      padding: 5px 10px;
+      border-radius: 5px;
+    }
+    #preview-content table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 15px 0;
+    }
+    #preview-content th, #preview-content td {
+      border: 1px solid #555;
+      padding: 8px;
+      text-align: left;
+    }
+    #preview-content th {
+      background-color: rgba(0, 255, 240, 0.2);
+    }
+    #preview-content img {
+      max-width: 100%;
+      height: auto;
+      margin: 10px 0;
+    }
+    #preview-content ul, #preview-content ol {
+      margin-left: 20px;
+    }
+    .error-message {
+      color: #ff5555;
+      padding: 10px;
+      background: rgba(255, 0, 0, 0.1);
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+    .warning-message {
+      color: #ffaa00;
+      padding: 10px;
+      background: rgba(255, 166, 0, 0.1);
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+    .success-message {
+      color: #55ff7f;
+      padding: 10px;
+      background: rgba(0, 255, 85, 0.1);
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+    #warnings-container {
+      margin-top: 10px;
+    }
+    .progress-bar {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 5px;
+      height: 15px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      background: linear-gradient(90deg, #00fff0, #00e0e0);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    .progress-text {
+      text-align: center;
+      font-size: 14px;
+      color: #aaa;
+    }
+    .fallback-message {
+      color: #ffaa00;
+      padding: 10px;
+      background: rgba(255, 166, 0, 0.1);
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">⚡ FilePro</div>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../../tools.html">Tools</a>
+    <a href="../../about.html">About</a>
+    <a href="../../contact.html">Contact</a>
+  </nav>
+</header>
+
+<main class="page">
+  <h1>Universal Word to PDF Converter</h1>
+
+  <div class="upload-area" onclick="document.getElementById('word-upload').click();">
+    <input type="file" id="word-upload" accept=".docx,.doc,.rtf,.odt,.txt" onchange="handleWordFile()" />
+    <p id="upload-instructions">Drag & Drop or Click to Upload Word File</p>
+    <div id="file-name"></div>
+  </div>
+
+  <div class="settings-panel">
+    <div class="settings-title">PDF Settings</div>
+    <div class="settings-row">
+      <div class="settings-label">Page Size</div>
+      <div class="settings-control">
+        <select id="page-size">
+          <option value="A4">A4</option>
+          <option value="Letter">Letter</option>
+          <option value="Legal">Legal</option>
+          <option value="A3">A3</option>
+          <option value="A5">A5</option>
+        </select>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-label">Orientation</div>
+      <div class="settings-control">
+        <select id="orientation">
+          <option value="portrait">Portrait</option>
+          <option value="landscape">Landscape</option>
+        </select>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-label">Margin (mm)</div>
+      <div class="settings-control">
+        <input type="number" id="margin" min="0" max="50" value="20" style="width: 60px;">
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-label">Preserve Formatting</div>
+      <div class="settings-control">
+        <input type="checkbox" id="preserve-styles" checked>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-label">Include Images</div>
+      <div class="settings-control">
+        <input type="checkbox" id="include-images" checked>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-label">Conversion Method</div>
+      <div class="settings-control">
+        <select id="conversion-method">
+          <option value="auto">Auto (Recommended)</option>
+          <option value="docxjs">Direct Conversion (DOCX only)</option>
+          <option value="mammoth">HTML Conversion</option>
+          <option value="text">Plain Text</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div id="preview-content"></div>
+  <div id="warnings-container"></div>
+
+  <div class="progress-bar" id="progress-bar" style="display: none;">
+    <div class="progress-bar-fill" id="progress-bar-fill"></div>
+  </div>
+  <div class="progress-text" id="progress-text"></div>
+
+  <div style="text-align: center;">
+    <button class="tool-btn" id="convert-btn" onclick="convertWordToPDF()" disabled>Convert to PDF</button>
+  </div>
+
+  <div id="loading">
+    <div class="neon-spinner"></div>
+    <p>Creating your professional PDF...</p>
+  </div>
+
+  <div id="download-section">
+    <a id="download-link" href="#" download="document.pdf">
+      <button class="tool-btn">Download PDF</button>
+    </a>
+  </div>
+</main>
+
+<footer>
+  &copy; 2025 FilePro. All rights reserved.
+</footer>
+
+<!-- Core Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- DOCX.js for direct conversion -->
+<script src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx-preview@0.1.8/dist/docx-preview.min.js"></script>
+
+<!-- RTF.js for RTF conversion -->
+<script src="https://cdn.jsdelivr.net/npm/rtf-parser@1.0.0/dist/rtf-parser.min.js"></script>
+
+<!-- ODF.js for ODT conversion -->
+<script src="https://cdn.jsdelivr.net/npm/odf@1.0.0/dist/odf.min.js"></script>
+
+<script>
+  // Initialize global variables
+  let docContent = null;
+  let fileName = "document.pdf";
+  let wordFileData = null;
+  let rawHtml = null;
+  let images = {};
+  let documentStyles = {};
+  let fonts = {};
+  const convertBtn = document.getElementById('convert-btn');
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  
+  // Add drag and drop functionality
+  const uploadArea = document.querySelector('.upload-area');
+  
+  uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.style.background = 'rgba(0, 255, 255, 0.1)';
+  });
+  
+  uploadArea.addEventListener('dragleave', () => {
+    uploadArea.style.background = 'transparent';
+  });
+  
+  uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.style.background = 'transparent';
+    
+    if (e.dataTransfer.files.length > 0) {
+      document.getElementById('word-upload').files = e.dataTransfer.files;
+      handleWordFile();
+    }
+  });
+
+  function getFileExtension(filename) {
+    if (!filename) return '';
+    return filename.split('.').pop().toLowerCase();
+  }
+
+  function createMessage(message, type) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `${type}-message`;
+    let icon = type === 'error' ? '⚠️' : (type === 'warning' ? '⚠️' : '✅');
+    msgDiv.innerHTML = `<strong>${icon} ${type.charAt(0).toUpperCase() + type.slice(1)}:</strong> ${message}`;
+    return msgDiv;
+  }
+
+  function createErrorMessage(message) {
+    return createMessage(message, 'error');
+  }
+
+  function createWarningMessage(message) {
+    return createMessage(message, 'warning');
+  }
+
+  function createSuccessMessage(message) {
+    return createMessage(message, 'success');
+  }
+
+  function createFallbackMessage(message) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'fallback-message';
+    msgDiv.innerHTML = `<strong>⚠️ Note:</strong> ${message}`;
+    return msgDiv;
+  }
+
+  function updateProgress(percent, text) {
+    const progressBar = document.getElementById('progress-bar');
+    const progressFill = document.getElementById('progress-bar-fill');
+    const progressText = document.getElementById('progress-text');
+    
+    progressBar.style.display = 'block';
+    progressFill.style.width = `${percent}%`;
+    progressText.textContent = text || `${percent}% complete`;
+    
+    // Add animation for better UX
+    if (percent < 100) {
+      progressFill.style.transition = 'width 0.5s ease';
+    } else {
+      progressFill.style.transition = 'none';
+    }
+  }
+
+  // Enhanced file upload handling
+  function handleWordFile() {
+    const fileInput = document.getElementById('word-upload');
+    const fileNameDiv = document.getElementById('file-name');
+    const previewDiv = document.getElementById('preview-content');
+    const warningsContainer = document.getElementById('warnings-container');
+    
+    // Clear previous content
+    previewDiv.innerHTML = '';
+    warningsContainer.innerHTML = '';
+    docContent = null;
+    rawHtml = null;
+    images = {};
+    convertBtn.disabled = true;
+    
+    if (fileInput.files.length > 0) {
+      const file = fileInput.files[0];
+      const extension = getFileExtension(file.name);
+      
+      // Validate file type and size
+      if (!['docx', 'doc', 'rtf', 'odt', 'txt'].includes(extension)) {
+        previewDiv.appendChild(createErrorMessage('Unsupported file type. Please upload a Word document (.docx, .doc, .rtf, .odt or .txt)'));
+        fileNameDiv.textContent = '';
+        return;
+      }
+      
+      if (file.size > MAX_FILE_SIZE) {
+        previewDiv.appendChild(createErrorMessage(`File too large. Maximum size is ${MAX_FILE_SIZE/1024/1024}MB`));
+        fileNameDiv.textContent = '';
+        return;
+      }
+      
+      // Proceed with processing
+      processWordFile(file);
+    }
+  }
+
+  async function processWordFile(file) {
+    const fileNameDiv = document.getElementById('file-name');
+    const previewDiv = document.getElementById('preview-content');
+    
+    fileNameDiv.textContent = `Selected: ${file.name}`;
+    fileName = file.name.replace(/\.[^/.]+$/, '') + '.pdf';
+    
+    updateProgress(5, 'Reading file...');
+    
+    try {
+      wordFileData = await readFileAsArrayBuffer(file);
+      updateProgress(15, 'Analyzing document...');
+      
+      // Determine conversion method
+      const conversionMethod = document.getElementById('conversion-method').value;
+      let conversionSuccess = false;
+      
+      if (conversionMethod === 'auto') {
+        // Try the best method based on file type
+        const extension = getFileExtension(file.name);
+        if (extension === 'docx') {
+          try {
+            conversionSuccess = await tryDocxJsConversion(file, previewDiv, warningsContainer);
+            if (conversionSuccess) {
+              warningsContainer.appendChild(createSuccessMessage('Document processed with direct conversion (best quality)!'));
+            }
+          } catch (e) {
+            console.log("Direct conversion failed, trying fallback:", e);
+            conversionSuccess = await tryMammothConversion(file, previewDiv, warningsContainer);
+          }
+        } else if (extension === 'rtf') {
+          conversionSuccess = await tryRtfConversion(file, previewDiv, warningsContainer);
+        } else if (extension === 'odt') {
+          conversionSuccess = await tryOdtConversion(file, previewDiv, warningsContainer);
+        } else if (extension === 'doc') {
+          // Old .doc format - try multiple methods
+          try {
+            conversionSuccess = await tryMammothConversion(file, previewDiv, warningsContainer);
+          } catch (e) {
+            console.log("Mammoth failed, trying plain text:", e);
+            conversionSuccess = await tryPlainTextConversion(file, previewDiv, warningsContainer);
+          }
+        } else if (extension === 'txt') {
+          conversionSuccess = await tryPlainTextConversion(file, previewDiv, warningsContainer);
+        }
+      } else if (conversionMethod === 'docxjs' && getFileExtension(file.name) === 'docx') {
+        conversionSuccess = await tryDocxJsConversion(file, previewDiv, warningsContainer);
+      } else if (conversionMethod === 'mammoth') {
+        conversionSuccess = await tryMammothConversion(file, previewDiv, warningsContainer);
+      } else if (conversionMethod === 'text') {
+        conversionSuccess = await tryPlainTextConversion(file, previewDiv, warningsContainer);
+      } else {
+        throw new Error(`Selected conversion method not supported for ${getFileExtension(file.name)} files`);
+      }
+      
+      if (!conversionSuccess) {
+        throw new Error('All conversion methods failed. Please try a different file or method.');
+      }
+      
+      // Enable the convert button
+      convertBtn.disabled = false;
+      updateProgress(100, 'Ready to convert!');
+      
+    } catch (error) {
+      console.error('Error processing file:', error);
+      let errorMessage = `Failed to process the document: ${error.message}`;
+      
+      if (error.message.includes('ArrayBuffer')) {
+        errorMessage = "Failed to read the file. The file might be corrupted.";
+      } else if (error.message.includes('mammoth')) {
+        errorMessage = "Document conversion failed. The file format might not be supported.";
+      }
+      
+      previewDiv.innerHTML = '';
+      previewDiv.appendChild(createErrorMessage(errorMessage));
+      convertBtn.disabled = true;
+    }
+  }
+
+  // Verify all required libraries are loaded
+  function verifyLibraries() {
+    const requiredLibs = {
+      'jszip': typeof JSZip !== 'undefined',
+      'pdf-lib': typeof PDFLib !== 'undefined',
+      'mammoth': typeof mammoth !== 'undefined',
+      'html2canvas': typeof html2canvas !== 'undefined',
+      'jspdf': typeof jspdf !== 'undefined',
+      'docx-preview': typeof docxPreview !== 'undefined'
+    };
+    
+    const missingLibs = Object.entries(requiredLibs)
+      .filter(([_, loaded]) => !loaded)
+      .map(([name]) => name);
+      
+    if (missingLibs.length > 0) {
+      const errorDiv = document.getElementById('preview-content');
+      errorDiv.innerHTML = '';
+      errorDiv.appendChild(createErrorMessage(
+        `The following required libraries failed to load: ${missingLibs.join(', ')}. ` +
+        `Please check your internet connection and try again.`
+      ));
+      return false;
+    }
+    
+    return true;
+  }
+
+  async function convertWordToPDF() {
+    if (!verifyLibraries()) {
+      return;
+    }
+    
+    const loadingDiv = document.getElementById('loading');
+    const downloadSection = document.getElementById('download-section');
+    const previewDiv = document.getElementById('preview-content');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    
+    loadingDiv.style.display = 'block';
+    downloadSection.style.display = 'none';
+    convertBtn.disabled = true;
+    progressBar.style.display = 'block';
+    updateProgress(10, 'Starting PDF conversion...');
+    
+    try {
+      const pageSize = document.getElementById('page-size').value;
+      const orientation = document.getElementById('orientation').value;
+      const margin = parseInt(document.getElementById('margin').value);
+      const preserveStyles = document.getElementById('preserve-styles').checked;
+      const includeImages = document.getElementById('include-images').checked;
+      
+      if (rawHtml) {
+        updateProgress(30, 'Converting to PDF...');
+        await convertHtmlToPdf(rawHtml, pageSize, orientation, margin, preserveStyles, includeImages);
+      } else {
+        throw new Error('No content available for conversion');
+      }
+      
+      updateProgress(100, 'PDF ready!');
+      loadingDiv.style.display = 'none';
+      downloadSection.style.display = 'block';
+      convertBtn.disabled = false;
+      
+    } catch (error) {
+      console.error('Error converting to PDF:', error);
+      previewDiv.appendChild(createErrorMessage(`PDF conversion failed: ${error.message}`));
+      loadingDiv.style.display = 'none';
+      progressBar.style.display = 'none';
+      progressText.textContent = '';
+      convertBtn.disabled = false;
+    }
+  }
+
+  async function convertHtmlToPdf(html, pageSize, orientation, margin, preserveStyles, includeImages) {
+    const { jsPDF } = window.jspdf;
+    
+    // Validate jsPDF is available
+    if (!jsPDF) {
+      throw new Error('PDF library not loaded properly');
+    }
+    
+    const pdf = new jsPDF({
+      orientation: orientation,
+      unit: 'mm',
+      format: pageSize
+    });
+    
+    updateProgress(40, 'Creating PDF container...');
+    
+    // Create a temporary container with proper dimensions
+    const tempDiv = document.createElement('div');
+    const pageWidth = orientation === 'portrait' ? 210 : 297; // A4 dimensions in mm
+    const contentWidth = pageWidth - (margin * 2);
+    
+    tempDiv.style.width = `${contentWidth}mm`;
+    tempDiv.style.padding = '0';
+    tempDiv.style.margin = '0';
+    tempDiv.style.position = 'absolute';
+    tempDiv.style.left = '-9999px';
+    tempDiv.innerHTML = html;
+    document.body.appendChild(tempDiv);
+    
+    try {
+      if (includeImages) {
+        updateProgress(50, 'Processing images...');
+        await processImagesInHtml(tempDiv);
+      } else {
+        // Remove images if not included
+        tempDiv.querySelectorAll('img').forEach(img => img.remove());
+      }
+      
+      updateProgress(70, 'Generating PDF preview...');
+      
+      // Use html2canvas to convert HTML to canvas
+      const canvas = await html2canvas(tempDiv, {
+        scale: 2,
+        logging: true,
+        useCORS: true,
+        allowTaint: true,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: tempDiv.scrollWidth,
+        windowHeight: tempDiv.scrollHeight
+      });
+      
+      updateProgress(90, 'Finalizing PDF...');
+      
+      // Calculate dimensions for PDF
+      const imgWidth = pdf.internal.pageSize.getWidth() - (margin * 2);
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      // Add image to PDF
+      const imgData = canvas.toDataURL('image/png');
+      pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+      
+      // Create download link
+      const pdfOutput = pdf.output('blob');
+      const url = URL.createObjectURL(pdfOutput);
+      const downloadLink = document.getElementById('download-link');
+      
+      downloadLink.href = url;
+      downloadLink.setAttribute('download', fileName);
+      
+      updateProgress(100, 'PDF ready!');
+      
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      throw error;
+    } finally {
+      // Clean up
+      document.body.removeChild(tempDiv);
+    }
+  }
+
+  // Try direct conversion using docx.js (for DOCX files)
+  async function tryDocxJsConversion(file, previewDiv, warningsContainer) {
+    updateProgress(30, 'Using direct DOCX conversion...');
+    
+    const docxPreview = window.docxPreview;
+    
+    // Render the document in a hidden container
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.width = '210mm'; // A4 width
+    document.body.appendChild(tempContainer);
+    
+    try {
+      // Render the document
+      await docxPreview.renderAsync(wordFileData, tempContainer);
+      
+      // Extract the rendered HTML
+      rawHtml = tempContainer.innerHTML;
+      
+      // Clean up the HTML
+      const cleanedHtml = cleanDocxJsHtml(rawHtml);
+      
+      // Display preview
+      previewDiv.innerHTML = `<h2>Document Preview (Direct Conversion)</h2>${cleanedHtml}`;
+      
+      return true;
+    } catch (e) {
+      console.error("Direct conversion failed:", e);
+      return false;
+    } finally {
+      document.body.removeChild(tempContainer);
+    }
+  }
+
+  // Clean HTML from docx.js rendering
+  function cleanDocxJsHtml(html) {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    
+    // Remove docx.js specific classes and styles
+    tempDiv.querySelectorAll('[class^="docx"]').forEach(el => {
+      el.removeAttribute('class');
+    });
+    
+    // Clean up tables
+    tempDiv.querySelectorAll('table').forEach(table => {
+      table.style.width = '100%';
+      table.style.borderCollapse = 'collapse';
+      
+      table.querySelectorAll('td, th').forEach(cell => {
+        cell.style.border = '1px solid #555';
+        cell.style.padding = '8px';
+      });
+    });
+    
+    // Clean up lists
+    tempDiv.querySelectorAll('ul, ol').forEach(list => {
+      list.style.marginLeft = '20px';
+      list.style.paddingLeft = '20px';
+    });
+    
+    return tempDiv.innerHTML;
+  }
+
+  // Try conversion using mammoth.js (for DOCX, DOC files)
+  async function tryMammothConversion(file, previewDiv, warningsContainer) {
+    updateProgress(30, 'Using HTML conversion...');
+    
+    const options = {
+      styleMap: [
+        "p[style-name='Normal'] => p:fresh",
+        "p[style-name='Heading 1'] => h1:fresh",
+        "p[style-name='Heading 2'] => h2:fresh",
+        "p[style-name='Heading 3'] => h3:fresh",
+        "p[style-name='Heading 4'] => h4:fresh",
+        "p[style-name='Heading 5'] => h5:fresh",
+        "p[style-name='Heading 6'] => h6:fresh",
+        "r[style-name='Strong'] => strong",
+        "r[style-name='Emphasis'] => em",
+        "p[style-name='Quote'] => blockquote:fresh",
+        "p[style-name='Intense Quote'] => blockquote.intense:fresh",
+        "p[style-name='List Paragraph'] => li:fresh",
+        "table => table.docx-table:fresh",
+        "p[style-name='Caption'] => p.caption:fresh",
+        "p[style-name='Footnote Text'] => p.footnote:fresh",
+        "p[style-name='Header'] => header:fresh",
+        "p[style-name='Footer'] => footer:fresh",
+        "r[style-name='Hyperlink'] => a",
+        "p[style-name='TOC Heading'] => h6.toc-heading:fresh",
+        "p[style-name='TOC 1'] => p.toc-1:fresh",
+        "p[style-name='TOC 2'] => p.toc-2:fresh",
+        "p[style-name='TOC 3'] => p.toc-3:fresh"
+      ],
+      includeDefaultStyleMap: true,
+      ignoreEmptyParagraphs: false,
+      convertImage: mammoth.images.imgElement(function(image) {
+        return image.read("base64").then(function(imageBuffer) {
+          const imageId = `image-${Object.keys(images).length + 1}`;
+          images[imageId] = {
+            contentType: image.contentType,
+            data: imageBuffer,
+            width: image.width,
+            height: image.height,
+            altText: image.altText
+          };
+          return {
+            src: `data:${image.contentType};base64,${imageBuffer}`,
+            class: "doc-image",
+            alt: image.altText || "",
+            "data-image-id": imageId,
+            width: image.width ? `${image.width}px` : null,
+            height: image.height ? `${image.height}px` : null
+          };
+        });
+      }),
+      preserveEmptyParagraphs: true
+    };
+    
+    updateProgress(50, 'Converting document to HTML...');
+    
+    const result = await mammoth.convertToHtml({ arrayBuffer: wordFileData }, options);
+    docContent = result.value;
+    rawHtml = docContent;
+    
+    updateProgress(70, 'Processing document styling...');
+    
+    if (!docContent || docContent.trim() === '') {
+      throw new Error('Could not extract content from the document.');
+    }
+    
+    const enhancedHtml = postProcessHtml(docContent);
+    
+    updateProgress(90, 'Preparing preview...');
+    
+    previewDiv.innerHTML = `<h2>Document Preview (HTML Conversion)</h2>${enhancedHtml}`;
+    
+    if (result.messages && result.messages.length > 0) {
+      result.messages.forEach(msg => {
+        warningsContainer.appendChild(createWarningMessage(msg.message));
+      });
+    }
+    
+    return true;
+  }
+
+  // Try conversion for RTF files
+  async function tryRtfConversion(file, previewDiv, warningsContainer) {
+    updateProgress(30, 'Processing RTF document...');
+    
+    // RTF to HTML conversion is limited - we'll use a simple approach
+    const textContent = await readFileAsText(file);
+    
+    // Simple RTF to plain text conversion (removes RTF control codes)
+    let plainText = textContent.replace(/\\[a-z]+\d*[ -]?|[{}\\]/g, ' ')
+                              .replace(/\s+/g, ' ')
+                              .trim();
+    
+    // Create basic HTML structure
+    rawHtml = `<div style="white-space: pre-wrap;">${plainText}</div>`;
+    
+    previewDiv.innerHTML = `<h2>Document Preview (Basic RTF Conversion)</h2>
+                           <p>RTF conversion is limited. For better results, save as DOCX first.</p>
+                           <div>${plainText}</div>`;
+    
+    warningsContainer.appendChild(createWarningMessage('RTF conversion is basic. Complex formatting may not be preserved.'));
+    
+    return true;
+  }
+
+  // Try conversion for ODT files
+  async function tryOdtConversion(file, previewDiv, warningsContainer) {
+    updateProgress(30, 'Processing ODT document...');
+    
+    // ODT to HTML conversion is limited - we'll extract text content
+    const textContent = await readFileAsText(file);
+    
+    // Extract content between <office:text> tags if they exist
+    let content = textContent;
+    const officeTextMatch = textContent.match(/<office:text>([\s\S]*?)<\/office:text>/i);
+    if (officeTextMatch) {
+      content = officeTextMatch[1];
+    }
+    
+    // Create basic HTML structure
+    rawHtml = `<div>${content}</div>`;
+    
+    previewDiv.innerHTML = `<h2>Document Preview (Basic ODT Conversion)</h2>
+                           <p>ODT conversion is limited. For better results, save as DOCX first.</p>
+                           <div>${content}</div>`;
+    
+    warningsContainer.appendChild(createWarningMessage('ODT conversion is basic. Complex formatting may not be preserved.'));
+    
+    return true;
+  }
+
+  // Try plain text conversion (for TXT or fallback)
+  async function tryPlainTextConversion(file, previewDiv, warningsContainer) {
+    updateProgress(30, 'Processing plain text...');
+    
+    const textContent = await readFileAsText(file);
+    
+    // Create basic HTML structure with preserved line breaks
+    rawHtml = `<div style="white-space: pre-wrap;">${textContent}</div>`;
+    
+    previewDiv.innerHTML = `<h2>Document Preview (Plain Text)</h2>
+                           <div style="white-space: pre-wrap;">${textContent}</div>`;
+    
+    warningsContainer.appendChild(createWarningMessage('Using plain text conversion. No formatting will be preserved.'));
+    
+    return true;
+  }
+
+  // Enhanced post-processing for HTML
+  function postProcessHtml(html) {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    
+    // Apply paragraph alignment
+    tempDiv.querySelectorAll('p, h1, h2, h3, h4, h5, h6').forEach(el => {
+      const style = el.getAttribute('style') || '';
+      if (style.includes('text-align:')) {
+        const alignMatch = style.match(/text-align:\s*([^;]+)/);
+        if (alignMatch && alignMatch[1]) {
+          el.style.textAlign = alignMatch[1].trim();
+        }
+      }
+    });
+    
+    // Process tables
+    tempDiv.querySelectorAll('table').forEach(table => {
+      table.style.width = '100%';
+      table.style.borderCollapse = 'collapse';
+      table.querySelectorAll('td, th').forEach(cell => {
+        cell.style.border = '1px solid #555';
+        cell.style.padding = '8px';
+      });
+    });
+    
+    // Process images
+    tempDiv.querySelectorAll('img').forEach(img => {
+      if (!img.style.maxWidth) img.style.maxWidth = '100%';
+      if (!img.style.height) img.style.height = 'auto';
+      img.style.margin = '10px 0';
+    });
+    
+    // Process hyperlinks
+    tempDiv.querySelectorAll('a').forEach(a => {
+      if (!a.getAttribute('href')) a.setAttribute('href', '#');
+      a.style.color = '#00fff0';
+      a.style.textDecoration = 'none';
+      a.addEventListener('mouseover', () => a.style.textDecoration = 'underline');
+      a.addEventListener('mouseout', () => a.style.textDecoration = 'none');
+    });
+    
+    return tempDiv.innerHTML;
+  }
+
+  async function processImagesInHtml(container) {
+    const images = container.querySelectorAll('img');
+    
+    for (let i = 0; i < images.length; i++) {
+      const img = images[i];
+      
+      if (img.src.startsWith('data:')) continue;
+      
+      try {
+        if (img.src.startsWith('http')) {
+          const response = await fetch(img.src, { mode: 'cors' });
+          if (!response.ok) throw new Error('Failed to fetch image');
+          const blob = await response.blob();
+          img.src = await blobToDataUrl(blob);
+        }
+      } catch (error) {
+        console.error('Error processing image:', error);
+        img.remove();
+      }
+    }
+  }
+
+  async function readFileAsArrayBuffer(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  async function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
+  }
+
+  function blobToDataUrl(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PDF to Word Converter - FilePro</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet" />
+
+  <!-- External CSS -->
+  <link rel="stylesheet" href="../../style.css" />
+
+  <!-- PDF.js for PDF rendering -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+  
+  <!-- docx.js for Word document generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.1.0/docx.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+
+    header, footer {
+      background: #111;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #00fff0;
+    }
+
+    nav a {
+      color: #fff;
+      margin: 0 15px;
+      text-decoration: none;
+      transition: 0.3s;
+    }
+
+    nav a:hover {
+      color: #00fff0;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 40px auto;
+      background: rgba(255,255,255,0.05);
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 0 30px rgba(0,255,255,0.2);
+      backdrop-filter: blur(8px);
+      animation: fadeIn 1s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    h1 {
+      text-align: center;
+      color: #00fff0;
+      margin-bottom: 20px;
+    }
+
+    .upload-area {
+      border: 2px dashed #00fff0;
+      padding: 40px;
+      border-radius: 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 30px;
+      position: relative;
+    }
+
+    .upload-area:hover {
+      background: rgba(0, 255, 255, 0.1);
+      transform: scale(1.03);
+    }
+
+    #file-name {
+      margin-top: 10px;
+      color: #00fff0;
+      font-weight: bold;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .tool-btn {
+      background: linear-gradient(135deg, #00fff0, #00e0e0);
+      color: #000;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 20px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    .tool-btn:hover {
+      transform: scale(1.07);
+      box-shadow: 0 0 15px #00fff0;
+    }
+
+    .tool-btn:disabled {
+      background: #666;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    #loading {
+      display: none;
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .neon-spinner {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 10px;
+      border: 6px solid transparent;
+      border-top: 6px solid #00fff0;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    #download-section {
+      text-align: center;
+      display: none;
+      margin-top: 30px;
+    }
+
+    .progress-container {
+      width: 100%;
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      margin: 20px 0;
+      display: none;
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 10px;
+      background: linear-gradient(90deg, #00fff0, #00e0e0);
+      border-radius: 10px;
+      transition: width 0.3s ease;
+    }
+
+    .options-section {
+      margin: 20px 0;
+      text-align: left;
+      padding: 15px;
+      background: rgba(0, 255, 255, 0.05);
+      border-radius: 10px;
+    }
+
+    .option-group {
+      margin: 10px 0;
+    }
+
+    .option-label {
+      display: block;
+      margin-bottom: 5px;
+      color: #00fff0;
+    }
+
+    .option-select {
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      border: 1px solid #00fff0;
+      padding: 8px;
+      border-radius: 5px;
+      width: 100%;
+    }
+
+    .file-info {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #aaa;
+    }
+
+    .convert-btn {
+      margin-top: 20px;
+      width: 100%;
+    }
+
+    @media screen and (max-width: 768px) {
+      nav {
+        margin-top: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      
+      .upload-area {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="logo">⚡ FilePro</div>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../../tools.html">Tools</a>
+    <a href="../../about.html">About</a>
+    <a href="../../contact.html">Contact</a>
+  </nav>
+</header>
+
+<main class="page">
+  <h1>PDF to Word Converter</h1>
+
+  <div class="upload-area" id="drop-area">
+    <input type="file" id="pdf-upload" accept=".pdf" onchange="handlePDFFile(event)" />
+    <p>Drag & Drop or Click to Upload PDF File</p>
+    <div id="file-name"></div>
+    <div class="file-info" id="file-info"></div>
+  </div>
+
+  <div class="options-section">
+    <div class="option-group">
+      <label class="option-label">Output Format:</label>
+      <select class="option-select" id="output-format">
+        <option value="docx">DOCX (Microsoft Word)</option>
+        <option value="odt">ODT (OpenDocument)</option>
+        <option value="rtf">RTF (Rich Text Format)</option>
+      </select>
+    </div>
+    
+    <div class="option-group">
+      <label class="option-label">Page Range:</label>
+      <select class="option-select" id="page-range">
+        <option value="all">All Pages</option>
+        <option value="custom">Custom Range</option>
+      </select>
+      <div id="custom-range-container" style="display: none; margin-top: 10px;">
+        <input type="text" id="custom-range" placeholder="e.g., 1-5, 7, 9-12" style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); color: white; border: 1px solid #00fff0; border-radius: 5px;">
+      </div>
+    </div>
+    
+    <div class="option-group">
+      <label class="option-label">Image Quality:</label>
+      <select class="option-select" id="image-quality">
+        <option value="high">High (Best quality)</option>
+        <option value="medium" selected>Medium (Balanced)</option>
+        <option value="low">Low (Smaller file size)</option>
+      </select>
+    </div>
+    
+    <button class="tool-btn convert-btn" id="convert-btn" disabled>Convert to Word</button>
+  </div>
+
+  <div class="progress-container" id="progress-container">
+    <div class="progress-bar" id="progress-bar"></div>
+  </div>
+
+  <div id="loading">
+    <div class="neon-spinner"></div>
+    <p>Converting your file...</p>
+  </div>
+
+  <div id="download-section" style="display: none;">
+    <button class="tool-btn" id="download-btn">Download Word Document</button>
+    <div style="margin-top: 15px;">
+      <button class="tool-btn" id="new-conversion-btn" style="background: transparent; border: 1px solid #00fff0; color: #00fff0;">Convert Another File</button>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  &copy; 2025 FilePro. All rights reserved.
+</footer>
+
+<script>
+  // Initialize PDF.js
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
+  
+  let pdfData = null;
+  let fileName = '';
+  let convertedBlob = null;
+  
+  // DOM elements
+  const convertBtn = document.getElementById('convert-btn');
+  const dropArea = document.getElementById('drop-area');
+  const fileInput = document.getElementById('pdf-upload');
+  
+  // Set up drag and drop
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, preventDefaults, false);
+  });
+  
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropArea.addEventListener(eventName, highlight, false);
+  });
+  
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, unhighlight, false);
+  });
+  
+  function highlight() {
+    dropArea.style.borderColor = '#00ffaa';
+    dropArea.style.transform = 'scale(1.05)';
+  }
+  
+  function unhighlight() {
+    dropArea.style.borderColor = '#00fff0';
+    dropArea.style.transform = 'scale(1)';
+  }
+  
+  dropArea.addEventListener('drop', handleDrop, false);
+  
+  function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    
+    if (files.length > 0) {
+      const file = files[0];
+      if (file.type === 'application/pdf') {
+        fileInput.files = files;
+        handlePDFFile({ target: fileInput });
+      } else {
+        alert('Please upload a PDF file');
+      }
+    }
+  }
+  
+  // Page range selector
+  document.getElementById('page-range').addEventListener('change', function() {
+    const customRangeContainer = document.getElementById('custom-range-container');
+    if (this.value === 'custom') {
+      customRangeContainer.style.display = 'block';
+    } else {
+      customRangeContainer.style.display = 'none';
+    }
+  });
+  
+  function handlePDFFile(event) {
+    const input = event.target;
+    const file = input.files[0];
+    const fileNameDiv = document.getElementById('file-name');
+    const fileInfoDiv = document.getElementById('file-info');
+    
+    if (!file) {
+      convertBtn.disabled = true;
+      return;
+    }
+    
+    // Validate file type
+    if (file.type !== 'application/pdf') {
+      alert('Please upload a PDF file');
+      input.value = '';
+      convertBtn.disabled = true;
+      return;
+    }
+    
+    fileName = file.name.replace('.pdf', '');
+    fileNameDiv.textContent = `Selected: ${file.name}`;
+    
+    // Show file info
+    const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+    fileInfoDiv.textContent = `Size: ${fileSize} MB`;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      pdfData = e.target.result;
+      convertBtn.disabled = false;
+    };
+    reader.onerror = function() {
+      alert('Error reading file');
+      convertBtn.disabled = true;
+    };
+    reader.readAsArrayBuffer(file);
+  }
+  
+  // Event listeners
+  convertBtn.addEventListener('click', convertPDFToWord);
+  document.getElementById('download-btn').addEventListener('click', downloadWord);
+  document.getElementById('new-conversion-btn').addEventListener('click', resetConverter);
+  
+  function resetConverter() {
+    fileInput.value = '';
+    document.getElementById('file-name').textContent = '';
+    document.getElementById('file-info').textContent = '';
+    document.getElementById('download-section').style.display = 'none';
+    document.getElementById('progress-container').style.display = 'none';
+    document.getElementById('progress-bar').style.width = '0%';
+    convertBtn.disabled = true;
+    pdfData = null;
+    fileName = '';
+    convertedBlob = null;
+  }
+  
+  function convertPDFToWord() {
+    if (!pdfData) {
+      alert('Please upload a PDF file first');
+      return;
+    }
+    
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('progress-container').style.display = 'block';
+    document.getElementById('download-section').style.display = 'none';
+    convertBtn.disabled = true;
+    
+    // Get conversion options
+    const outputFormat = document.getElementById('output-format').value;
+    const imageQuality = document.getElementById('image-quality').value;
+    
+    // Simulate progress (in a real app, this would be actual progress)
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+      progress += Math.random() * 10;
+      if (progress > 90) progress = 90;
+      updateProgress(progress);
+    }, 300);
+    
+    // Using PDF.js to extract text (simplified example)
+    const loadingTask = pdfjsLib.getDocument({data: new Uint8Array(pdfData)});
+    
+    loadingTask.promise.then(async function(pdf) {
+      const { docx } = window;
+      const doc = new docx.Document();
+      const paragraphs = [];
+      
+      // Get page range to convert
+      let pagesToConvert = [];
+      const pageRange = document.getElementById('page-range').value;
+      
+      if (pageRange === 'all') {
+        for (let i = 1; i <= pdf.numPages; i++) {
+          pagesToConvert.push(i);
+        }
+      } else {
+        const customRange = document.getElementById('custom-range').value;
+        pagesToConvert = parsePageRange(customRange, pdf.numPages);
+        if (pagesToConvert.length === 0) {
+          pagesToConvert = Array.from({length: pdf.numPages}, (_, i) => i + 1);
+        }
+      }
+      
+      // Process each page
+      for (let i = 0; i < pagesToConvert.length; i++) {
+        const pageNumber = pagesToConvert[i];
+        try {
+          const page = await pdf.getPage(pageNumber);
+          const textContent = await page.getTextContent();
+          const text = textContent.items.map(item => item.str).join(' ');
+          
+          paragraphs.push(
+            new docx.Paragraph({
+              children: [
+                new docx.TextRun({
+                  text: text,
+                  size: 24, // 12pt
+                }),
+              ],
+            })
+          );
+          
+          // Update progress
+          updateProgress(((i + 1) / pagesToConvert.length) * 90);
+        } catch (err) {
+          console.error(`Error processing page ${pageNumber}:`, err);
+          continue;
+        }
+      }
+      
+      doc.addSection({
+        children: paragraphs,
+      });
+      
+      // Generate the Word document
+      docx.Packer.toBlob(doc).then(blob => {
+        clearInterval(progressInterval);
+        updateProgress(100);
+        
+        convertedBlob = blob;
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('download-section').style.display = 'block';
+        
+        // Change button text based on format
+        let formatName = 'Word';
+        if (outputFormat === 'odt') formatName = 'OpenDocument';
+        if (outputFormat === 'rtf') formatName = 'RTF';
+        
+        document.getElementById('download-btn').textContent = `Download ${formatName} Document`;
+      }).catch(err => {
+        console.error('Error generating Word document:', err);
+        alert('Error generating Word document: ' + err.message);
+        clearInterval(progressInterval);
+        document.getElementById('loading').style.display = 'none';
+        convertBtn.disabled = false;
+      });
+    }).catch(err => {
+      console.error('PDF conversion error:', err);
+      alert('Error converting PDF: ' + err.message);
+      document.getElementById('loading').style.display = 'none';
+      clearInterval(progressInterval);
+      convertBtn.disabled = false;
+    });
+  }
+  
+  function parsePageRange(rangeStr, maxPages) {
+    if (!rangeStr || !rangeStr.trim()) return [];
+    
+    const pages = new Set();
+    const parts = rangeStr.split(',');
+    
+    for (const part of parts) {
+      const trimmed = part.trim();
+      if (!trimmed) continue;
+      
+      if (trimmed.includes('-')) {
+        const [startStr, endStr] = trimmed.split('-').map(s => s.trim());
+        const start = parseInt(startStr) || 1;
+        const end = parseInt(endStr) || start;
+        
+        const realStart = Math.max(1, Math.min(start, maxPages));
+        const realEnd = Math.max(realStart, Math.min(end, maxPages));
+        
+        for (let i = realStart; i <= realEnd; i++) {
+          pages.add(i);
+        }
+      } else {
+        const page = parseInt(trimmed);
+        if (!isNaN(page) && page >= 1 && page <= maxPages) {
+          pages.add(page);
+        }
+      }
+    }
+    
+    return Array.from(pages).sort((a, b) => a - b);
+  }
+  
+  function updateProgress(percent) {
+    const progressBar = document.getElementById('progress-bar');
+    progressBar.style.width = `${Math.min(100, percent)}%`;
+  }
+  
+  function downloadWord() {
+    if (!convertedBlob) {
+      alert('No converted file available');
+      return;
+    }
+    
+    const outputFormat = document.getElementById('output-format').value;
+    let extension = '.docx';
+    if (outputFormat === 'odt') extension = '.odt';
+    if (outputFormat === 'rtf') extension = '.rtf';
+    
+    const url = URL.createObjectURL(convertedBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${fileName}_converted${extension}`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+  }
+</script>
+
+</body>
+</html>

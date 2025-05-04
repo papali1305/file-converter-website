@@ -1,0 +1,2554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced PDF Form Creator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4a6bff;
+            --secondary: #ff6b6b;
+            --dark-color: #2c3e50;
+            --light-color: #f8f9fa;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            --border-radius: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7ff;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 1.5rem 2rem;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        nav {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+            transform: translateY(-2px);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        .tool-container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .workspace {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+        }
+
+        .pdf-container {
+            flex: 3;
+            background-color: var(--light-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            position: relative;
+            min-height: 600px;
+        }
+
+        .toolbar {
+            flex: 1;
+            background-color: var(--light-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            position: sticky;
+            top: 100px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .toolbar-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .toolbar-section h3 {
+            margin-bottom: 1rem;
+            color: var(--dark-color);
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toolbar-section h3 i {
+            color: var(--primary);
+        }
+
+        .toolbar-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .tool-btn {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            width: 40px;
+            height: 40px;
+        }
+
+        .tool-btn:hover {
+            background-color: var(--light-color);
+            transform: translateY(-2px);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .tool-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .canvas-container {
+            overflow: auto;
+            max-height: 600px;
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+            background-color: white;
+            border: 1px solid #eee;
+            border-radius: var(--border-radius);
+        }
+
+        .form-fields-container {
+            margin-bottom: 1rem;
+        }
+
+        .field-btn {
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            text-align: left;
+        }
+
+        .field-btn:hover {
+            background-color: var(--light-color);
+            transform: translateY(-2px);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3a5bef;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(74, 107, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e65a5a;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background-color: rgba(74, 107, 255, 0.1);
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .btn-disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .save-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .loading-animation {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(74, 107, 255, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 1rem;
+        }
+
+        .status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .status.success {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+            display: block;
+        }
+
+        .status.error {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            border: 1px solid #dc3545;
+            display: block;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+        }
+
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--dark-color);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .field-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .field-item {
+            padding: 0.75rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s ease;
+        }
+
+        .field-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .field-item:last-child {
+            border-bottom: none;
+        }
+
+        .field-item-content {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .field-item-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 1rem;
+            color: #666;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 120px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .starting-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            animation: fadeOut 1.5s ease-out 2.5s forwards;
+            color: white;
+        }
+
+        .starting-logo {
+            font-size: 4rem;
+            color: var(--primary);
+            animation: logoScale 1.5s ease-out;
+        }
+
+        .starting-text {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-top: 1rem;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: slideIn 1s ease-out 0.5s both;
+            opacity: 0;
+        }
+
+        .starting-subtext {
+            margin-top: 1rem;
+            animation: slideIn 1s ease-out 1s both;
+            opacity: 0;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .page-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .page-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .template-selector {
+            margin-bottom: 1.5rem;
+        }
+
+        .template-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .template-option {
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .template-option:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .template-option i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        .template-option.active {
+            border-color: var(--primary);
+            background-color: rgba(74, 107, 255, 0.1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; visibility: hidden; }
+        }
+
+        @keyframes logoScale {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 992px) {
+            .workspace {
+                flex-direction: column;
+            }
+            
+            .toolbar {
+                width: 100%;
+                position: static;
+                max-height: none;
+            }
+            
+            .toolbar-buttons {
+                justify-content: center;
+            }
+            
+            .pdf-container {
+                min-height: 500px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            header {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            nav {
+                width: 100%;
+                justify-content: space-around;
+            }
+            
+            .canvas-container {
+                max-height: 400px;
+                padding: 1rem;
+            }
+
+            .save-controls {
+                flex-wrap: wrap;
+            }
+
+            .btn {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Starting Animation -->
+    <div class="starting-animation" id="startingAnimation">
+        <div class="starting-logo">
+            <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="starting-text">Advanced PDF Form Creator</div>
+        <div class="starting-subtext">Design professional PDF forms with interactive fields</div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="logo">
+            <i class="fas fa-bolt"></i>
+            <span>FilePro</span>
+        </div>
+        <nav>
+            <a href="../../index.html">Home</a>
+            <a href="../../tools.html">Tools</a>
+            <a href="../../about.html">About</a>
+            <a href="../../contact.html">Contact</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Advanced PDF Form Creator</h1>
+            <p class="subtitle">Design professional PDF forms with interactive fields, templates, and more</p>
+        </div>
+
+        <div class="tool-container">
+            <div class="template-selector">
+                <h3><i class="fas fa-clone"></i> Templates</h3>
+                <div class="template-options">
+                    <div class="template-option" data-template="blank">
+                        <i class="fas fa-file-alt"></i>
+                        <div>Blank Form</div>
+                    </div>
+                    <div class="template-option" data-template="application">
+                        <i class="fas fa-file-signature"></i>
+                        <div>Application</div>
+                    </div>
+                    <div class="template-option" data-template="survey">
+                        <i class="fas fa-poll"></i>
+                        <div>Survey</div>
+                    </div>
+                    <div class="template-option" data-template="invoice">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <div>Invoice</div>
+                    </div>
+                    <div class="template-option" data-template="contact">
+                        <i class="fas fa-address-card"></i>
+                        <div>Contact Form</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="workspace" id="workspace">
+                <div class="pdf-container">
+                    <div class="page-controls">
+                        <button class="btn btn-outline btn-sm" id="prevPage">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </button>
+                        <div class="page-info">
+                            <span>Page</span>
+                            <input type="number" id="pageNum" min="1" value="1" class="form-control" style="width: 60px;">
+                            <span>of <span id="pageCount">1</span></span>
+                        </div>
+                        <button class="btn btn-outline btn-sm" id="nextPage">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="canvas-container" id="canvasContainer">
+                        <canvas id="formCanvas"></canvas>
+                    </div>
+                </div>
+                
+                <div class="toolbar">
+                    <div class="toolbar-section">
+                        <h3><i class="fas fa-puzzle-piece"></i> Form Fields</h3>
+                        <div class="form-fields-container">
+                            <button class="field-btn" id="addTextField">
+                                <i class="fas fa-font"></i> Text Field
+                            </button>
+                            <button class="field-btn" id="addCheckbox">
+                                <i class="fas fa-check-square"></i> Checkbox
+                            </button>
+                            <button class="field-btn" id="addDateField">
+                                <i class="fas fa-calendar"></i> Date Field
+                            </button>
+                            <button class="field-btn" id="addRadioButton">
+                                <i class="far fa-dot-circle"></i> Radio Button
+                            </button>
+                            <button class="field-btn" id="addDropdown">
+                                <i class="fas fa-caret-down"></i> Dropdown
+                            </button>
+                            <button class="field-btn" id="addSignature">
+                                <i class="fas fa-signature"></i> Signature
+                            </button>
+                            <button class="field-btn" id="addImage">
+                                <i class="fas fa-image"></i> Image
+                            </button>
+                            <button class="field-btn" id="addTable">
+                                <i class="fas fa-table"></i> Table
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="toolbar-section">
+                        <h3><i class="fas fa-tools"></i> Form Properties</h3>
+                        <div class="form-fields-container">
+                            <button class="field-btn" id="setFormTitle">
+                                <i class="fas fa-heading"></i> Set Form Title
+                            </button>
+                            <button class="field-btn" id="addInstructions">
+                                <i class="fas fa-info-circle"></i> Add Instructions
+                            </button>
+                            <button class="field-btn" id="setFormTheme">
+                                <i class="fas fa-palette"></i> Set Theme
+                            </button>
+                            <button class="field-btn" id="setFormLogo">
+                                <i class="fas fa-image"></i> Set Logo
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="toolbar-section">
+                        <h3><i class="fas fa-layer-group"></i> Page Options</h3>
+                        <div class="form-fields-container">
+                            <button class="field-btn" id="addNewPage">
+                                <i class="fas fa-plus"></i> Add Page
+                            </button>
+                            <button class="field-btn" id="removePage">
+                                <i class="fas fa-minus"></i> Remove Page
+                            </button>
+                            <button class="field-btn" id="setPageSize">
+                                <i class="fas fa-ruler"></i> Page Size
+                            </button>
+                            <button class="field-btn" id="setPageMargin">
+                                <i class="fas fa-border-style"></i> Margins
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="toolbar-section">
+                        <h3><i class="fas fa-list"></i> Form Fields List</h3>
+                        <div class="field-list" id="fieldList">
+                            <div class="empty-state">No fields added yet</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="save-controls">
+                <button id="undoBtn" class="btn btn-outline btn-disabled">
+                    <i class="fas fa-undo"></i> Undo
+                </button>
+                <button id="redoBtn" class="btn btn-outline btn-disabled">
+                    <i class="fas fa-redo"></i> Redo
+                </button>
+                <button id="previewBtn" class="btn btn-outline">
+                    <i class="fas fa-eye"></i> Preview
+                </button>
+                <button id="resetBtn" class="btn btn-outline">
+                    <i class="fas fa-sync-alt"></i> Reset
+                </button>
+                <button id="saveBtn" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Form
+                </button>
+            </div>
+
+            <div class="status" id="statusMessage"></div>
+        </div>
+
+        <footer>
+            <p>Advanced PDF Form Creator &copy; 2023 | Works entirely in your browser - your forms are never uploaded to any server</p>
+        </footer>
+    </div>
+
+    <!-- Field Properties Modal -->
+    <div class="modal" id="fieldModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="fieldModalTitle">Field Properties</h3>
+                <button class="modal-close" id="closeFieldModal">&times;</button>
+            </div>
+            <div id="fieldModalBody">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelFieldModal">Cancel</button>
+                <button class="btn btn-primary" id="saveFieldModal">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div class="modal" id="previewModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Form Preview</h3>
+                <button class="modal-close" id="closePreviewModal">&times;</button>
+            </div>
+            <div id="previewModalBody" style="padding: 1rem; background: white; border-radius: var(--border-radius);">
+                <!-- Preview content will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="closePreviewBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Upload Modal -->
+    <div class="modal" id="imageModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add Image</h3>
+                <button class="modal-close" id="closeImageModal">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="imageUpload">Upload Image</label>
+                <input type="file" id="imageUpload" accept="image/*" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="imageUrl">Or enter image URL</label>
+                <input type="text" id="imageUrl" placeholder="https://example.com/image.jpg" class="form-control">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelImageModal">Cancel</button>
+                <button class="btn btn-primary" id="addImageModal">Add Image</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme Settings Modal -->
+    <div class="modal" id="themeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Form Theme Settings</h3>
+                <button class="modal-close" id="closeThemeModal">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="themePrimaryColor">Primary Color</label>
+                <input type="color" id="themePrimaryColor" value="#4a6bff" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="themeSecondaryColor">Secondary Color</label>
+                <input type="color" id="themeSecondaryColor" value="#ff6b6b" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="themeFont">Font Family</label>
+                <select id="themeFont" class="form-control">
+                    <option value="Arial">Arial</option>
+                    <option value="Helvetica">Helvetica</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                    <option value="Courier New">Courier New</option>
+                    <option value="Georgia">Georgia</option>
+                    <option value="Verdana">Verdana</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelThemeModal">Cancel</button>
+                <button class="btn btn-primary" id="saveThemeModal">Apply Theme</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        const { PDFDocument, rgb, StandardFonts } = PDFLib;
+        const { jsPDF } = window.jspdf;
+        
+        let formCanvas = null;
+        let formFields = [];
+        let pages = []; // Array to hold multiple pages
+        let currentPageIndex = 0;
+        let undoStack = [];
+        let redoStack = [];
+        let currentField = null;
+        let currentTemplate = 'blank';
+        let formTheme = {
+            primaryColor: '#4a6bff',
+            secondaryColor: '#ff6b6b',
+            fontFamily: 'Arial'
+        };
+        
+        // DOM elements
+        const workspace = document.getElementById('workspace');
+        const statusMessage = document.getElementById('statusMessage');
+        const canvasContainer = document.getElementById('canvasContainer');
+        const formCanvasEl = document.getElementById('formCanvas');
+        const saveBtn = document.getElementById('saveBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+        const previewBtn = document.getElementById('previewBtn');
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const pageNumInput = document.getElementById('pageNum');
+        const pageCountSpan = document.getElementById('pageCount');
+        
+        // Field buttons
+        const addTextFieldBtn = document.getElementById('addTextField');
+        const addCheckboxBtn = document.getElementById('addCheckbox');
+        const addDateFieldBtn = document.getElementById('addDateField');
+        const addRadioButtonBtn = document.getElementById('addRadioButton');
+        const addDropdownBtn = document.getElementById('addDropdown');
+        const addSignatureBtn = document.getElementById('addSignature');
+        const addImageBtn = document.getElementById('addImage');
+        const addTableBtn = document.getElementById('addTable');
+        
+        // Form property buttons
+        const setFormTitleBtn = document.getElementById('setFormTitle');
+        const addInstructionsBtn = document.getElementById('addInstructions');
+        const setFormThemeBtn = document.getElementById('setFormTheme');
+        const setFormLogoBtn = document.getElementById('setFormLogo');
+        
+        // Page control buttons
+        const addNewPageBtn = document.getElementById('addNewPage');
+        const removePageBtn = document.getElementById('removePage');
+        const setPageSizeBtn = document.getElementById('setPageSize');
+        const setPageMarginBtn = document.getElementById('setPageMargin');
+        
+        // Field list
+        const fieldList = document.getElementById('fieldList');
+        
+        // Modals
+        const fieldModal = document.getElementById('fieldModal');
+        const fieldModalTitle = document.getElementById('fieldModalTitle');
+        const fieldModalBody = document.getElementById('fieldModalBody');
+        const closeFieldModal = document.getElementById('closeFieldModal');
+        const cancelFieldModal = document.getElementById('cancelFieldModal');
+        const saveFieldModal = document.getElementById('saveFieldModal');
+        
+        const previewModal = document.getElementById('previewModal');
+        const previewModalBody = document.getElementById('previewModalBody');
+        const closePreviewModal = document.getElementById('closePreviewModal');
+        const closePreviewBtn = document.getElementById('closePreviewBtn');
+        
+        const imageModal = document.getElementById('imageModal');
+        const closeImageModal = document.getElementById('closeImageModal');
+        const cancelImageModal = document.getElementById('cancelImageModal');
+        const addImageModal = document.getElementById('addImageModal');
+        const imageUpload = document.getElementById('imageUpload');
+        const imageUrl = document.getElementById('imageUrl');
+        
+        const themeModal = document.getElementById('themeModal');
+        const closeThemeModal = document.getElementById('closeThemeModal');
+        const cancelThemeModal = document.getElementById('cancelThemeModal');
+        const saveThemeModal = document.getElementById('saveThemeModal');
+        const themePrimaryColor = document.getElementById('themePrimaryColor');
+        const themeSecondaryColor = document.getElementById('themeSecondaryColor');
+        const themeFont = document.getElementById('themeFont');
+        
+        // Template options
+        const templateOptions = document.querySelectorAll('.template-option');
+
+        // Event listeners for document load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Hide the starting animation after 4 seconds
+            setTimeout(() => {
+                const startingAnimation = document.getElementById('startingAnimation');
+                if (startingAnimation) {
+                    startingAnimation.style.display = 'none';
+                }
+            }, 4000);
+            
+            // Initialize form canvas and first page
+            initForm();
+            
+            // Template selection
+            templateOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    templateOptions.forEach(opt => opt.classList.remove('active'));
+                    option.classList.add('active');
+                    currentTemplate = option.dataset.template;
+                    loadTemplate(currentTemplate);
+                });
+            });
+            
+            // Form field buttons
+            addTextFieldBtn.addEventListener('click', () => showFieldProperties('text'));
+            addCheckboxBtn.addEventListener('click', () => showFieldProperties('checkbox'));
+            addDateFieldBtn.addEventListener('click', () => showFieldProperties('date'));
+            addRadioButtonBtn.addEventListener('click', () => showFieldProperties('radio'));
+            addDropdownBtn.addEventListener('click', () => showFieldProperties('dropdown'));
+            addSignatureBtn.addEventListener('click', () => showFieldProperties('signature'));
+            addImageBtn.addEventListener('click', () => imageModal.classList.add('active'));
+            addTableBtn.addEventListener('click', () => showFieldProperties('table'));
+            
+            // Form property buttons
+            setFormTitleBtn.addEventListener('click', () => showFormProperties('title'));
+            addInstructionsBtn.addEventListener('click', () => showFormProperties('instructions'));
+            setFormThemeBtn.addEventListener('click', () => {
+                themePrimaryColor.value = formTheme.primaryColor;
+                themeSecondaryColor.value = formTheme.secondaryColor;
+                themeFont.value = formTheme.fontFamily;
+                themeModal.classList.add('active');
+            });
+            setFormLogoBtn.addEventListener('click', () => imageModal.classList.add('active'));
+            
+            // Page controls
+            addNewPageBtn.addEventListener('click', addNewPage);
+            removePageBtn.addEventListener('click', removeCurrentPage);
+            setPageSizeBtn.addEventListener('click', () => showPageProperties('size'));
+            setPageMarginBtn.addEventListener('click', () => showPageProperties('margin'));
+            
+            // Navigation controls
+            prevPageBtn.addEventListener('click', () => {
+                if (currentPageIndex > 0) {
+                    currentPageIndex--;
+                    renderCurrentPage();
+                }
+            });
+            
+            nextPageBtn.addEventListener('click', () => {
+                if (currentPageIndex < pages.length - 1) {
+                    currentPageIndex++;
+                    renderCurrentPage();
+                }
+            });
+            
+            pageNumInput.addEventListener('change', () => {
+                const newPage = parseInt(pageNumInput.value) - 1;
+                if (newPage >= 0 && newPage < pages.length) {
+                    currentPageIndex = newPage;
+                    renderCurrentPage();
+                } else {
+                    pageNumInput.value = currentPageIndex + 1;
+                }
+            });
+            
+            // Modal controls
+            closeFieldModal.addEventListener('click', () => fieldModal.classList.remove('active'));
+            cancelFieldModal.addEventListener('click', () => fieldModal.classList.remove('active'));
+            
+            closePreviewModal.addEventListener('click', () => previewModal.classList.remove('active'));
+            closePreviewBtn.addEventListener('click', () => previewModal.classList.remove('active'));
+            
+            closeImageModal.addEventListener('click', () => imageModal.classList.remove('active'));
+            cancelImageModal.addEventListener('click', () => imageModal.classList.remove('active'));
+            
+            closeThemeModal.addEventListener('click', () => themeModal.classList.remove('active'));
+            cancelThemeModal.addEventListener('click', () => themeModal.classList.remove('active'));
+            
+            // Save handlers
+            saveFieldModal.addEventListener('click', saveFieldProperties);
+            saveThemeModal.addEventListener('click', saveThemeSettings);
+            addImageModal.addEventListener('click', addImageToForm);
+            
+            // Action buttons
+            saveBtn.addEventListener('click', saveFormAsPDF);
+            resetBtn.addEventListener('click', resetForm);
+            undoBtn.addEventListener('click', undoLastAction);
+            redoBtn.addEventListener('click', redoLastAction);
+            previewBtn.addEventListener('click', previewForm);
+        });
+
+        // Initialize the form
+        function initForm() {
+            // Initialize fabric.js canvas
+            formCanvas = new fabric.Canvas('formCanvas', {
+                width: canvasContainer.clientWidth - 40,
+                height: 800,
+                backgroundColor: '#ffffff',
+                selection: false
+            });
+            
+            // Add first page
+            addNewPage();
+            
+            // Set up event listeners for canvas
+            formCanvas.on('object:added', () => {
+                addToUndoStack();
+                updateFieldList();
+            });
+            
+            formCanvas.on('object:modified', () => {
+                addToUndoStack();
+                updateFieldList();
+            });
+            
+            formCanvas.on('object:removed', () => {
+                addToUndoStack();
+                updateFieldList();
+            });
+            
+            formCanvas.on('object:selected', (e) => {
+                if (e.target) {
+                    showFieldPropertiesForExisting(e.target);
+                }
+            });
+        }
+
+        // Load a template
+        function loadTemplate(templateName) {
+            // Clear current form
+            resetForm();
+            
+            // Add template-specific elements
+            switch (templateName) {
+                case 'application':
+                    // Add application form fields
+                    addTemplateField('text', 'Full Name', 50, 50);
+                    addTemplateField('text', 'Email Address', 50, 100);
+                    addTemplateField('text', 'Phone Number', 50, 150);
+                    addTemplateField('date', 'Date of Birth', 50, 200);
+                    addTemplateField('text', 'Address', 50, 250);
+                    addTemplateField('text', 'City', 50, 300);
+                    addTemplateField('text', 'State', 200, 300);
+                    addTemplateField('text', 'Zip Code', 350, 300);
+                    addTemplateField('dropdown', 'Education Level', 50, 350, {
+                        options: ['High School', 'Associate Degree', 'Bachelor Degree', 'Master Degree', 'PhD']
+                    });
+                    addTemplateField('text', 'Work Experience', 50, 400, { multiline: true, height: 100 });
+                    addTemplateField('signature', 'Signature', 50, 550);
+                    break;
+                    
+                case 'survey':
+                    // Add survey form fields
+                    addTemplateField('text', 'Survey Title', 50, 50, { fontSize: 24, textAlign: 'center', width: 500 });
+                    addTemplateField('text', 'Question 1: How satisfied are you with our service?', 50, 120);
+                    addTemplateField('radio', 'Satisfaction', 50, 150, {
+                        options: ['Very Satisfied', 'Satisfied', 'Neutral', 'Dissatisfied', 'Very Dissatisfied'],
+                        orientation: 'horizontal'
+                    });
+                    addTemplateField('text', 'Question 2: What features would you like to see improved?', 50, 220);
+                    addTemplateField('checkbox', 'Features', 50, 250, {
+                        options: ['User Interface', 'Performance', 'Documentation', 'Customer Support', 'Pricing'],
+                        columns: 2
+                    });
+                    addTemplateField('text', 'Additional Comments:', 50, 400, { multiline: true, height: 100 });
+                    break;
+                    
+                case 'invoice':
+                    // Add invoice form fields
+                    addTemplateField('text', 'INVOICE', 50, 50, { fontSize: 28, fontWeight: 'bold' });
+                    addTemplateField('text', 'Invoice #:', 400, 50);
+                    addTemplateField('text', 'Date:', 400, 80);
+                    addTemplateField('text', 'Bill To:', 50, 120);
+                    addTemplateField('text', 'Company Name', 50, 150);
+                    addTemplateField('text', 'Address', 50, 180);
+                    addTemplateField('text', 'City, State, Zip', 50, 210);
+                    addTemplateField('text', 'Phone', 50, 240);
+                    addTemplateField('text', 'Email', 50, 270);
+                    
+                    // Add table for line items
+                    addTemplateField('table', 'Items', 50, 320, {
+                        columns: [
+                            { header: 'Description', width: 300 },
+                            { header: 'Quantity', width: 80 },
+                            { header: 'Price', width: 100 },
+                            { header: 'Total', width: 100 }
+                        ],
+                        rows: 5
+                    });
+                    
+                    addTemplateField('text', 'Subtotal:', 430, 520);
+                    addTemplateField('text', 'Tax:', 430, 550);
+                    addTemplateField('text', 'Total:', 430, 580, { fontSize: 16, fontWeight: 'bold' });
+                    addTemplateField('text', 'Payment Terms:', 50, 620);
+                    addTemplateField('text', 'Notes:', 50, 650, { multiline: true, height: 80 });
+                    break;
+                    
+                case 'contact':
+                    // Add contact form fields
+                    addTemplateField('text', 'Contact Us', 50, 50, { fontSize: 24, textAlign: 'center', width: 500 });
+                    addTemplateField('text', 'Name:', 50, 120);
+                    addTemplateField('text', 'Email:', 50, 170);
+                    addTemplateField('text', 'Phone:', 50, 220);
+                    addTemplateField('dropdown', 'Subject:', 50, 270, {
+                        options: ['General Inquiry', 'Support', 'Feedback', 'Other']
+                    });
+                    addTemplateField('text', 'Message:', 50, 320, { multiline: true, height: 150 });
+                    addTemplateField('checkbox', 'Subscribe to newsletter', 50, 500);
+                    addTemplateField('signature', 'Signature', 50, 550);
+                    break;
+                    
+                case 'blank':
+                default:
+                    // Blank form - no template fields
+                    break;
+            }
+        }
+
+        function addTemplateField(type, label, x, y, options = {}) {
+            const field = {
+                id: generateId(),
+                type,
+                label,
+                x,
+                y,
+                ...options
+            };
+            
+            addFieldToCanvas(field);
+            formFields.push(field);
+            updateFieldList();
+        }
+
+        function addNewPage() {
+            const newPage = {
+                id: generateId(),
+                fields: [],
+                background: '#ffffff',
+                width: formCanvas.width,
+                height: formCanvas.height
+            };
+            
+            pages.push(newPage);
+            currentPageIndex = pages.length - 1;
+            renderCurrentPage();
+            updatePageControls();
+        }
+
+        function removeCurrentPage() {
+            if (pages.length <= 1) {
+                showStatus('Cannot remove the only page', 'error');
+                return;
+            }
+            
+            pages.splice(currentPageIndex, 1);
+            if (currentPageIndex >= pages.length) {
+                currentPageIndex = pages.length - 1;
+            }
+            
+            renderCurrentPage();
+            updatePageControls();
+        }
+
+        function renderCurrentPage() {
+            if (!pages[currentPageIndex]) return;
+            
+            // Clear canvas
+            formCanvas.clear();
+            formCanvas.backgroundColor = pages[currentPageIndex].background;
+            
+            // Render fields for current page
+            pages[currentPageIndex].fields.forEach(field => {
+                addFieldToCanvas(field);
+            });
+            
+            // Update page controls
+            pageNumInput.value = currentPageIndex + 1;
+            pageCountSpan.textContent = pages.length;
+            prevPageBtn.disabled = currentPageIndex === 0;
+            nextPageBtn.disabled = currentPageIndex === pages.length - 1;
+        }
+
+        function updatePageControls() {
+            pageNumInput.value = currentPageIndex + 1;
+            pageNumInput.max = pages.length;
+            pageCountSpan.textContent = pages.length;
+            prevPageBtn.disabled = currentPageIndex === 0;
+            nextPageBtn.disabled = currentPageIndex === pages.length - 1;
+        }
+
+        function showFieldProperties(fieldType) {
+            currentField = {
+                id: generateId(),
+                type: fieldType,
+                label: '',
+                x: 100,
+                y: 100
+            };
+            
+            // Set default properties based on field type
+            switch (fieldType) {
+                case 'text':
+                    currentField.value = '';
+                    currentField.required = false;
+                    currentField.multiline = false;
+                    currentField.width = 200;
+                    currentField.height = 30;
+                    currentField.fontSize = 14;
+                    break;
+                    
+                case 'checkbox':
+                    currentField.label = 'Checkbox';
+                    currentField.checked = false;
+                    currentField.required = false;
+                    break;
+                    
+                case 'date':
+                    currentField.label = 'Date';
+                    currentField.format = 'MM/DD/YYYY';
+                    currentField.required = false;
+                    currentField.width = 150;
+                    break;
+                    
+                case 'radio':
+                    currentField.label = 'Radio Group';
+                    currentField.options = ['Option 1', 'Option 2'];
+                    currentField.orientation = 'vertical';
+                    currentField.required = false;
+                    break;
+                    
+                case 'dropdown':
+                    currentField.label = 'Dropdown';
+                    currentField.options = ['Option 1', 'Option 2', 'Option 3'];
+                    currentField.required = false;
+                    currentField.width = 200;
+                    break;
+                    
+                case 'signature':
+                    currentField.label = 'Signature';
+                    currentField.required = false;
+                    currentField.width = 200;
+                    currentField.height = 50;
+                    break;
+                    
+                case 'table':
+                    currentField.label = 'Table';
+                    currentField.columns = [
+                        { header: 'Column 1', width: 100 },
+                        { header: 'Column 2', width: 100 }
+                    ];
+                    currentField.rows = 3;
+                    currentField.width = 250;
+                    break;
+            }
+            
+            showFieldModal(currentField);
+        }
+
+        function showFieldPropertiesForExisting(fieldObj) {
+            // Find the field in our formFields array
+            const field = formFields.find(f => f.id === fieldObj.id);
+            if (!field) return;
+            
+            currentField = field;
+            showFieldModal(field);
+        }
+
+        function showFieldModal(field) {
+            fieldModalTitle.textContent = `${field.type.charAt(0).toUpperCase() + field.type.slice(1)} Field Properties`;
+            
+            // Generate form based on field type
+            let formHTML = '';
+            
+            // Common properties
+            formHTML += `
+                <div class="form-group">
+                    <label for="fieldLabel">Label</label>
+                    <input type="text" id="fieldLabel" class="form-control" value="${field.label || ''}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="fieldX">X Position</label>
+                    <input type="number" id="fieldX" class="form-control" value="${field.x || 100}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="fieldY">Y Position</label>
+                    <input type="number" id="fieldY" class="form-control" value="${field.y || 100}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="fieldRequired">
+                        <input type="checkbox" id="fieldRequired" ${field.required ? 'checked' : ''}>
+                        Required Field
+                    </label>
+                </div>
+            `;
+            
+            // Type-specific properties
+            switch (field.type) {
+                case 'text':
+                    formHTML += `
+                        <div class="form-group">
+                            <label for="fieldValue">Default Value</label>
+                            <input type="text" id="fieldValue" class="form-control" value="${field.value || ''}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fieldWidth">Width</label>
+                            <input type="number" id="fieldWidth" class="form-control" value="${field.width || 200}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fieldHeight">Height</label>
+                            <input type="number" id="fieldHeight" class="form-control" value="${field.height || 30}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fieldFontSize">Font Size</label>
+                            <input type="number" id="fieldFontSize" class="form-control" value="${field.fontSize || 14}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fieldMultiline">
+                                <input type="checkbox" id="fieldMultiline" ${field.multiline ? 'checked' : ''}>
+                                Multiline Text
+                            </label>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'checkbox':
+                    formHTML += `
+                        <div class="form-group">
+                            <label for="fieldChecked">
+                                <input type="checkbox" id="fieldChecked" ${field.checked ? 'checked' : ''}>
+                                Checked by default
+                            </label>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'date':
+                    formHTML += `
+                        <div class="form-group">
+                            <label for="fieldFormat">Date Format</label>
+                            <select id="fieldFormat" class="form-control">
+                                <option value="MM/DD/YYYY" ${field.format === 'MM/DD/YYYY' ? 'selected' : ''}>MM/DD/YYYY</option>
+                                <option value="DD/MM/YYYY" ${field.format === 'DD/MM/YYYY' ? 'selected' : ''}>DD/MM/YYYY</option>
+                                <option value="YYYY-MM-DD" ${field.format === 'YYYY-MM-DD' ? 'selected' : ''}>YYYY-MM-DD</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fieldWidth">Width</label>
+                            <input type="number" id="fieldWidth" class="form-control" value="${field.width || 150}">
+                        </div>
+                    `;
+                    break;
+                    
+                case 'radio':
+                    formHTML += `
+                        <div class="form-group">
+                            <label>Options (one per line)</label>
+                            <textarea id="fieldOptions" class="form-control form-textarea">${field.options ? field.options.join('\n') : ''}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fieldOrientation">Orientation</label>
+                            <select id="fieldOrientation" class="form-control">
+                                <option value="vertical" ${field.orientation === 'vertical' ? 'selected' : ''}>Vertical</option>
+                                <option value="horizontal" ${field.orientation === 'horizontal' ? 'selected' : ''}>Horizontal</option>
+                            </select>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'dropdown':
+                    formHTML += `
+                        <div class="form-group">
+                            <label>Options (one per line)</label>
+                            <textarea id="fieldOptions" class="form-control form-textarea">${field.options ? field.options.join('\n') : ''}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fieldWidth">Width</label>
+                            <input type="number" id="fieldWidth" class="form-control" value="${field.width || 200}">
+                        </div>
+                    `;
+                    break;
+                    
+                case 'signature':
+                    formHTML += `
+                        <div class="form-group">
+                            <label for="fieldWidth">Width</label>
+                            <input type="number" id="fieldWidth" class="form-control" value="${field.width || 200}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fieldHeight">Height</label>
+                            <input type="number" id="fieldHeight" class="form-control" value="${field.height || 50}">
+                        </div>
+                    `;
+                    break;
+                    
+                case 'table':
+                    formHTML += `
+                        <div class="form-group">
+                            <label for="fieldColumns">Number of Columns</label>
+                            <input type="number" id="fieldColumns" class="form-control" value="${field.columns ? field.columns.length : 2}" min="1">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fieldRows">Number of Rows</label>
+                            <input type="number" id="fieldRows" class="form-control" value="${field.rows || 3}" min="1">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fieldWidth">Table Width</label>
+                            <input type="number" id="fieldWidth" class="form-control" value="${field.width || 250}">
+                        </div>
+                    `;
+                    break;
+            }
+            
+            fieldModalBody.innerHTML = formHTML;
+            fieldModal.classList.add('active');
+        }
+
+        function saveFieldProperties() {
+            // Get common properties
+            currentField.label = document.getElementById('fieldLabel').value;
+            currentField.x = parseInt(document.getElementById('fieldX').value);
+            currentField.y = parseInt(document.getElementById('fieldY').value);
+            currentField.required = document.getElementById('fieldRequired').checked;
+            
+            // Get type-specific properties
+            switch (currentField.type) {
+                case 'text':
+                    currentField.value = document.getElementById('fieldValue').value;
+                    currentField.width = parseInt(document.getElementById('fieldWidth').value);
+                    currentField.height = parseInt(document.getElementById('fieldHeight').value);
+                    currentField.fontSize = parseInt(document.getElementById('fieldFontSize').value);
+                    currentField.multiline = document.getElementById('fieldMultiline').checked;
+                    break;
+                    
+                case 'checkbox':
+                    currentField.checked = document.getElementById('fieldChecked').checked;
+                    break;
+                    
+                case 'date':
+                    currentField.format = document.getElementById('fieldFormat').value;
+                    currentField.width = parseInt(document.getElementById('fieldWidth').value);
+                    break;
+                    
+                case 'radio':
+                case 'dropdown':
+                    const optionsText = document.getElementById('fieldOptions').value;
+                    currentField.options = optionsText.split('\n').filter(opt => opt.trim() !== '');
+                    
+                    if (currentField.type === 'radio') {
+                        currentField.orientation = document.getElementById('fieldOrientation').value;
+                    } else {
+                        currentField.width = parseInt(document.getElementById('fieldWidth').value);
+                    }
+                    break;
+                    
+                case 'signature':
+                    currentField.width = parseInt(document.getElementById('fieldWidth').value);
+                    currentField.height = parseInt(document.getElementById('fieldHeight').value);
+                    break;
+                    
+                case 'table':
+                    const columnsCount = parseInt(document.getElementById('fieldColumns').value);
+                    const rowsCount = parseInt(document.getElementById('fieldRows').value);
+                    const tableWidth = parseInt(document.getElementById('fieldWidth').value);
+                    
+                    // Initialize or update columns
+                    if (!currentField.columns || currentField.columns.length !== columnsCount) {
+                        currentField.columns = [];
+                        for (let i = 0; i < columnsCount; i++) {
+                            currentField.columns.push({
+                                header: `Column ${i + 1}`,
+                                width: Math.floor(tableWidth / columnsCount)
+                            });
+                        }
+                    }
+                    
+                    currentField.rows = rowsCount;
+                    currentField.width = tableWidth;
+                    break;
+            }
+            
+            // If this is a new field, add it to the form
+            if (!formFields.find(f => f.id === currentField.id)) {
+                formFields.push(currentField);
+            }
+            
+            // Update the canvas
+            renderCurrentPage();
+            updateFieldList();
+            
+            // Close the modal
+            fieldModal.classList.remove('active');
+        }
+
+        function addFieldToCanvas(field) {
+            let fabricObj;
+            
+            switch (field.type) {
+                case 'text':
+                    if (field.multiline) {
+                        fabricObj = new fabric.Textbox(field.label || '', {
+                            left: field.x,
+                            top: field.y,
+                            width: field.width,
+                            height: field.height,
+                            fontSize: field.fontSize,
+                            textAlign: 'left',
+                            fill: '#000000',
+                            id: field.id
+                        });
+                    } else {
+                        fabricObj = new fabric.Text(field.label || '', {
+                            left: field.x,
+                            top: field.y,
+                            fontSize: field.fontSize,
+                            fill: '#000000',
+                            id: field.id
+                        });
+                    }
+                    break;
+                    
+                case 'checkbox':
+                    fabricObj = new fabric.Rect({
+                        left: field.x,
+                        top: field.y,
+                        width: 16,
+                        height: 16,
+                        stroke: '#000000',
+                        fill: field.checked ? '#000000' : 'transparent',
+                        id: field.id
+                    });
+                    
+                    const checkboxLabel = new fabric.Text(field.label || '', {
+                        left: field.x + 25,
+                        top: field.y,
+                        fontSize: 14,
+                        fill: '#000000',
+                        id: field.id + '_label'
+                    });
+                    
+                    formCanvas.add(fabricObj, checkboxLabel);
+                    return;
+                    
+                case 'date':
+                    fabricObj = new fabric.Text(field.label || '', {
+                        left: field.x,
+                        top: field.y,
+                        fontSize: 14,
+                        fill: '#000000',
+                        id: field.id
+                    });
+                    
+                    const dateField = new fabric.Rect({
+                        left: field.x + 100,
+                        top: field.y,
+                        width: field.width,
+                        height: 25,
+                        stroke: '#000000',
+                        fill: 'transparent',
+                        id: field.id + '_input'
+                    });
+                    
+                    formCanvas.add(fabricObj, dateField);
+                    return;
+                    
+                case 'radio':
+                    const radioGroup = [];
+                    let radioY = field.y;
+                    
+                    field.options.forEach((option, index) => {
+                        const radioCircle = new fabric.Circle({
+                            left: field.x,
+                            top: radioY,
+                            radius: 8,
+                            stroke: '#000000',
+                            fill: index === 0 ? '#000000' : 'transparent', // First option selected by default
+                            id: field.id + '_' + index
+                        });
+                        
+                        const radioLabel = new fabric.Text(option, {
+                            left: field.x + 20,
+                            top: radioY - 8,
+                            fontSize: 14,
+                            fill: '#000000',
+                            id: field.id + '_label_' + index
+                        });
+                        
+                        radioGroup.push(radioCircle, radioLabel);
+                        
+                        if (field.orientation === 'vertical') {
+                            radioY += 30;
+                        } else {
+                            radioY += 150;
+                        }
+                    });
+                    
+                    const group = new fabric.Group(radioGroup, {
+                        id: field.id
+                    });
+                    
+                    formCanvas.add(group);
+                    return;
+                    
+                case 'dropdown':
+                    fabricObj = new fabric.Text(field.label || '', {
+                        left: field.x,
+                        top: field.y,
+                        fontSize: 14,
+                        fill: '#000000',
+                        id: field.id
+                    });
+                    
+                    const dropdownField = new fabric.Rect({
+                        left: field.x + 100,
+                        top: field.y,
+                        width: field.width,
+                        height: 25,
+                        stroke: '#000000',
+                        fill: 'transparent',
+                        id: field.id + '_input'
+                    });
+                    
+                    const dropdownArrow = new fabric.Text('▼', {
+                        left: field.x + 100 + field.width - 20,
+                        top: field.y,
+                        fontSize: 14,
+                        fill: '#000000',
+                        id: field.id + '_arrow'
+                    });
+                    
+                    formCanvas.add(fabricObj, dropdownField, dropdownArrow);
+                    return;
+                    
+                case 'signature':
+                    fabricObj = new fabric.Rect({
+                        left: field.x,
+                        top: field.y,
+                        width: field.width,
+                        height: field.height,
+                        stroke: '#000000',
+                        fill: 'transparent',
+                        id: field.id
+                    });
+                    
+                    const signatureLabel = new fabric.Text(field.label || '', {
+                        left: field.x,
+                        top: field.y - 20,
+                        fontSize: 12,
+                        fill: '#000000',
+                        id: field.id + '_label'
+                    });
+                    
+                    formCanvas.add(signatureLabel, fabricObj);
+                    return;
+                    
+                case 'table':
+                    const tableGroup = [];
+                    const cellWidth = field.width / field.columns.length;
+                    const cellHeight = 25;
+                    
+                    // Add header row
+                    field.columns.forEach((col, colIndex) => {
+                        const headerCell = new fabric.Rect({
+                            left: field.x + colIndex * cellWidth,
+                            top: field.y,
+                            width: cellWidth,
+                            height: cellHeight,
+                            stroke: '#000000',
+                            fill: '#f0f0f0',
+                            id: field.id + '_header_' + colIndex
+                        });
+                        
+                        const headerText = new fabric.Text(col.header, {
+                            left: field.x + colIndex * cellWidth + 5,
+                            top: field.y + 5,
+                            fontSize: 12,
+                            fill: '#000000',
+                            id: field.id + '_headertext_' + colIndex
+                        });
+                        
+                        tableGroup.push(headerCell, headerText);
+                    });
+                    
+                    // Add data rows
+                    for (let row = 1; row <= field.rows; row++) {
+                        field.columns.forEach((col, colIndex) => {
+                            const dataCell = new fabric.Rect({
+                                left: field.x + colIndex * cellWidth,
+                                top: field.y + row * cellHeight,
+                                width: cellWidth,
+                                height: cellHeight,
+                                stroke: '#000000',
+                                fill: '#ffffff',
+                                id: field.id + '_cell_' + row + '_' + colIndex
+                            });
+                            
+                            tableGroup.push(dataCell);
+                        });
+                    }
+                    
+                    const table = new fabric.Group(tableGroup, {
+                        id: field.id
+                    });
+                    
+                    formCanvas.add(table);
+                    return;
+            }
+            
+            if (fabricObj) {
+                formCanvas.add(fabricObj);
+            }
+        }
+
+        function updateFieldList() {
+            if (formFields.length === 0) {
+                fieldList.innerHTML = '<div class="empty-state">No fields added yet</div>';
+                return;
+            }
+            
+            fieldList.innerHTML = '';
+            formFields.forEach(field => {
+                const fieldItem = document.createElement('div');
+                fieldItem.className = 'field-item';
+                fieldItem.dataset.id = field.id;
+                
+                let icon, text;
+                switch (field.type) {
+                    case 'text':
+                        icon = '<i class="fas fa-font"></i>';
+                        text = `Text: ${field.label || 'Untitled'}`;
+                        break;
+                    case 'checkbox':
+                        icon = '<i class="fas fa-check-square"></i>';
+                        text = `Checkbox: ${field.label || 'Untitled'}`;
+                        break;
+                    case 'date':
+                        icon = '<i class="fas fa-calendar"></i>';
+                        text = `Date: ${field.label || 'Untitled'}`;
+                        break;
+                    case 'radio':
+                        icon = '<i class="far fa-dot-circle"></i>';
+                        text = `Radio: ${field.label || 'Untitled'}`;
+                        break;
+                    case 'dropdown':
+                        icon = '<i class="fas fa-caret-down"></i>';
+                        text = `Dropdown: ${field.label || 'Untitled'}`;
+                        break;
+                    case 'signature':
+                        icon = '<i class="fas fa-signature"></i>';
+                        text = `Signature: ${field.label || 'Untitled'}`;
+                        break;
+                    case 'table':
+                        icon = '<i class="fas fa-table"></i>';
+                        text = `Table: ${field.label || 'Untitled'}`;
+                        break;
+                    default:
+                        icon = '<i class="fas fa-question"></i>';
+                        text = `Field: ${field.label || 'Untitled'}`;
+                }
+                
+                fieldItem.innerHTML = `
+                    <div class="field-item-content">
+                        ${icon} ${text}
+                    </div>
+                    <div class="field-item-actions">
+                        <i class="fas fa-edit" data-action="edit"></i>
+                        <i class="fas fa-trash" data-action="delete"></i>
+                    </div>
+                `;
+                
+                fieldList.appendChild(fieldItem);
+            });
+            
+            // Add event listeners to field items
+            document.querySelectorAll('.field-item').forEach(item => {
+                const editBtn = item.querySelector('[data-action="edit"]');
+                const deleteBtn = item.querySelector('[data-action="delete"]');
+                const fieldId = item.dataset.id;
+                
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const field = formFields.find(f => f.id === fieldId);
+                    if (field) {
+                        currentField = field;
+                        showFieldModal(field);
+                    }
+                });
+                
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const index = formFields.findIndex(f => f.id === fieldId);
+                    if (index !== -1) {
+                        formFields.splice(index, 1);
+                        renderCurrentPage();
+                        updateFieldList();
+                        addToUndoStack();
+                    }
+                });
+                
+                item.addEventListener('click', () => {
+                    const field = formFields.find(f => f.id === fieldId);
+                    if (field) {
+                        // Find and select the corresponding canvas object
+                        const canvasObj = formCanvas.getObjects().find(obj => obj.id === field.id);
+                        if (canvasObj) {
+                            formCanvas.setActiveObject(canvasObj);
+                            formCanvas.renderAll();
+                        }
+                    }
+                });
+            });
+        }
+
+        function showFormProperties(propertyType) {
+            fieldModalTitle.textContent = propertyType === 'title' ? 'Set Form Title' : 'Add Instructions';
+            
+            let formHTML = '';
+            
+            if (propertyType === 'title') {
+                formHTML = `
+                    <div class="form-group">
+                        <label for="formTitle">Form Title</label>
+                        <input type="text" id="formTitle" class="form-control" placeholder="Enter form title">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="formTitleSize">Font Size</label>
+                        <input type="number" id="formTitleSize" class="form-control" value="24" min="10" max="72">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="formTitleAlign">Alignment</label>
+                        <select id="formTitleAlign" class="form-control">
+                            <option value="left">Left</option>
+                            <option value="center" selected>Center</option>
+                            <option value="right">Right</option>
+                        </select>
+                    </div>
+                `;
+            } else {
+                formHTML = `
+                    <div class="form-group">
+                        <label for="formInstructions">Instructions</label>
+                        <textarea id="formInstructions" class="form-control form-textarea" placeholder="Enter instructions for the form"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="formInstructionsSize">Font Size</label>
+                        <input type="number" id="formInstructionsSize" class="form-control" value="14" min="8" max="24">
+                    </div>
+                `;
+            }
+            
+            fieldModalBody.innerHTML = formHTML;
+            
+            // Change save button text
+            saveFieldModal.textContent = propertyType === 'title' ? 'Add Title' : 'Add Instructions';
+            
+            // Store the property type in the current field
+            currentField = {
+                id: generateId(),
+                type: 'form_' + propertyType
+            };
+            
+            fieldModal.classList.add('active');
+        }
+
+        function showPageProperties(propertyType) {
+            fieldModalTitle.textContent = propertyType === 'size' ? 'Set Page Size' : 'Set Page Margins';
+            
+            let formHTML = '';
+            
+            if (propertyType === 'size') {
+                formHTML = `
+                    <div class="form-group">
+                        <label for="pageSize">Page Size</label>
+                        <select id="pageSize" class="form-control">
+                            <option value="letter">Letter (8.5 × 11 in)</option>
+                            <option value="legal">Legal (8.5 × 14 in)</option>
+                            <option value="a4">A4 (210 × 297 mm)</option>
+                            <option value="a5">A5 (148 × 210 mm)</option>
+                        </select>
+                    </div>
+                `;
+            } else {
+                formHTML = `
+                    <div class="form-group">
+                        <label for="pageMarginTop">Top Margin (px)</label>
+                        <input type="number" id="pageMarginTop" class="form-control" value="50">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="pageMarginRight">Right Margin (px)</label>
+                        <input type="number" id="pageMarginRight" class="form-control" value="50">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="pageMarginBottom">Bottom Margin (px)</label>
+                        <input type="number" id="pageMarginBottom" class="form-control" value="50">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="pageMarginLeft">Left Margin (px)</label>
+                        <input type="number" id="pageMarginLeft" class="form-control" value="50">
+                    </div>
+                `;
+            }
+            
+            fieldModalBody.innerHTML = formHTML;
+            
+            // Change save button text
+            saveFieldModal.textContent = 'Apply Changes';
+            
+            // Store the property type in the current field
+            currentField = {
+                id: generateId(),
+                type: 'page_' + propertyType
+            };
+            
+            fieldModal.classList.add('active');
+        }
+
+        function saveThemeSettings() {
+            formTheme = {
+                primaryColor: themePrimaryColor.value,
+                secondaryColor: themeSecondaryColor.value,
+                fontFamily: themeFont.value
+            };
+            
+            // Apply theme to the form
+            applyTheme();
+            
+            // Close the modal
+            themeModal.classList.remove('active');
+        }
+
+        function applyTheme() {
+            // This would update the visual appearance of the form
+            // based on the selected theme colors and font
+            // For now, we'll just update the canvas background
+            formCanvas.backgroundColor = formTheme.primaryColor + '20'; // Add transparency
+            formCanvas.renderAll();
+            
+            showStatus('Theme applied successfully', 'success');
+        }
+
+        function addImageToForm() {
+            const file = imageUpload.files[0];
+            const url = imageUrl.value.trim();
+            
+            if (!file && !url) {
+                showStatus('Please upload an image or enter an image URL', 'error');
+                return;
+            }
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    fabric.Image.fromURL(e.target.result, function(img) {
+                        img.set({
+                            left: 100,
+                            top: 100,
+                            scaleX: 0.5,
+                            scaleY: 0.5,
+                            id: generateId()
+                        });
+                        
+                        const field = {
+                            id: img.id,
+                            type: 'image',
+                            src: e.target.result,
+                            x: 100,
+                            y: 100,
+                            width: img.width * 0.5,
+                            height: img.height * 0.5
+                        };
+                        
+                        formFields.push(field);
+                        formCanvas.add(img);
+                        updateFieldList();
+                        addToUndoStack();
+                        
+                        // Close the modal and reset inputs
+                        imageModal.classList.remove('active');
+                        imageUpload.value = '';
+                        imageUrl.value = '';
+                    });
+                };
+                reader.readAsDataURL(file);
+            } else if (url) {
+                fabric.Image.fromURL(url, function(img) {
+                    img.set({
+                        left: 100,
+                        top: 100,
+                        scaleX: 0.5,
+                        scaleY: 0.5,
+                        id: generateId()
+                    });
+                    
+                    const field = {
+                        id: img.id,
+                        type: 'image',
+                        src: url,
+                        x: 100,
+                        y: 100,
+                        width: img.width * 0.5,
+                        height: img.height * 0.5
+                    };
+                    
+                    formFields.push(field);
+                    formCanvas.add(img);
+                    updateFieldList();
+                    addToUndoStack();
+                    
+                    // Close the modal and reset inputs
+                    imageModal.classList.remove('active');
+                    imageUpload.value = '';
+                    imageUrl.value = '';
+                }, {
+                    crossOrigin: 'anonymous'
+                });
+            }
+        }
+
+        function previewForm() {
+            // Create a preview of the form
+            previewModalBody.innerHTML = `
+                <h3 style="text-align: center; margin-bottom: 20px;">Form Preview</h3>
+                <div style="border: 1px solid #ddd; padding: 20px; border-radius: 5px; background: white;">
+                    ${generateFormPreviewHTML()}
+                </div>
+                <div style="margin-top: 20px; text-align: center;">
+                    <button class="btn btn-primary" onclick="document.getElementById('closePreviewBtn').click()">Close Preview</button>
+                </div>
+            `;
+            
+            previewModal.classList.add('active');
+        }
+
+        function generateFormPreviewHTML() {
+            let html = '';
+            
+            // Add form title if exists
+            const formTitle = formFields.find(f => f.type === 'form_title');
+            if (formTitle) {
+                html += `<h1 style="text-align: ${formTitle.align || 'center'}; font-size: ${formTitle.size || 24}px;">${formTitle.value || 'Untitled Form'}</h1>`;
+            }
+            
+            // Add form instructions if exists
+            const formInstructions = formFields.find(f => f.type === 'form_instructions');
+            if (formInstructions) {
+                html += `<p style="font-size: ${formInstructions.size || 14}px; margin-bottom: 30px;">${formInstructions.value || ''}</p>`;
+            }
+            
+            // Add form fields
+            formFields.forEach(field => {
+                if (field.type.startsWith('form_') || field.type === 'image') return;
+                
+                switch (field.type) {
+                    case 'text':
+                        html += `
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">${field.label || 'Text Field'}</label>
+                                ${field.multiline ? 
+                                    `<textarea style="width: ${field.width}px; height: ${field.height}px; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">${field.value || ''}</textarea>` : 
+                                    `<input type="text" style="width: ${field.width}px; height: 30px; padding: 5px; border: 1px solid #ddd; border-radius: 3px;" value="${field.value || ''}">`
+                                }
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'checkbox':
+                        html += `
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: flex; align-items: center; gap: 5px;">
+                                    <input type="checkbox" ${field.checked ? 'checked' : ''}>
+                                    ${field.label || 'Checkbox'}
+                                </label>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'date':
+                        html += `
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">${field.label || 'Date Field'}</label>
+                                <input type="date" style="width: ${field.width}px; height: 30px; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'radio':
+                        html += `
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">${field.label || 'Radio Group'}</label>
+                                <div style="display: ${field.orientation === 'horizontal' ? 'flex' : 'block'}; gap: 15px;">
+                                    ${field.options.map(opt => `
+                                        <label style="display: flex; align-items: center; gap: 5px; margin-right: 15px;">
+                                            <input type="radio" name="${field.id}">
+                                            ${opt}
+                                        </label>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'dropdown':
+                        html += `
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">${field.label || 'Dropdown'}</label>
+                                <select style="width: ${field.width}px; height: 30px; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
+                                    ${field.options.map(opt => `
+                                        <option>${opt}</option>
+                                    `).join('')}
+                                </select>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'signature':
+                        html += `
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">${field.label || 'Signature'}</label>
+                                <div style="width: ${field.width}px; height: ${field.height}px; border: 1px dashed #999; border-radius: 3px;"></div>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'table':
+                        html += `
+                            <div style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">${field.label || 'Table'}</label>
+                                <table border="1" style="width: ${field.width}px; border-collapse: collapse;">
+                                    <thead>
+                                        <tr>
+                                            ${field.columns.map(col => `
+                                                <th style="padding: 5px; text-align: left; background: #f0f0f0;">${col.header}</th>
+                                            `).join('')}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${Array(field.rows).fill().map((_, row) => `
+                                            <tr>
+                                                ${field.columns.map(col => `
+                                                    <td style="padding: 5px; height: 25px;"></td>
+                                                `).join('')}
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                        break;
+                }
+            });
+            
+            return html;
+        }
+
+        async function saveFormAsPDF() {
+            try {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                
+                // Create a new PDF document
+                const pdfDoc = await PDFDocument.create();
+                
+                // Add a blank page
+                const page = pdfDoc.addPage([550, 750]); // Default size
+                
+                // Get the Helvetica font
+                const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+                
+                // Draw form title if exists
+                const formTitle = formFields.find(f => f.type === 'form_title');
+                if (formTitle) {
+                    page.drawText(formTitle.value || 'Untitled Form', {
+                        x: 50,
+                        y: 700,
+                        size: formTitle.size || 24,
+                        font: helveticaFont,
+                        color: rgb(0, 0, 0),
+                    });
+                }
+                
+                // Draw form instructions if exists
+                const formInstructions = formFields.find(f => f.type === 'form_instructions');
+                if (formInstructions) {
+                    page.drawText(formInstructions.value || '', {
+                        x: 50,
+                        y: 650,
+                        size: formInstructions.size || 14,
+                        font: helveticaFont,
+                        color: rgb(0, 0, 0),
+                    });
+                }
+                
+                // Draw form fields
+                formFields.forEach(field => {
+                    if (field.type.startsWith('form_')) return;
+                    
+                    // Draw field label
+                    page.drawText(field.label || '', {
+                        x: field.x,
+                        y: 750 - field.y,
+                        size: 12,
+                        font: helveticaFont,
+                        color: rgb(0, 0, 0),
+                    });
+                    
+                    // Draw field based on type
+                    switch (field.type) {
+                        case 'text':
+                            // Draw a rectangle for the text field
+                            page.drawRectangle({
+                                x: field.x,
+                                y: 750 - field.y - 20,
+                                width: field.width || 200,
+                                height: field.height || 20,
+                                borderColor: rgb(0, 0, 0),
+                                borderWidth: 1,
+                            });
+                            break;
+                            
+                        case 'checkbox':
+                            // Draw a square for the checkbox
+                            page.drawSquare({
+                                x: field.x,
+                                y: 750 - field.y - 15,
+                                size: 15,
+                                borderColor: rgb(0, 0, 0),
+                                borderWidth: 1,
+                            });
+                            
+                            if (field.checked) {
+                                // Draw a checkmark
+                                page.drawText('✓', {
+                                    x: field.x + 3,
+                                    y: 750 - field.y - 13,
+                                    size: 12,
+                                    font: helveticaFont,
+                                    color: rgb(0, 0, 0),
+                                });
+                            }
+                            break;
+                            
+                        // Add other field types as needed
+                    }
+                });
+                
+                // Save the PDF
+                const pdfBytes = await pdfDoc.save();
+                
+                // Download the PDF
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                saveAs(blob, 'form.pdf');
+                
+                showStatus('PDF saved successfully!', 'success');
+            } catch (error) {
+                console.error('Error saving PDF:', error);
+                showStatus('Error saving PDF. Please try again.', 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Form';
+            }
+        }
+
+        function resetForm() {
+            if (confirm('Are you sure you want to reset the form? All changes will be lost.')) {
+                formFields = [];
+                pages = [];
+                currentPageIndex = 0;
+                undoStack = [];
+                redoStack = [];
+                
+                // Add a new blank page
+                addNewPage();
+                
+                // Update UI
+                updateFieldList();
+                undoBtn.classList.add('btn-disabled');
+                redoBtn.classList.add('btn-disabled');
+                
+                showStatus('Form has been reset', 'success');
+            }
+        }
+
+        function addToUndoStack() {
+            // Save current state to undo stack
+            const state = {
+                fields: JSON.parse(JSON.stringify(formFields)),
+                pages: JSON.parse(JSON.stringify(pages)),
+                currentPageIndex
+            };
+            
+            undoStack.push(state);
+            undoBtn.classList.remove('btn-disabled');
+            
+            // Clear redo stack when a new action is performed
+            redoStack = [];
+            redoBtn.classList.add('btn-disabled');
+        }
+
+        function undoLastAction() {
+            if (undoStack.length === 0) return;
+            
+            // Save current state to redo stack
+            const currentState = {
+                fields: JSON.parse(JSON.stringify(formFields)),
+                pages: JSON.parse(JSON.stringify(pages)),
+                currentPageIndex
+            };
+            
+            redoStack.push(currentState);
+            redoBtn.classList.remove('btn-disabled');
+            
+            // Restore previous state
+            const lastState = undoStack.pop();
+            formFields = lastState.fields;
+            pages = lastState.pages;
+            currentPageIndex = lastState.currentPageIndex;
+            
+            // Update UI
+            renderCurrentPage();
+            updateFieldList();
+            
+            if (undoStack.length === 0) {
+                undoBtn.classList.add('btn-disabled');
+            }
+        }
+
+        function redoLastAction() {
+            if (redoStack.length === 0) return;
+            
+            // Save current state to undo stack
+            const currentState = {
+                fields: JSON.parse(JSON.stringify(formFields)),
+                pages: JSON.parse(JSON.stringify(pages)),
+                currentPageIndex
+            };
+            
+            undoStack.push(currentState);
+            undoBtn.classList.remove('btn-disabled');
+            
+            // Restore next state
+            const nextState = redoStack.pop();
+            formFields = nextState.fields;
+            pages = nextState.pages;
+            currentPageIndex = nextState.currentPageIndex;
+            
+            // Update UI
+            renderCurrentPage();
+            updateFieldList();
+            
+            if (redoStack.length === 0) {
+                redoBtn.classList.add('btn-disabled');
+            }
+        }
+
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = 'status ' + type;
+            statusMessage.style.display = 'block';
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                statusMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        function generateId() {
+            return 'field_' + Math.random().toString(36).substr(2, 9);
+        }
+    </script>
+</body>
+</html>

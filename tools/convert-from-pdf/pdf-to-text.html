@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PDF to Text Converter - FilePro</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet" />
+
+  <!-- External CSS -->
+  <link rel="stylesheet" href="../../style.css" />
+
+  <style>
+    body {
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+
+    header, footer {
+      background: #111;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #00fff0;
+    }
+
+    nav a {
+      color: #fff;
+      margin: 0 15px;
+      text-decoration: none;
+      transition: 0.3s;
+    }
+
+    nav a:hover {
+      color: #00fff0;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 40px auto;
+      background: rgba(255,255,255,0.05);
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 0 30px rgba(0,255,255,0.2);
+      backdrop-filter: blur(8px);
+      animation: fadeIn 1s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    h1 {
+      text-align: center;
+      color: #00fff0;
+      margin-bottom: 20px;
+    }
+
+    .upload-area {
+      border: 2px dashed #00fff0;
+      padding: 40px;
+      border-radius: 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 30px;
+    }
+
+    .upload-area:hover {
+      background: rgba(0, 255, 255, 0.1);
+      transform: scale(1.03);
+    }
+
+    #file-name {
+      margin-top: 10px;
+      color: #00fff0;
+      font-weight: bold;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .tool-btn {
+      background: linear-gradient(135deg, #00fff0, #00e0e0);
+      color: #000;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 20px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    .tool-btn:hover {
+      transform: scale(1.07);
+      box-shadow: 0 0 15px #00fff0;
+    }
+
+    #loading {
+      display: none;
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .neon-spinner {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 10px;
+      border: 6px solid transparent;
+      border-top: 6px solid #00fff0;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    #result-section {
+      display: none;
+      margin-top: 30px;
+      background: rgba(0,255,255,0.05);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,255,255,0.2);
+    }
+
+    #output-text {
+      white-space: pre-wrap;
+      font-size: 14px;
+      color: #00fff0;
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="logo">⚡ FilePro</div>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../../tools.html">Tools</a>
+    <a href="../../about.html">About</a>
+    <a href="../../contact.html">Contact</a>
+  </nav>
+</header>
+
+<main class="page">
+  <h1>PDF to Text Converter</h1>
+
+  <div class="upload-area" onclick="document.getElementById('pdf-upload').click();">
+    <input type="file" id="pdf-upload" accept=".pdf" onchange="handlePDFFile()" />
+    <p>Click or Drop PDF File Here</p>
+    <div id="file-name"></div>
+  </div>
+
+  <div id="loading">
+    <div class="neon-spinner"></div>
+    <p>Extracting text from PDF...</p>
+  </div>
+
+  <div id="result-section">
+    <div id="output-text">Your extracted text will appear here...</div>
+    <button class="tool-btn" onclick="downloadText()">Download as .txt</button>
+  </div>
+</main>
+
+<footer>
+  &copy; 2025 FilePro. All rights reserved.
+</footer>
+
+<script>
+  let extractedText = "";
+
+  function handlePDFFile() {
+    const input = document.getElementById('pdf-upload');
+    const file = input.files[0];
+    const fileNameDiv = document.getElementById('file-name');
+
+    if (!file) return;
+
+    fileNameDiv.textContent = `Selected: ${file.name}`;
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('result-section').style.display = 'none';
+
+    // Simulate extraction
+    setTimeout(() => {
+      extractedText = `Sample text extracted from ${file.name}\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.`;
+      document.getElementById('output-text').textContent = extractedText;
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('result-section').style.display = 'block';
+    }, 3000);
+  }
+
+  function downloadText() {
+    if (!extractedText) {
+      alert("No text extracted yet.");
+      return;
+    }
+
+    const blob = new Blob([extractedText], { type: "text/plain" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "extracted_text.txt";
+    link.click();
+  }
+</script>
+</body>
+</html>

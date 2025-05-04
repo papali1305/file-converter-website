@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fill and Sign PDF</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4a6bff;
+            --secondary: #ff6b6b;
+            --dark-color: #2c3e50;
+            --light-color: #f8f9fa;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7ff;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 1.5rem 2rem;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        nav {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+            transform: translateY(-2px);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        .tool-container {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 3rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background-color: rgba(74, 107, 255, 0.05);
+        }
+
+        .upload-area.active {
+            border-color: var(--success-color);
+            background-color: rgba(40, 167, 69, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .workspace {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+        }
+
+        .pdf-container {
+            flex: 3;
+            background-color: var(--light-color);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            position: relative;
+            min-height: 600px;
+        }
+
+        .toolbar {
+            flex: 1;
+            background-color: var(--light-color);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            position: sticky;
+            top: 100px;
+        }
+
+        .toolbar-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .toolbar-section h3 {
+            margin-bottom: 1rem;
+            color: var(--dark-color);
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toolbar-section h3 i {
+            color: var(--primary);
+        }
+
+        .toolbar-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .tool-btn {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            width: 40px;
+            height: 40px;
+        }
+
+        .tool-btn:hover {
+            background-color: var(--light-color);
+            transform: translateY(-2px);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .tool-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .navigation-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .page-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        #page-num {
+            width: 40px;
+            text-align: center;
+        }
+
+        .canvas-container {
+            overflow: auto;
+            max-height: 600px;
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .color-option {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.selected {
+            border-color: var(--dark-color);
+            transform: scale(1.1);
+        }
+
+        .color-option:nth-child(1) { background-color: #000000; }
+        .color-option:nth-child(2) { background-color: #ff0000; }
+        .color-option:nth-child(3) { background-color: #0000ff; }
+        .color-option:nth-child(4) { background-color: #006400; }
+        .color-option:nth-child(5) { background-color: #800080; }
+        .color-option:nth-child(6) { background-color: #FFA500; }
+
+        .slider-control {
+            margin-bottom: 1rem;
+        }
+
+        .slider-control label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .slider-with-value {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .slider-with-value input[type="range"] {
+            flex: 1;
+        }
+
+        .slider-value {
+            width: 40px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .form-fields-container {
+            margin-bottom: 1rem;
+        }
+
+        .field-btn {
+            padding: 0.5rem 1rem;
+            margin: 0.25rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .field-btn:hover {
+            background-color: var(--light-color);
+            transform: translateY(-2px);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .signature-pad {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            height: 150px;
+            background-color: white;
+            margin-bottom: 1rem;
+        }
+
+        .signature-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #3a5bef;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(74, 107, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e65a5a;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background-color: rgba(74, 107, 255, 0.1);
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .btn-disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .save-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .loading-animation {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(74, 107, 255, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 1rem;
+        }
+
+        .status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .status.success {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+            display: block;
+        }
+
+        .status.error {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            border: 1px solid #dc3545;
+            display: block;
+        }
+
+        .input-field-popup {
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 1rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            display: none;
+        }
+
+        .input-field-popup input {
+            width: 200px;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .input-field-popup .popup-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
+        .field-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .field-item {
+            padding: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        .field-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .field-item:last-child {
+            border-bottom: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 1rem;
+            color: #666;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 120px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .starting-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            animation: fadeOut 1.5s ease-out 2.5s forwards;
+            color: white;
+        }
+
+        .starting-logo {
+            font-size: 4rem;
+            color: var(--primary);
+            animation: logoScale 1.5s ease-out;
+        }
+
+        .starting-text {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-top: 1rem;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: slideIn 1s ease-out 0.5s both;
+            opacity: 0;
+        }
+
+        .starting-subtext {
+            margin-top: 1rem;
+            animation: slideIn 1s ease-out 1s both;
+            opacity: 0;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; visibility: hidden; }
+        }
+
+        @keyframes logoScale {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 992px) {
+            .workspace {
+                flex-direction: column;
+            }
+            
+            .toolbar {
+                width: 100%;
+                position: static;
+            }
+            
+            .toolbar-buttons {
+                justify-content: center;
+            }
+            
+            .pdf-container {
+                min-height: 500px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            header {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            nav {
+                width: 100%;
+                justify-content: space-around;
+            }
+            
+            .canvas-container {
+                max-height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Starting Animation -->
+    <div class="starting-animation" id="startingAnimation">
+        <div class="starting-logo">
+            <i class="fas fa-file-signature"></i>
+        </div>
+        <div class="starting-text">PDF Fill & Sign Tool</div>
+        <div class="starting-subtext">Complete your PDF forms and add signatures easily</div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="logo">
+            <i class="fas fa-bolt"></i>
+            <span>FilePro</span>
+        </div>
+        <nav>
+            <a href="../../index.html">Home</a>
+            <a href="../../tools.html">Tools</a>
+            <a href="../../about.html">About</a>
+            <a href="../../contact.html">Contact</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Fill and Sign PDF</h1>
+            <p class="subtitle">Complete PDF forms and add signatures right in your browser</p>
+        </div>
+
+        <div class="tool-container">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">
+                    <i class="fas fa-file-pdf"></i>
+                </div>
+                <h3>Drag & Drop your PDF here</h3>
+                <p>or click to browse files</p>
+                <input type="file" id="fileInput" class="file-input" accept=".pdf">
+            </div>
+
+            <div class="loading-animation" id="loadingAnimation">
+                <div class="spinner"></div>
+                <p>Loading PDF document...</p>
+            </div>
+
+            <div class="workspace" id="workspace" style="display: none;">
+                <div class="pdf-container">
+                    <div class="navigation-controls">
+                        <button id="prevPage" class="btn btn-outline btn-sm">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </button>
+                        <div class="page-info">
+                            <span>Page</span>
+                            <input type="number" id="page-num" min="1" value="1">
+                            <span>of <span id="page-count">1</span></span>
+                        </div>
+                        <button id="nextPage" class="btn btn-outline btn-sm">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="canvas-container" id="canvasContainer">
+                        <canvas id="pdfCanvas"></canvas>
+                        <canvas id="drawingCanvas"></canvas>
+                    </div>
+                </div>
+                
+                <div class="toolbar">
+                    <div class="toolbar-section">
+                        <h3><i class="fas fa-pen"></i> Drawing Tools</h3>
+                        <div class="toolbar-buttons">
+                            <button class="tool-btn tooltip" id="selectTool" data-tool="select">
+                                <i class="fas fa-mouse-pointer"></i>
+                                <span class="tooltiptext">Select</span>
+                            </button>
+                            <button class="tool-btn tooltip" id="penTool" data-tool="draw">
+                                <i class="fas fa-pen"></i>
+                                <span class="tooltiptext">Draw</span>
+                            </button>
+                            <button class="tool-btn tooltip" id="textTool" data-tool="text">
+                                <i class="fas fa-font"></i>
+                                <span class="tooltiptext">Text</span>
+                            </button>
+                            <button class="tool-btn tooltip" id="rectangleTool" data-tool="rect">
+                                <i class="far fa-square"></i>
+                                <span class="tooltiptext">Rectangle</span>
+                            </button>
+                            <button class="tool-btn tooltip" id="circleTool" data-tool="circle">
+                                <i class="far fa-circle"></i>
+                                <span class="tooltiptext">Circle</span>
+                            </button>
+                            <button class="tool-btn tooltip" id="eraseTool" data-tool="erase">
+                                <i class="fas fa-eraser"></i>
+                                <span class="tooltiptext">Erase</span>
+                            </button>
+                        </div>
+                        
+                        <div class="color-picker">
+                            <div class="color-option selected" data-color="#000000"></div>
+                            <div class="color-option" data-color="#ff0000"></div>
+                            <div class="color-option" data-color="#0000ff"></div>
+                            <div class="color-option" data-color="#006400"></div>
+                            <div class="color-option" data-color="#800080"></div>
+                            <div class="color-option" data-color="#FFA500"></div>
+                        </div>
+                        
+                        <div class="slider-control">
+                            <label for="brushSize">Brush Size:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="brushSize" min="1" max="20" value="3">
+                                <span class="slider-value" id="brushSizeValue">3</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="toolbar-section">
+                        <h3><i class="fas fa-puzzle-piece"></i> Form Fields</h3>
+                        <div class="form-fields-container">
+                            <button class="field-btn" id="addTextField">
+                                <i class="fas fa-font"></i> Text Field
+                            </button>
+                            <button class="field-btn" id="addCheckbox">
+                                <i class="fas fa-check-square"></i> Checkbox
+                            </button>
+                            <button class="field-btn" id="addDateField">
+                                <i class="fas fa-calendar"></i> Date
+                            </button>
+                        </div>
+                        
+                        <div class="field-list" id="fieldList">
+                            <div class="empty-state">No fields added yet</div>
+                        </div>
+                    </div>
+                    
+                    <div class="toolbar-section">
+                        <h3><i class="fas fa-signature"></i> Signature</h3>
+                        <canvas id="signatureCanvas" class="signature-pad"></canvas>
+                        <div class="signature-controls">
+                            <button class="btn btn-outline btn-sm" id="clearSignature">
+                                <i class="fas fa-times"></i> Clear
+                            </button>
+                            <button class="btn btn-primary btn-sm" id="addSignature">
+                                <i class="fas fa-plus"></i> Add to Document
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-field-popup" id="textFieldPopup">
+                <input type="text" id="fieldValue" placeholder="Enter text...">
+                <div class="popup-buttons">
+                    <button class="btn btn-outline btn-sm" id="cancelFieldBtn">Cancel</button>
+                    <button class="btn btn-primary btn-sm" id="addFieldBtn">Add</button>
+                </div>
+            </div>
+
+            <div class="save-controls">
+                <button id="undoBtn" class="btn btn-outline btn-disabled">
+                    <i class="fas fa-undo"></i> Undo
+                </button>
+                <button id="resetBtn" class="btn btn-outline btn-disabled">
+                    <i class="fas fa-sync-alt"></i> Reset
+                </button>
+                <button id="saveBtn" class="btn btn-primary btn-disabled">
+                    <i class="fas fa-save"></i> Save PDF
+                </button>
+            </div>
+
+            <div class="status" id="statusMessage"></div>
+        </div>
+
+        <footer>
+            <p>PDF Fill & Sign Tool &copy; 2023 | Works entirely in your browser - your files are never uploaded to any server</p>
+        </footer>
+    </div>
+
+    <script>
+        // Initialize PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.worker.min.js';
+        
+        // Global variables
+        let pdfDoc = null;
+        let currentPage = 1;
+        let totalPages = 0;
+        let pdfBytes = null;
+        let pdfScale = 1.5;
+        let drawingCanvas = null;
+        let signatureCanvas = null;
+        let signaturePad = null;
+        let currentTool = 'select';
+        let selectedColor = '#000000';
+        let brushSize = 3;
+        let formFields = [];
+        let undoStack = [];
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        
+        // DOM elements
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const workspace = document.getElementById('workspace');
+        const loadingAnimation = document.getElementById('loadingAnimation');
+        const statusMessage = document.getElementById('statusMessage');
+        const canvasContainer = document.getElementById('canvasContainer');
+        const pdfCanvas = document.getElementById('pdfCanvas');
+        const drawingCanvasEl = document.getElementById('drawingCanvas');
+        const pageNumInput = document.getElementById('page-num');
+        const pageCount = document.getElementById('page-count');
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const saveBtn = document.getElementById('saveBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const undoBtn = document.getElementById('undoBtn');
+        const toolButtons = document.querySelectorAll('.tool-btn');
+        const brushSizeInput = document.getElementById('brushSize');
+        const brushSizeValue = document.getElementById('brushSizeValue');
+        const colorOptions = document.querySelectorAll('.color-option');
+        const signatureCanvasEl = document.getElementById('signatureCanvas');
+        const clearSignatureBtn = document.getElementById('clearSignature');
+        const addSignatureBtn = document.getElementById('addSignature');
+        const addTextFieldBtn = document.getElementById('addTextField');
+        const addCheckboxBtn = document.getElementById('addCheckbox');
+        const addDateFieldBtn = document.getElementById('addDateField');
+        const fieldList = document.getElementById('fieldList');
+        const textFieldPopup = document.getElementById('textFieldPopup');
+        const fieldValueInput = document.getElementById('fieldValue');
+        const addFieldBtn = document.getElementById('addFieldBtn');
+        const cancelFieldBtn = document.getElementById('cancelFieldBtn');
+        
+        // Event listeners for document load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Hide the starting animation after 4 seconds
+            setTimeout(() => {
+                const startingAnimation = document.getElementById('startingAnimation');
+                if (startingAnimation) {
+                    startingAnimation.style.display = 'none';
+                }
+            }, 4000);
+            
+            // Initialize signature pad
+            signaturePad = new fabric.Canvas('signatureCanvas', {
+                isDrawingMode: true,
+                width: signatureCanvasEl.parentElement.clientWidth - 2,
+                height: 148
+            });
+            
+            signaturePad.freeDrawingBrush.color = '#000000';
+            signaturePad.freeDrawingBrush.width = 2;
+            
+            // Update brush size value display
+            brushSizeInput.addEventListener('input', () => {
+                brushSize = parseInt(brushSizeInput.value);
+                brushSizeValue.textContent = brushSize;
+                if (drawingCanvas) {
+                    drawingCanvas.freeDrawingBrush.width = brushSize;
+                }
+            });
+
+            // Color picker event listeners
+            colorOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    colorOptions.forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
+                    selectedColor = option.dataset.color;
+                    
+                    if (drawingCanvas) {
+                        drawingCanvas.freeDrawingBrush.color = selectedColor;
+                    }
+                    
+                    if (signaturePad) {
+                        signaturePad.freeDrawingBrush.color = selectedColor;
+                    }
+                });
+            });
+
+            // Tool selection
+            toolButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    toolButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    currentTool = button.dataset.tool;
+                    
+                    if (drawingCanvas) {
+                        drawingCanvas.isDrawingMode = (currentTool === 'draw' || currentTool === 'erase');
+                        drawingCanvas.selection = (currentTool === 'select');
+                        
+                        if (currentTool === 'erase') {
+                            drawingCanvas.freeDrawingBrush.color = '#ffffff';
+                        } else if (currentTool === 'draw') {
+                            drawingCanvas.freeDrawingBrush.color = selectedColor;
+                        }
+                    }
+                });
+            });
+
+            // File upload handling
+            uploadArea.addEventListener('click', () => fileInput.click());
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('active');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('active');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('active');
+                
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFileUpload(fileInput.files[0]);
+                }
+            });
+            
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length) {
+                    handleFileUpload(fileInput.files[0]);
+                }
+            });
+
+            // Page navigation
+            prevPageBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderPage();
+                }
+            });
+            
+            nextPageBtn.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderPage();
+                }
+            });
+            
+            pageNumInput.addEventListener('change', () => {
+                const newPage = parseInt(pageNumInput.value);
+                if (newPage >= 1 && newPage <= totalPages) {
+                    currentPage = newPage;
+                    renderPage();
+                } else {
+                    pageNumInput.value = currentPage;
+                }
+            });
+
+            // Signature controls
+            clearSignatureBtn.addEventListener('click', () => {
+                signaturePad.clear();
+            });
+            
+            addSignatureBtn.addEventListener('click', () => {
+                if (signaturePad.getObjects().length === 0) {
+                    showStatus('Please create a signature first', 'error');
+                    return;
+                }
+                
+                // Create a copy of the signature to add to the main canvas
+                const signature = signaturePad.getObjects()[0].clone();
+                signature.set({
+                    left: 100,
+                    top: 100,
+                    selectable: true
+                });
+                
+                drawingCanvas.add(signature);
+                drawingCanvas.setActiveObject(signature);
+                drawingCanvas.renderAll();
+                
+                // Add to undo stack
+                addToUndoStack();
+            });
+
+            // Form fields
+            addTextFieldBtn.addEventListener('click', () => {
+                showFieldPopup('text');
+            });
+            
+            addCheckboxBtn.addEventListener('click', () => {
+                showFieldPopup('checkbox');
+            });
+            
+            addDateFieldBtn.addEventListener('click', () => {
+                showFieldPopup('date');
+            });
+            
+            cancelFieldBtn.addEventListener('click', () => {
+                hideFieldPopup();
+            });
+            
+            addFieldBtn.addEventListener('click', () => {
+                const value = fieldValueInput.value.trim();
+                if (!value) {
+                    showStatus('Please enter a value for the field', 'error');
+                    return;
+                }
+                
+                // Create a new field object
+                const field = {
+                    type: fieldValueInput.dataset.fieldType,
+                    value: value,
+                    x: 100,
+                    y: 100
+                };
+                
+                formFields.push(field);
+                updateFieldList();
+                hideFieldPopup();
+                
+                // Add to undo stack
+                addToUndoStack();
+            });
+
+            // Save and reset buttons
+            saveBtn.addEventListener('click', savePdf);
+            resetBtn.addEventListener('click', resetCanvas);
+            undoBtn.addEventListener('click', undoLastAction);
+        });
+
+        // Functions
+        function handleFileUpload(file) {
+            if (file.type !== 'application/pdf') {
+                showStatus('Please upload a PDF file', 'error');
+                return;
+            }
+            
+            workspace.style.display = 'none';
+            loadingAnimation.style.display = 'block';
+            statusMessage.style.display = 'none';
+            
+            const fileReader = new FileReader();
+            fileReader.onload = async function() {
+                try {
+                    pdfBytes = new Uint8Array(this.result);
+                    pdfDoc = await pdfjsLib.getDocument({data: pdfBytes}).promise;
+                    totalPages = pdfDoc.numPages;
+                    currentPage = 1;
+                    
+                    pageCount.textContent = totalPages;
+                    pageNumInput.value = currentPage;
+                    pageNumInput.max = totalPages;
+                    
+                    // Initialize fabric.js canvas
+                    initDrawingCanvas();
+                    
+                    // Render first page
+                    await renderPage();
+                    
+                    workspace.style.display = 'flex';
+                    loadingAnimation.style.display = 'none';
+                    saveBtn.classList.remove('btn-disabled');
+                    resetBtn.classList.remove('btn-disabled');
+                } catch (error) {
+                    console.error('Error loading PDF:', error);
+                    showStatus('Error loading PDF. Please try another file.', 'error');
+                    loadingAnimation.style.display = 'none';
+                }
+            };
+            fileReader.readAsArrayBuffer(file);
+        }
+
+        async function renderPage() {
+            if (!pdfDoc) return;
+            
+            const page = await pdfDoc.getPage(currentPage);
+            const viewport = page.getViewport({scale: pdfScale});
+            
+            // Set canvas dimensions
+            pdfCanvas.width = viewport.width;
+            pdfCanvas.height = viewport.height;
+            drawingCanvasEl.width = viewport.width;
+            drawingCanvasEl.height = viewport.height;
+            
+            // Render PDF page
+            const renderContext = {
+                canvasContext: pdfCanvas.getContext('2d'),
+                viewport: viewport
+            };
+            
+            await page.render(renderContext).promise;
+            
+            // Update page info
+            pageNumInput.value = currentPage;
+            prevPageBtn.disabled = (currentPage <= 1);
+            nextPageBtn.disabled = (currentPage >= totalPages);
+        }
+
+        function initDrawingCanvas() {
+            if (drawingCanvas) {
+                drawingCanvas.dispose();
+            }
+            
+            drawingCanvas = new fabric.Canvas('drawingCanvas', {
+                isDrawingMode: false,
+                selection: true,
+                width: pdfCanvas.width,
+                height: pdfCanvas.height
+            });
+            
+            // Configure drawing brush
+            drawingCanvas.freeDrawingBrush.color = selectedColor;
+            drawingCanvas.freeDrawingBrush.width = brushSize;
+            
+            // Event listeners for drawing canvas
+            drawingCanvas.on('object:added', () => {
+                addToUndoStack();
+            });
+            
+            drawingCanvas.on('object:modified', () => {
+                addToUndoStack();
+            });
+            
+            drawingCanvas.on('object:removed', () => {
+                addToUndoStack();
+            });
+        }
+
+        function showFieldPopup(fieldType) {
+            fieldValueInput.value = '';
+            fieldValueInput.dataset.fieldType = fieldType;
+            
+            // Set placeholder based on field type
+            switch (fieldType) {
+                case 'text':
+                    fieldValueInput.placeholder = 'Enter text...';
+                    break;
+                case 'checkbox':
+                    fieldValueInput.placeholder = 'Checkbox label...';
+                    break;
+                case 'date':
+                    fieldValueInput.placeholder = 'MM/DD/YYYY';
+                    break;
+            }
+            
+            textFieldPopup.style.display = 'block';
+            textFieldPopup.style.left = '50%';
+            textFieldPopup.style.top = '50%';
+            textFieldPopup.style.transform = 'translate(-50%, -50%)';
+        }
+
+        function hideFieldPopup() {
+            textFieldPopup.style.display = 'none';
+        }
+
+        function updateFieldList() {
+            if (formFields.length === 0) {
+                fieldList.innerHTML = '<div class="empty-state">No fields added yet</div>';
+                return;
+            }
+            
+            fieldList.innerHTML = '';
+            formFields.forEach((field, index) => {
+                const fieldItem = document.createElement('div');
+                fieldItem.className = 'field-item';
+                
+                let icon, text;
+                switch (field.type) {
+                    case 'text':
+                        icon = '<i class="fas fa-font"></i>';
+                        text = `Text: ${field.value}`;
+                        break;
+                    case 'checkbox':
+                        icon = '<i class="fas fa-check-square"></i>';
+                        text = `Checkbox: ${field.value}`;
+                        break;
+                    case 'date':
+                        icon = '<i class="fas fa-calendar"></i>';
+                        text = `Date: ${field.value}`;
+                        break;
+                }
+                
+                fieldItem.innerHTML = `
+                    <div>${icon} ${text}</div>
+                    <i class="fas fa-trash" data-index="${index}"></i>
+                `;
+                
+                fieldList.appendChild(fieldItem);
+            });
+            
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.fa-trash').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const index = parseInt(btn.dataset.index);
+                    formFields.splice(index, 1);
+                    updateFieldList();
+                    addToUndoStack();
+                });
+            });
+        }
+
+        function addToUndoStack() {
+            // Save current state to undo stack
+            const state = {
+                drawingObjects: JSON.stringify(drawingCanvas.toJSON()),
+                formFields: JSON.parse(JSON.stringify(formFields))
+            };
+            
+            undoStack.push(state);
+            undoBtn.classList.remove('btn-disabled');
+        }
+
+        function undoLastAction() {
+            if (undoStack.length === 0) return;
+            
+            const lastState = undoStack.pop();
+            
+            if (lastState.drawingObjects) {
+                drawingCanvas.loadFromJSON(lastState.drawingObjects, () => {
+                    drawingCanvas.renderAll();
+                });
+            }
+            
+            formFields = lastState.formFields || [];
+            updateFieldList();
+            
+            if (undoStack.length === 0) {
+                undoBtn.classList.add('btn-disabled');
+            }
+        }
+
+        function resetCanvas() {
+            if (confirm('Are you sure you want to reset all changes?')) {
+                drawingCanvas.clear();
+                formFields = [];
+                updateFieldList();
+                undoStack = [];
+                undoBtn.classList.add('btn-disabled');
+            }
+        }
+
+        async function savePdf() {
+            if (!pdfDoc) return;
+            
+            try {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                
+                // Load the PDF with pdf-lib
+                const { PDFDocument, rgb } = PDFLib;
+                const pdfDoc = await PDFDocument.load(pdfBytes);
+                const pages = pdfDoc.getPages();
+                
+                // For now, we'll just save the original PDF
+                // In a real implementation, you would add the annotations and form fields here
+                
+                const modifiedPdfBytes = await pdfDoc.save();
+                
+                // Create download link
+                const blob = new Blob([modifiedPdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'modified_document.pdf';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showStatus('PDF saved successfully!', 'success');
+            } catch (error) {
+                console.error('Error saving PDF:', error);
+                showStatus('Error saving PDF. Please try again.', 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> Save PDF';
+            }
+        }
+
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = 'status ' + type;
+            statusMessage.style.display = 'block';
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                statusMessage.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

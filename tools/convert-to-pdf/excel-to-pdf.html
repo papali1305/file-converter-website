@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Excel to PDF Converter - FilePro</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet" />
+
+  <!-- External CSS -->
+  <link rel="stylesheet" href="../../style.css" />
+
+  <style>
+    body {
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+
+    header, footer {
+      background: #111;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #00fff0;
+    }
+
+    nav a {
+      color: #fff;
+      margin: 0 15px;
+      text-decoration: none;
+      transition: 0.3s;
+    }
+
+    nav a:hover {
+      color: #00fff0;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 40px auto;
+      background: rgba(255,255,255,0.05);
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 0 30px rgba(0,255,255,0.2);
+      backdrop-filter: blur(8px);
+      animation: fadeIn 1s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    h1 {
+      text-align: center;
+      color: #00fff0;
+      margin-bottom: 20px;
+    }
+
+    .upload-area {
+      border: 2px dashed #00fff0;
+      padding: 40px;
+      border-radius: 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 30px;
+    }
+
+    .upload-area:hover {
+      background: rgba(0, 255, 255, 0.1);
+      transform: scale(1.03);
+    }
+
+    #file-name {
+      margin-top: 10px;
+      color: #00fff0;
+      font-weight: bold;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .tool-btn {
+      background: linear-gradient(135deg, #00fff0, #00e0e0);
+      color: #000;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 20px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+
+    .tool-btn:hover {
+      transform: scale(1.07);
+      box-shadow: 0 0 15px #00fff0;
+    }
+
+    #preview-table {
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #111;
+      color: #fff;
+    }
+
+    th, td {
+      border: 1px solid #00fff0;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #00fff0;
+      color: #000;
+    }
+
+    #loading {
+      display: none;
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .neon-spinner {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 10px;
+      border: 6px solid transparent;
+      border-top: 6px solid #00fff0;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    #download-section {
+      text-align: center;
+      display: none;
+      margin-top: 30px;
+    }
+
+    @media screen and (max-width: 768px) {
+      nav {
+        margin-top: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+    }
+  </style>
+
+</head>
+
+<body>
+<header>
+  <div class="logo">⚡ FilePro</div>
+  <nav>
+    <a href="../../index.html">Home</a>
+    <a href="../../tools.html">Tools</a>
+    <a href="../../about.html">About</a>
+    <a href="../../contact.html">Contact</a>
+  </nav>
+</header>
+
+<main class="page">
+  <h1>Excel to PDF Converter</h1>
+
+  <div class="upload-area" onclick="document.getElementById('excel-upload').click();">
+    <input type="file" id="excel-upload" accept=".xlsx,.xls" onchange="handleExcelFile()" />
+    <p>Drag & Drop or Click to Upload Excel File</p>
+    <div id="file-name"></div>
+  </div>
+
+  <div id="preview-table"></div>
+
+  <div style="text-align: center;">
+    <button class="tool-btn" onclick="convertExcelToPDF()">Convert to PDF</button>
+  </div>
+
+  <div id="loading">
+    <div class="neon-spinner"></div>
+    <p>Converting your data...</p>
+  </div>
+
+  <div id="download-section">
+    <a id="download-link" href="#" download="converted.pdf">
+      <button class="tool-btn">Download PDF</button>
+    </a>
+  </div>
+</main>
+
+<footer>
+  &copy; 2025 FilePro. All rights reserved.
+</footer>
+
+<!-- SheetJS for Excel parsing -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<!-- PDF-lib for PDF generation -->
+<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+
+<script>
+  let parsedData = [];
+  let originalFileName = 'converted.pdf';
+
+  function handleExcelFile() {
+    const input = document.getElementById('excel-upload');
+    const file = input.files[0];
+    const fileNameDiv = document.getElementById('file-name');
+    const previewTable = document.getElementById('preview-table');
+    previewTable.innerHTML = '';
+    parsedData = [];
+
+    if (!file) return;
+
+    originalFileName = file.name.replace(/\.[^/.]+$/, '') + ".pdf";
+    fileNameDiv.textContent = `Selected: ${file.name}`;
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+
+        // Read all sheets in the workbook
+        parsedData = [];
+        workbook.SheetNames.forEach(sheetName => {
+          const sheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+          parsedData.push({ sheetName, data: json });
+        });
+
+        renderTable(parsedData[0].data); // Render the first sheet as default
+      } catch (err) {
+        alert("❌ Failed to parse Excel file.");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function renderTable(data) {
+    if (data.length === 0) return;
+
+    const container = document.getElementById('preview-table');
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const tbody = document.createElement('tbody');
+
+    const headerRow = document.createElement('tr');
+    data[0].forEach(cell => {
+      const th = document.createElement('th');
+      th.textContent = cell || '';
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+
+    for (let i = 1; i < data.length; i++) {
+      const row = document.createElement('tr');
+      data[i].forEach(cell => {
+        const td = document.createElement('td');
+        td.textContent = cell || '';
+        row.appendChild(td);
+      });
+      tbody.appendChild(row);
+    }
+
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    container.appendChild(table);
+  }
+
+  async function convertExcelToPDF() {
+    if (parsedData.length === 0 || parsedData[0].data.length === 0) {
+      alert("⚠️ Please upload an Excel file first.");
+      return;
+    }
+
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('download-section').style.display = 'none';
+
+    try {
+      const pdfDoc = await PDFLib.PDFDocument.create();
+      const pageSize = [595, 842]; // A4 size
+      const margin = 30;
+      const rowHeight = 20;
+      const fontSize = 10;
+      const colCount = parsedData[0].data[0].length;
+      const colWidth = (pageSize[0] - 2 * margin) / colCount;
+
+      const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+      let page = pdfDoc.addPage(pageSize);
+      let y = pageSize[1] - margin;
+
+      for (let r = 0; r < parsedData[0].data.length; r++) {
+        if (y < margin + rowHeight) {
+          page = pdfDoc.addPage(pageSize);
+          y = pageSize[1] - margin;
+        }
+
+        let x = margin;
+        for (let c = 0; c < colCount; c++) {
+          const cellText = String(parsedData[0].data[r][c] || '');
+          const isHeader = r === 0;
+          const textColor = isHeader ? PDFLib.rgb(0, 0, 0) : PDFLib.rgb(1, 1, 1);
+          const fillColor = isHeader ? PDFLib.rgb(0, 1, 1) : PDFLib.rgb(0.1, 0.1, 0.1);
+
+          page.drawRectangle({
+            x,
+            y: y - rowHeight + 5,
+            width: colWidth,
+            height: rowHeight,
+            color: fillColor,
+            borderColor: PDFLib.rgb(0, 1, 1),
+            borderWidth: 1,
+          });
+
+          page.drawText(cellText, {
+            x: x + 5,
+            y: y - 12,
+            size: fontSize,
+            font,
+            color: textColor,
+            maxWidth: colWidth - 10,
+          });
+
+          x += colWidth;
+        }
+        y -= rowHeight;
+      }
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.getElementById('download-link');
+
+      link.href = url;
+      link.download = originalFileName;
+    } catch (error) {
+      console.error("PDF Conversion Error:", error);
+      alert("❌ An error occurred during PDF conversion.");
+    } finally {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('download-section').style.display = 'block';
+    }
+  }
+</script>
+
+</body>
+</html>
