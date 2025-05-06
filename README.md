@@ -1,6 +1,69 @@
 # FilePro - Ultimate File Conversion Site
 
-![FilePro Logo](https://i.imgur.com/JQ7w3Hk.png)
+!<div align="center" style="
+  font-family: 'Orbitron', sans-serif;
+  background: linear-gradient(135deg, #1a1b41, #3f37c9);
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(67, 97, 238, 0.3);
+  margin: 2rem 0;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  overflow: hidden;
+">
+  <h1 style="
+    font-size: 3rem;
+    margin: 0;
+    text-shadow: 0 0 15px rgba(72, 149, 239, 0.7);
+    position: relative;
+    z-index: 2;
+  ">
+    <i class="fas fa-bolt" style="color: #4895ef; margin-right: 1rem;"></i>
+    FilePro
+  </h1>
+  <p style="
+    font-family: 'Roboto', sans-serif;
+    text-transform: none;
+    letter-spacing: normal;
+    opacity: 0.9;
+    max-width: 800px;
+    margin: 1rem auto;
+    position: relative;
+    z-index: 2;
+  ">
+    The next-generation file conversion platform with military-grade security and futuristic interface
+  </p>
+  <div style="
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"none\"><path d=\"M0,0 L100,0 L100,100 L0,100 Z\" fill=\"none\" stroke=\"rgba(255,255,255,0.05)\" stroke-width=\"0.5\"/></svg>');
+    background-size: 20px 20px;
+    opacity: 0.5;
+    z-index: 1;
+  "></div>
+  <div style="
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(72,149,239,0.1) 0%, transparent 70%);
+    animation: pulse 15s infinite alternate;
+    z-index: 0;
+  "></div>
+</div>
+
+<style>
+  @keyframes pulse {
+    0% { transform: scale(0.8); opacity: 0.1; }
+    100% { transform: scale(1.2); opacity: 0.3; }
+  }
+</style>
 
 ## 🌟 Overview
 
