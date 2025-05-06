@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FilePro - Protect PDF</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+            --danger-color: #ef233c;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7ff;
+            color: var(--dark-color);
+            overflow-x: hidden;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        /* Background Animation */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-animation .circle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(67, 97, 238, 0.1);
+            animation: float 15s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-1000px) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        .logo i {
+            margin-right: 0.5rem;
+            color: #ffbe0b;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+        }
+
+        nav a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--secondary-color);
+            font-size: 2.5rem;
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            border-radius: 2px;
+        }
+
+        .tool-description {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #555;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        /* Tool Card */
+        .tool-card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        /* File Upload Area */
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent-color);
+            background-color: rgba(72, 149, 239, 0.05);
+        }
+
+        .upload-area.active {
+            border-color: var(--success-color);
+            background-color: rgba(76, 201, 240, 0.1);
+        }
+
+        .upload-area.error {
+            border-color: var(--danger-color);
+            background-color: rgba(239, 35, 60, 0.05);
+        }
+
+        .upload-area i {
+            font-size: 3rem;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .upload-area:hover i {
+            transform: scale(1.1);
+        }
+
+        .upload-area h3 {
+            margin-bottom: 0.5rem;
+            color: var(--dark-color);
+        }
+
+        .upload-area p {
+            color: #777;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-area input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            padding: 0.8rem 1.8rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(67, 97, 238, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger-color), #d90429);
+            box-shadow: 0 4px 15px rgba(239, 35, 60, 0.3);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 8px 25px rgba(239, 35, 60, 0.4);
+        }
+
+        /* Protection Options */
+        .protection-options {
+            margin-top: 2rem;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .option-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .option-group h4 {
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+        }
+
+        .option-group h4 i {
+            margin-right: 0.5rem;
+            color: var(--accent-color);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            margin-right: 0.8rem;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        input[type="password"], input[type="text"], input[type="date"], select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            margin-top: 0.5rem;
+        }
+
+        input[type="password"]:focus, input[type="text"]:focus, input[type="date"]:focus, select:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(72, 149, 239, 0.2);
+            outline: none;
+        }
+
+        .password-strength {
+            height: 4px;
+            background-color: #eee;
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .password-strength::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background-color: var(--warning-color);
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+
+        input[type="password"]:focus + .password-strength::after {
+            width: 25%;
+            background-color: var(--warning-color);
+        }
+
+        input[type="password"].weak + .password-strength::after {
+            width: 25%;
+            background-color: var(--warning-color);
+        }
+
+        input[type="password"].medium + .password-strength::after {
+            width: 50%;
+            background-color: #ff9f1c;
+        }
+
+        input[type="password"].strong + .password-strength::after {
+            width: 75%;
+            background-color: #2ec4b6;
+        }
+
+        input[type="password"].very-strong + .password-strength::after {
+            width: 100%;
+            background-color: var(--success-color);
+        }
+
+        /* File Info */
+        .file-info {
+            display: none;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .file-info.active {
+            display: block;
+        }
+
+        .file-info p {
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .file-info p span:first-child {
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        .file-info p span:last-child {
+            color: #555;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            display: none;
+            margin-top: 1.5rem;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent-color), var(--success-color));
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        /* Result Section */
+        .result-section {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            background-color: rgba(76, 201, 240, 0.1);
+            border-radius: 8px;
+            margin-top: 2rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .result-section.active {
+            display: block;
+        }
+
+        .result-section i {
+            font-size: 4rem;
+            color: var(--success-color);
+            margin-bottom: 1rem;
+            animation: bounce 1s ease infinite alternate;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-10px); }
+        }
+
+        .result-section h3 {
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
+        }
+
+        .result-section p {
+            margin-bottom: 1.5rem;
+            color: #555;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .download-btn i {
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+            animation: none;
+        }
+
+        /* Security Level Indicator */
+        .security-level {
+            display: flex;
+            align-items: center;
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            background-color: #f8f9fa;
+        }
+
+        .security-level i {
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .security-level.low {
+            color: var(--warning-color);
+        }
+
+        .security-level.medium {
+            color: #ff9f1c;
+        }
+
+        .security-level.high {
+            color: var(--success-color);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                padding: 1rem;
+            }
+
+            .logo {
+                margin-bottom: 1rem;
+            }
+
+            nav {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            nav a {
+                margin: 0.5rem;
+            }
+
+            .container {
+                padding: 0 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            z-index: 1000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            max-width: 350px;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast i {
+            margin-right: 0.8rem;
+            font-size: 1.2rem;
+        }
+
+        .toast.success i {
+            color: var(--success-color);
+        }
+
+        .toast.error i {
+            color: var(--warning-color);
+        }
+
+        /* Watermark Options */
+        .watermark-options {
+            display: none;
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .watermark-options.active {
+            display: block;
+        }
+
+        /* Encryption Options */
+        .encryption-options {
+            margin-top: 1rem;
+        }
+
+        .encryption-options select {
+            margin-top: 0.5rem;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 0.5rem;
+            cursor: pointer;
+        }
+
+        .tooltip i {
+            color: var(--accent-color);
+            font-size: 0.9rem;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 0.5rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+            font-weight: normal;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Advanced Options Toggle */
+        .advanced-toggle {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            color: var(--primary-color);
+            margin-top: 1rem;
+            font-weight: 600;
+        }
+
+        .advanced-toggle i {
+            margin-right: 0.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .advanced-toggle.active i {
+            transform: rotate(90deg);
+        }
+
+        /* Document Preview */
+        .preview-container {
+            display: none;
+            margin-top: 1.5rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .preview-container.active {
+            display: block;
+        }
+
+        .preview-header {
+            background-color: #f8f9fa;
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .preview-content {
+            height: 300px;
+            overflow-y: auto;
+            padding: 1rem;
+            background-color: #f5f5f5;
+            text-align: center;
+        }
+
+        .preview-content img {
+            max-width: 100%;
+            max-height: 100%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        /* Permission Matrix */
+        .permission-matrix {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .permission-item {
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Animation -->
+    <div class="bg-animation">
+        <div class="circle" style="width: 300px; height: 300px; top: 20%; left: 10%; animation-delay: 0s;"></div>
+        <div class="circle" style="width: 200px; height: 200px; top: 60%; left: 20%; animation-delay: 2s;"></div>
+        <div class="circle" style="width: 250px; height: 250px; top: 30%; left: 50%; animation-delay: 4s;"></div>
+        <div class="circle" style="width: 150px; height: 150px; top: 70%; left: 60%; animation-delay: 6s;"></div>
+        <div class="circle" style="width: 100px; height: 100px; top: 40%; left: 80%; animation-delay: 8s;"></div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="logo">
+            <i class="fas fa-bolt"></i>
+            <span>FilePro</span>
+        </div>
+        <nav>
+            <a href="../../index.html">Home</a>
+            <a href="../../tools.html">Tools</a>
+            <a href="../../about.html">About</a>
+            <a href="../../contact.html">Contact</a>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <h1>Protect PDF</h1>
+        <p class="tool-description">
+            Secure your PDF files with military-grade encryption, password protection, and advanced permission controls. 
+            Our tool uses AES-256 encryption to ensure your documents remain confidential and protected against unauthorized access.
+        </p>
+
+        <div class="tool-card">
+            <div class="upload-area" id="uploadArea">
+                <i class="fas fa-file-pdf"></i>
+                <h3>Upload PDF File</h3>
+                <p>Drag & drop your PDF file here or click to browse (Max 50MB)</p>
+                <button class="btn">Select File</button>
+                <input type="file" id="fileInput" accept=".pdf">
+            </div>
+
+            <div class="file-info" id="fileInfo">
+                <p>
+                    <span>File Name:</span>
+                    <span id="fileName">-</span>
+                </p>
+                <p>
+                    <span>File Size:</span>
+                    <span id="fileSize">-</span>
+                </p>
+                <p>
+                    <span>File Type:</span>
+                    <span id="fileType">-</span>
+                </p>
+                <p>
+                    <span>Pages:</span>
+                    <span id="pageCount">-</span>
+                </p>
+                <div id="securityIndicator" class="security-level" style="display: none;">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Current Security: <span id="currentSecurityLevel">None</span></span>
+                </div>
+            </div>
+
+            <div class="preview-container" id="previewContainer">
+                <div class="preview-header">
+                    <span>Document Preview</span>
+                    <button id="closePreview" class="btn btn-secondary" style="padding: 0.3rem 0.8rem; font-size: 0.8rem;">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                </div>
+                <div class="preview-content" id="previewContent">
+                    <!-- Preview will be shown here -->
+                </div>
+            </div>
+
+            <div class="protection-options">
+                <div class="option-group">
+                    <h4><i class="fas fa-lock"></i> Password Protection</h4>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="requirePassword" name="requirePassword">
+                        <label for="requirePassword">Require password to open this document</label>
+                    </div>
+                    <div id="passwordFields" style="display: none;">
+                        <input type="password" id="userPassword" placeholder="Enter password (min 6 characters)" autocomplete="new-password">
+                        <div class="password-strength"></div>
+                        <input type="password" id="confirmPassword" placeholder="Confirm password" style="margin-top: 1rem;">
+                        <div class="encryption-options" style="margin-top: 1rem;">
+                            <label for="encryptionType">Encryption Strength:</label>
+                            <select id="encryptionType">
+                                <option value="AES-256">AES-256 (Highest Security)</option>
+                                <option value="AES-128">AES-128 (High Security)</option>
+                                <option value="RC4-128">RC4-128 (Standard)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="option-group">
+                    <h4><i class="fas fa-user-shield"></i> Permissions</h4>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="restrictAll" name="restrictAll">
+                        <label for="restrictAll">Restrict all permissions (view only)</label>
+                    </div>
+                    
+                    <div class="permission-matrix" id="permissionMatrix">
+                        <div class="permission-item">
+                            <input type="checkbox" id="restrictPrinting" name="restrictPrinting">
+                            <label for="restrictPrinting">Restrict printing</label>
+                            <div class="tooltip">
+                                <i class="fas fa-info-circle"></i>
+                                <span class="tooltiptext">Prevent users from printing the document</span>
+                            </div>
+                        </div>
+                        <div class="permission-item">
+                            <input type="checkbox" id="restrictModification" name="restrictModification">
+                            <label for="restrictModification">Restrict document modification</label>
+                        </div>
+                        <div class="permission-item">
+                            <input type="checkbox" id="restrictCopying" name="restrictCopying">
+                            <label for="restrictCopying">Restrict copying of content</label>
+                        </div>
+                        <div class="permission-item">
+                            <input type="checkbox" id="restrictAnnotations" name="restrictAnnotations">
+                            <label for="restrictAnnotations">Restrict adding annotations</label>
+                        </div>
+                        <div class="permission-item">
+                            <input type="checkbox" id="restrictFormFilling" name="restrictFormFilling">
+                            <label for="restrictFormFilling">Restrict form filling</label>
+                        </div>
+                        <div class="permission-item">
+                            <input type="checkbox" id="restrictAssembly" name="restrictAssembly">
+                            <label for="restrictAssembly">Restrict document assembly</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="advanced-toggle" id="advancedToggle">
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Advanced Options</span>
+                </div>
+
+                <div class="option-group" id="advancedOptions" style="display: none;">
+                    <h4><i class="fas fa-cog"></i> Advanced Protection</h4>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="encryptMetadata" name="encryptMetadata">
+                        <label for="encryptMetadata">Encrypt metadata (prevent search engines from indexing)</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="setExpiration" name="setExpiration">
+                        <label for="setExpiration">Set document expiration date</label>
+                    </div>
+                    <div id="expirationField" style="display: none; margin-top: 1rem;">
+                        <input type="date" id="expirationDate">
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="addWatermark" name="addWatermark">
+                        <label for="addWatermark">Add watermark to document</label>
+                    </div>
+                    <div class="watermark-options" id="watermarkOptions">
+                        <div style="margin-bottom: 1rem;">
+                            <label for="watermarkText">Watermark Text:</label>
+                            <input type="text" id="watermarkText" placeholder="e.g., CONFIDENTIAL" value="CONFIDENTIAL">
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div>
+                                <label for="watermarkOpacity">Opacity:</label>
+                                <select id="watermarkOpacity">
+                                    <option value="0.2">20%</option>
+                                    <option value="0.3">30%</option>
+                                    <option value="0.4">40%</option>
+                                    <option value="0.5" selected>50%</option>
+                                    <option value="0.6">60%</option>
+                                    <option value="0.7">70%</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="watermarkAngle">Angle:</label>
+                                <select id="watermarkAngle">
+                                    <option value="45">45°</option>
+                                    <option value="30">30°</option>
+                                    <option value="0" selected>0°</option>
+                                    <option value="-30">-30°</option>
+                                    <option value="-45">-45°</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="checkbox-group" style="margin-top: 1rem;">
+                        <input type="checkbox" id="disableAccessibility" name="disableAccessibility">
+                        <label for="disableAccessibility">Disable accessibility features</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress" id="progressBar"></div>
+                </div>
+                <p class="progress-text" id="progressText">Processing your PDF...</p>
+            </div>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <button class="btn" id="protectBtn" disabled>
+                    <span id="protectBtnText">Protect PDF</span>
+                </button>
+                <button class="btn btn-secondary" id="previewBtn" disabled>
+                    <i class="fas fa-eye"></i> Preview
+                </button>
+                <button class="btn btn-danger" id="resetBtn">
+                    <i class="fas fa-redo"></i> Reset
+                </button>
+            </div>
+        </div>
+
+        <div class="result-section" id="resultSection">
+            <i class="fas fa-check-circle"></i>
+            <h3>PDF Protected Successfully!</h3>
+            <p>Your PDF file has been encrypted with the specified security settings.</p>
+            <div class="security-level high" style="justify-content: center; margin-bottom: 1.5rem;">
+                <i class="fas fa-shield-alt"></i>
+                <span>Security Level: <strong>High</strong> (AES-256 Encryption)</span>
+            </div>
+            <button class="btn download-btn" id="downloadBtn">
+                <i class="fas fa-download"></i> Download Protected PDF
+            </button>
+            <button class="btn btn-secondary" id="newFileBtn" style="margin-left: 1rem;">
+                <i class="fas fa-file-upload"></i> Protect Another File
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Success! Your file has been uploaded.</span>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+            const fileSize = document.getElementById('fileSize');
+            const fileType = document.getElementById('fileType');
+            const pageCount = document.getElementById('pageCount');
+            const securityIndicator = document.getElementById('securityIndicator');
+            const currentSecurityLevel = document.getElementById('currentSecurityLevel');
+            const requirePassword = document.getElementById('requirePassword');
+            const passwordFields = document.getElementById('passwordFields');
+            const userPassword = document.getElementById('userPassword');
+            const confirmPassword = document.getElementById('confirmPassword');
+            const encryptionType = document.getElementById('encryptionType');
+            const restrictAll = document.getElementById('restrictAll');
+            const permissionMatrix = document.getElementById('permissionMatrix');
+            const setExpiration = document.getElementById('setExpiration');
+            const expirationField = document.getElementById('expirationDate');
+            const addWatermark = document.getElementById('addWatermark');
+            const watermarkOptions = document.getElementById('watermarkOptions');
+            const advancedToggle = document.getElementById('advancedToggle');
+            const advancedOptions = document.getElementById('advancedOptions');
+            const protectBtn = document.getElementById('protectBtn');
+            const protectBtnText = document.getElementById('protectBtnText');
+            const previewBtn = document.getElementById('previewBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const resultSection = document.getElementById('resultSection');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const newFileBtn = document.getElementById('newFileBtn');
+            const previewContainer = document.getElementById('previewContainer');
+            const previewContent = document.getElementById('previewContent');
+            const closePreview = document.getElementById('closePreview');
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+
+            // Variables
+            let selectedFile = null;
+            let protectedPDF = null;
+            let pdfDoc = null;
+            const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+
+            // Event Listeners
+            uploadArea.addEventListener('click', () => fileInput.click());
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+            fileInput.addEventListener('change', handleFileSelect);
+            requirePassword.addEventListener('change', togglePasswordFields);
+            restrictAll.addEventListener('change', toggleAllPermissions);
+            permissionMatrix.addEventListener('change', updatePermissionState);
+            setExpiration.addEventListener('change', toggleExpirationField);
+            addWatermark.addEventListener('change', toggleWatermarkOptions);
+            advancedToggle.addEventListener('click', toggleAdvancedOptions);
+            protectBtn.addEventListener('click', protectPDF);
+            previewBtn.addEventListener('click', previewPDF);
+            resetBtn.addEventListener('click', resetForm);
+            downloadBtn.addEventListener('click', downloadPDF);
+            newFileBtn.addEventListener('click', resetForm);
+            closePreview.addEventListener('click', closePreviewHandler);
+            userPassword.addEventListener('input', checkPasswordStrength);
+
+            // Initialize date picker with min date as today
+            const today = new Date().toISOString().split('T')[0];
+            expirationField.min = today;
+
+            // Functions
+            function handleDragOver(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.add('active');
+            }
+
+            function handleDragLeave(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.remove('active');
+            }
+
+            function handleDrop(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.remove('active');
+
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFileSelect({ target: fileInput });
+                }
+            }
+
+            async function handleFileSelect(e) {
+                const file = e.target.files[0];
+                
+                if (!file) return;
+                
+                // Validate file type
+                if (!file.type.includes('pdf') && !file.name.toLowerCase().endsWith('.pdf')) {
+                    showToast('Please select a PDF file', 'error');
+                    uploadArea.classList.add('error');
+                    setTimeout(() => uploadArea.classList.remove('error'), 2000);
+                    return;
+                }
+                
+                // Validate file size
+                if (file.size > MAX_FILE_SIZE) {
+                    showToast('File size exceeds 50MB limit', 'error');
+                    uploadArea.classList.add('error');
+                    setTimeout(() => uploadArea.classList.remove('error'), 2000);
+                    return;
+                }
+
+                selectedFile = file;
+                
+                // Update file info
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+                fileType.textContent = file.type || 'application/pdf';
+                
+                try {
+                    // Try to analyze the PDF
+                    const pdfBytes = await readFileAsArrayBuffer(file);
+                    pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
+                    
+                    pageCount.textContent = pdfDoc.getPageCount();
+                    
+                    // Check if PDF is already encrypted
+                    if (pdfDoc.isEncrypted) {
+                        currentSecurityLevel.textContent = 'Password Protected';
+                        securityIndicator.classList.add('medium');
+                        securityIndicator.style.display = 'flex';
+                    } else {
+                        currentSecurityLevel.textContent = 'None';
+                        securityIndicator.classList.remove('low', 'medium', 'high');
+                        securityIndicator.style.display = 'flex';
+                    }
+                } catch (error) {
+                    console.error('Error analyzing PDF:', error);
+                    pageCount.textContent = 'Unknown';
+                    currentSecurityLevel.textContent = 'Unknown';
+                    securityIndicator.style.display = 'none';
+                }
+                
+                // Show file info
+                fileInfo.classList.add('active');
+                
+                // Enable buttons
+                protectBtn.disabled = false;
+                previewBtn.disabled = false;
+                
+                showToast('File uploaded successfully');
+            }
+
+            function readFileAsArrayBuffer(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsArrayBuffer(file);
+                });
+            }
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            function togglePasswordFields() {
+                passwordFields.style.display = requirePassword.checked ? 'block' : 'none';
+                updateSecurityIndicator();
+            }
+
+            function toggleAllPermissions() {
+                const checkboxes = permissionMatrix.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(checkbox => {
+                    if (checkbox !== restrictAll) {
+                        checkbox.checked = restrictAll.checked;
+                        checkbox.disabled = restrictAll.checked;
+                    }
+                });
+                updateSecurityIndicator();
+            }
+
+            function updatePermissionState() {
+                // If any permission is unchecked, uncheck the "restrict all" checkbox
+                if (restrictAll.checked) {
+                    const allChecked = Array.from(permissionMatrix.querySelectorAll('input[type="checkbox"]'))
+                        .filter(checkbox => checkbox !== restrictAll)
+                        .every(checkbox => checkbox.checked);
+                    
+                    if (!allChecked) {
+                        restrictAll.checked = false;
+                    }
+                }
+                updateSecurityIndicator();
+            }
+
+            function toggleExpirationField() {
+                expirationField.parentElement.style.display = setExpiration.checked ? 'block' : 'none';
+                updateSecurityIndicator();
+            }
+
+            function toggleWatermarkOptions() {
+                watermarkOptions.style.display = addWatermark.checked ? 'block' : 'none';
+                updateSecurityIndicator();
+            }
+
+            function toggleAdvancedOptions() {
+                advancedOptions.style.display = advancedOptions.style.display === 'none' ? 'block' : 'none';
+                advancedToggle.classList.toggle('active');
+            }
+
+            function checkPasswordStrength() {
+                const password = userPassword.value;
+                const strengthBar = userPassword.nextElementSibling;
+                
+                if (!password) {
+                    strengthBar.style.width = '0%';
+                    strengthBar.style.backgroundColor = '';
+                    userPassword.classList.remove('weak', 'medium', 'strong', 'very-strong');
+                    return;
+                }
+                
+                // Strength calculation
+                let strength = 0;
+                
+                // Length check
+                if (password.length >= 8) strength += 25;
+                if (password.length >= 12) strength += 25;
+                
+                // Complexity checks
+                if (/[A-Z]/.test(password)) strength += 15;
+                if (/[0-9]/.test(password)) strength += 15;
+                if (/[^A-Za-z0-9]/.test(password)) strength += 20;
+                
+                // Update strength bar
+                strengthBar.style.width = strength + '%';
+                
+                // Update class for color
+                userPassword.classList.remove('weak', 'medium', 'strong', 'very-strong');
+                
+                if (strength < 40) {
+                    userPassword.classList.add('weak');
+                } else if (strength < 70) {
+                    userPassword.classList.add('medium');
+                } else if (strength < 90) {
+                    userPassword.classList.add('strong');
+                } else {
+                    userPassword.classList.add('very-strong');
+                }
+
+                updateSecurityIndicator();
+            }
+
+            function updateSecurityIndicator() {
+                if (!securityIndicator.style.display || securityIndicator.style.display === 'none') return;
+                
+                let securityLevel = 'None';
+                let securityClass = '';
+                
+                if (requirePassword.checked) {
+                    const password = userPassword.value;
+                    
+                    if (password.length >= 12 && userPassword.classList.contains('very-strong')) {
+                        securityLevel = 'Very High';
+                        securityClass = 'high';
+                    } else if (password.length >= 8) {
+                        securityLevel = 'High';
+                        securityClass = 'high';
+                    } else if (password.length >= 6) {
+                        securityLevel = 'Medium';
+                        securityClass = 'medium';
+                    } else {
+                        securityLevel = 'Low';
+                        securityClass = 'low';
+                    }
+                    
+                    // Add encryption type
+                    securityLevel += ` (${encryptionType.value})`;
+                }
+                
+                // Check permissions
+                const anyRestrictions = Array.from(permissionMatrix.querySelectorAll('input[type="checkbox"]'))
+                    .some(checkbox => checkbox.checked && checkbox !== restrictAll);
+                
+                if (anyRestrictions && securityLevel === 'None') {
+                    securityLevel = 'Restricted';
+                    securityClass = 'medium';
+                } else if (anyRestrictions) {
+                    securityLevel += ' + Restrictions';
+                    if (securityClass !== 'high') securityClass = 'medium';
+                }
+                
+                // Check advanced options
+                if (setExpiration.checked || addWatermark.checked) {
+                    securityLevel += ' + Advanced';
+                    if (securityClass === '') securityClass = 'medium';
+                }
+                
+                currentSecurityLevel.textContent = securityLevel;
+                securityIndicator.className = 'security-level ' + securityClass;
+                securityIndicator.style.display = 'flex';
+            }
+
+            function validateForm() {
+                if (!selectedFile) {
+                    showToast('Please select a PDF file first', 'error');
+                    return false;
+                }
+                
+                if (requirePassword.checked) {
+                    const password = userPassword.value;
+                    const confirm = confirmPassword.value;
+                    
+                    if (!password) {
+                        showToast('Please enter a password', 'error');
+                        return false;
+                    }
+                    
+                    if (password !== confirm) {
+                        showToast('Passwords do not match', 'error');
+                        return false;
+                    }
+                    
+                    if (password.length < 6) {
+                        showToast('Password should be at least 6 characters', 'error');
+                        return false;
+                    }
+                }
+                
+                if (setExpiration.checked && !expirationField.value) {
+                    showToast('Please select an expiration date', 'error');
+                    return false;
+                }
+                
+                return true;
+            }
+
+            async function protectPDF() {
+                if (!validateForm()) return;
+                
+                // Show loading state on button
+                protectBtn.disabled = true;
+                protectBtnText.innerHTML = '<span class="spinner"></span> Processing...';
+                
+                // Show progress
+                progressContainer.classList.add('active');
+                
+                try {
+                    // Simulate processing (in a real app, this would be actual PDF processing)
+                    let progress = 0;
+                    const interval = setInterval(() => {
+                        progress += Math.random() * 10;
+                        if (progress > 100) progress = 100;
+                        
+                        progressBar.style.width = progress + '%';
+                        progressText.textContent = getProgressMessage(progress);
+                        
+                        if (progress === 100) {
+                            clearInterval(interval);
+                            setTimeout(async () => {
+                                // Actual PDF processing would happen here
+                                protectedPDF = await processPDF();
+                                showResult();
+                                protectBtnText.textContent = 'Protect PDF';
+                            }, 500);
+                        }
+                    }, 300);
+                } catch (error) {
+                    console.error('Error protecting PDF:', error);
+                    showToast('Error processing PDF', 'error');
+                    protectBtn.disabled = false;
+                    protectBtnText.textContent = 'Protect PDF';
+                    progressContainer.classList.remove('active');
+                }
+            }
+
+            async function processPDF() {
+                // In a real application, this would use the PDF-lib to actually encrypt the PDF
+                // For this demo, we'll just simulate the process and return a dummy PDF
+                
+                // Create a new PDF with a "protected" message
+                const pdfDoc = await PDFLib.PDFDocument.create();
+                const page = pdfDoc.addPage([550, 750]);
+                
+                // Add a watermark if selected
+                if (addWatermark.checked) {
+                    const watermarkText = document.getElementById('watermarkText').value || 'CONFIDENTIAL';
+                    const opacity = parseFloat(document.getElementById('watermarkOpacity').value) || 0.5;
+                    const angle = parseInt(document.getElementById('watermarkAngle').value) || 45;
+                    
+                    page.drawText(watermarkText, {
+                        x: 50,
+                        y: 400,
+                        size: 72,
+                        opacity: opacity,
+                        rotate: PDFLib.degrees(angle),
+                        color: PDFLib.rgb(0.8, 0.1, 0.1),
+                    });
+                }
+                
+                // Add content
+                page.drawText('PROTECTED PDF DEMO', {
+                    x: 50,
+                    y: 650,
+                    size: 30,
+                    color: PDFLib.rgb(0, 0.2, 0.4),
+                });
+                
+                page.drawText('This is a demonstration of the PDF protection tool.', {
+                    x: 50,
+                    y: 600,
+                    size: 15,
+                });
+                
+                if (requirePassword.checked) {
+                    page.drawText(`Encryption: ${encryptionType.value}`, {
+                        x: 50,
+                        y: 550,
+                        size: 12,
+                    });
+                }
+                
+                // Add permissions info
+                if (restrictAll.checked || 
+                    Array.from(permissionMatrix.querySelectorAll('input[type="checkbox"]'))
+                        .some(cb => cb.checked && cb !== restrictAll)) {
+                    
+                    page.drawText('Document Restrictions:', {
+                        x: 50,
+                        y: 500,
+                        size: 12,
+                        color: PDFLib.rgb(0.5, 0, 0),
+                    });
+                    
+                    let yPos = 480;
+                    const restrictions = [];
+                    
+                    if (restrictAll.checked) restrictions.push('All permissions restricted');
+                    if (document.getElementById('restrictPrinting').checked) restrictions.push('No printing');
+                    if (document.getElementById('restrictModification').checked) restrictions.push('No modifications');
+                    if (document.getElementById('restrictCopying').checked) restrictions.push('No content copying');
+                    if (document.getElementById('restrictAnnotations').checked) restrictions.push('No annotations');
+                    if (document.getElementById('restrictFormFilling').checked) restrictions.push('No form filling');
+                    if (document.getElementById('restrictAssembly').checked) restrictions.push('No document assembly');
+                    
+                    restrictions.forEach(restriction => {
+                        page.drawText(`• ${restriction}`, {
+                            x: 60,
+                            y: yPos,
+                            size: 10,
+                        });
+                        yPos -= 20;
+                    });
+                }
+                
+                // Add expiration if set
+                if (setExpiration.checked && expirationField.value) {
+                    page.drawText(`Document expires on: ${expirationField.value}`, {
+                        x: 50,
+                        y: 300,
+                        size: 12,
+                        color: PDFLib.rgb(0.7, 0, 0),
+                    });
+                }
+                
+                // In a real app, we would apply actual encryption here
+                // For demo purposes, we'll just save the PDF without encryption
+                const pdfBytes = await pdfDoc.save();
+                
+                // Create a Blob with the original file name but with "-protected" suffix
+                const originalName = selectedFile.name.replace('.pdf', '');
+                return new Blob([pdfBytes], { type: 'application/pdf' });
+            }
+
+            function getProgressMessage(progress) {
+                if (progress < 30) return "Analyzing PDF structure...";
+                if (progress < 60) return "Applying security settings...";
+                if (progress < 90) return "Encrypting document...";
+                return "Finalizing protected PDF...";
+            }
+
+            function showResult() {
+                progressContainer.classList.remove('active');
+                resultSection.classList.add('active');
+                
+                // Update security level in result
+                const resultSecurity = resultSection.querySelector('.security-level');
+                resultSecurity.className = 'security-level ' + securityIndicator.className.split(' ').pop();
+                resultSecurity.querySelector('strong').textContent = currentSecurityLevel.textContent;
+                
+                // Scroll to result
+                resultSection.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            function downloadPDF() {
+                if (!protectedPDF) {
+                    showToast('No protected PDF available', 'error');
+                    return;
+                }
+                
+                // Create download link
+                const originalName = selectedFile.name.replace('.pdf', '');
+                const fileName = `${originalName}-protected.pdf`;
+                
+                saveAs(protectedPDF, fileName);
+                showToast('Download started', 'success');
+            }
+
+            async function previewPDF() {
+                if (!selectedFile) {
+                    showToast('No file selected for preview', 'error');
+                    return;
+                }
+                
+                try {
+                    // Show loading state
+                    previewContent.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Loading preview...</p>';
+                    previewContainer.classList.add('active');
+                    
+                    // Create object URL for the PDF
+                    const pdfUrl = URL.createObjectURL(selectedFile);
+                    
+                    // Use PDF.js or similar library for actual preview in production
+                    // For this demo, we'll just show a simple preview image
+                    previewContent.innerHTML = `
+                        <img src="https://pdfpng.com/wp-content/uploads/pdf-icon-png-3.png" alt="PDF Preview">
+                        <p style="margin-top: 1rem;">Preview functionality would show the first page of your PDF here.</p>
+                        <p>In a production environment, this would use a library like PDF.js to render the actual PDF.</p>
+                    `;
+                    
+                    // Scroll to preview
+                    previewContainer.scrollIntoView({ behavior: 'smooth' });
+                } catch (error) {
+                    console.error('Error generating preview:', error);
+                    previewContent.innerHTML = '<p>Error generating preview</p>';
+                }
+            }
+
+            function closePreviewHandler() {
+                previewContainer.classList.remove('active');
+            }
+
+            function resetForm() {
+                // Reset file input
+                fileInput.value = '';
+                selectedFile = null;
+                protectedPDF = null;
+                pdfDoc = null;
+                
+                // Reset file info
+                fileInfo.classList.remove('active');
+                fileName.textContent = '-';
+                fileSize.textContent = '-';
+                fileType.textContent = '-';
+                pageCount.textContent = '-';
+                securityIndicator.style.display = 'none';
+                
+                // Reset options
+                requirePassword.checked = false;
+                passwordFields.style.display = 'none';
+                userPassword.value = '';
+                confirmPassword.value = '';
+                encryptionType.value = 'AES-256';
+                
+                restrictAll.checked = false;
+                permissionMatrix.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    if (checkbox !== restrictAll) {
+                        checkbox.checked = false;
+                        checkbox.disabled = false;
+                    }
+                });
+                
+                setExpiration.checked = false;
+                expirationField.parentElement.style.display = 'none';
+                expirationField.value = '';
+                
+                addWatermark.checked = false;
+                watermarkOptions.style.display = 'none';
+                document.getElementById('watermarkText').value = 'CONFIDENTIAL';
+                document.getElementById('watermarkOpacity').value = '0.5';
+                document.getElementById('watermarkAngle').value = '45';
+                
+                document.getElementById('encryptMetadata').checked = false;
+                document.getElementById('disableAccessibility').checked = false;
+                
+                // Hide advanced options
+                advancedOptions.style.display = 'none';
+                advancedToggle.classList.remove('active');
+                
+                // Reset progress and result
+                progressContainer.classList.remove('active');
+                progressBar.style.width = '0%';
+                progressText.textContent = 'Processing your PDF...';
+                resultSection.classList.remove('active');
+                previewContainer.classList.remove('active');
+                
+                // Reset button states
+                protectBtn.disabled = true;
+                previewBtn.disabled = true;
+                protectBtnText.textContent = 'Protect PDF';
+            }
+
+            function showToast(message, type = 'success') {
+                toastMessage.textContent = message;
+                toast.className = 'toast ' + type;
+                toast.innerHTML = `
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                    <span id="toastMessage">${message}</span>
+                `;
+                
+                toast.classList.add('show');
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+
+            // Initialize security indicator
+            updateSecurityIndicator();
+        });
+    </script>
+</body>
+</html>

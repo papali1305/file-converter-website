@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FilePro - Document Workflows</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+            --danger-color: #ef233c;
+            --purple-color: #7209b7;
+            --pink-color: #f72585;
+            --teal-color: #4cc9f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7ff;
+            color: var(--dark-color);
+            overflow-x: hidden;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        /* Background Animation */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-animation .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(114, 9, 183, 0.1);
+            animation: float 15s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-1000px) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 100;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        .logo i {
+            margin-right: 0.5rem;
+            color: #ffbe0b;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+        }
+
+        nav a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: var(--secondary-color);
+            font-size: 2.5rem;
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            border-radius: 2px;
+            animation: expand 0.8s ease-out;
+        }
+
+        @keyframes expand {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+
+        .tool-description {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #555;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            animation: fadeIn 1s ease-out;
+        }
+
+        /* Workflow Cards */
+        .workflow-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .workflow-card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease-out;
+            position: relative;
+            overflow: hidden;
+            border-top: 4px solid var(--purple-color);
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .workflow-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .workflow-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--purple-color), var(--pink-color));
+        }
+
+        .workflow-card h3 {
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .workflow-card h3 i {
+            margin-right: 0.8rem;
+            color: var(--purple-color);
+        }
+
+        .workflow-card p {
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        .workflow-steps {
+            margin-top: 1.5rem;
+        }
+
+        .workflow-step {
+            display: flex;
+            margin-bottom: 1rem;
+            align-items: flex-start;
+        }
+
+        .step-number {
+            background-color: var(--purple-color);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex-grow: 1;
+        }
+
+        .step-content h4 {
+            margin-bottom: 0.3rem;
+            color: var(--dark-color);
+        }
+
+        .step-content p {
+            color: #777;
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            padding: 0.8rem 1.8rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+            margin-top: 1rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(67, 97, 238, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+        }
+
+        .btn-purple {
+            background: linear-gradient(135deg, var(--purple-color), var(--pink-color));
+            box-shadow: 0 4px 15px rgba(114, 9, 183, 0.3);
+        }
+
+        .btn-purple:hover {
+            box-shadow: 0 8px 25px rgba(114, 9, 183, 0.4);
+        }
+
+        /* Create Workflow Section */
+        .create-workflow {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 3rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .create-workflow h2 {
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .workflow-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark-color);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(72, 149, 239, 0.2);
+            outline: none;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .tool-selection {
+            grid-column: span 2;
+        }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .tool-option {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .tool-option:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-3px);
+        }
+
+        .tool-option.selected {
+            border-color: var(--purple-color);
+            background-color: rgba(114, 9, 183, 0.05);
+        }
+
+        .tool-option i {
+            font-size: 1.5rem;
+            color: var(--purple-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .tool-option h4 {
+            margin-bottom: 0.3rem;
+        }
+
+        .tool-option p {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .form-actions {
+            grid-column: span 2;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        /* File Upload Area */
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent-color);
+            background-color: rgba(72, 149, 239, 0.05);
+        }
+
+        .upload-area.active {
+            border-color: var(--success-color);
+            background-color: rgba(76, 201, 240, 0.1);
+        }
+
+        .upload-area.error {
+            border-color: var(--danger-color);
+            background-color: rgba(239, 35, 60, 0.05);
+        }
+
+        .upload-area i {
+            font-size: 3rem;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .upload-area:hover i {
+            transform: scale(1.1);
+        }
+
+        .upload-area h3 {
+            margin-bottom: 0.5rem;
+            color: var(--dark-color);
+        }
+
+        .upload-area p {
+            color: #777;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-area input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* File Info */
+        .file-info {
+            display: none;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .file-info.active {
+            display: block;
+        }
+
+        .file-info p {
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .file-info p span:first-child {
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        .file-info p span:last-child {
+            color: #555;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            display: none;
+            margin-top: 1.5rem;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent-color), var(--success-color));
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        /* Result Section */
+        .result-section {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            background-color: rgba(76, 201, 240, 0.1);
+            border-radius: 8px;
+            margin-top: 2rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .result-section.active {
+            display: block;
+        }
+
+        .result-section i {
+            font-size: 4rem;
+            color: var(--success-color);
+            margin-bottom: 1rem;
+            animation: bounce 1s ease infinite alternate;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-10px); }
+        }
+
+        .result-section h3 {
+            margin-bottom: 1rem;
+            color: var(--secondary-color);
+        }
+
+        .result-section p {
+            margin-bottom: 1.5rem;
+            color: #555;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .download-btn i {
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+            animation: none;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            z-index: 1000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            max-width: 350px;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast i {
+            margin-right: 0.8rem;
+            font-size: 1.2rem;
+        }
+
+        .toast.success i {
+            color: var(--success-color);
+        }
+
+        .toast.error i {
+            color: var(--warning-color);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                padding: 1rem;
+            }
+
+            .logo {
+                margin-bottom: 1rem;
+            }
+
+            nav {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            nav a {
+                margin: 0.5rem;
+            }
+
+            .container {
+                padding: 0 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .workflow-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .workflow-form {
+                grid-template-columns: 1fr;
+            }
+
+            .tool-selection,
+            .form-actions {
+                grid-column: span 1;
+            }
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Animation -->
+    <div class="bg-animation">
+        <div class="particle" style="width: 300px; height: 300px; top: 20%; left: 10%; animation-delay: 0s;"></div>
+        <div class="particle" style="width: 200px; height: 200px; top: 60%; left: 20%; animation-delay: 2s;"></div>
+        <div class="particle" style="width: 250px; height: 250px; top: 30%; left: 50%; animation-delay: 4s;"></div>
+        <div class="particle" style="width: 150px; height: 150px; top: 70%; left: 60%; animation-delay: 6s;"></div>
+        <div class="particle" style="width: 100px; height: 100px; top: 40%; left: 80%; animation-delay: 8s;"></div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="logo">
+            <i class="fas fa-bolt"></i>
+            <span>FilePro</span>
+        </div>
+        <nav>
+            <a href="../../index.html">Home</a>
+            <a href="../../tools.html">Tools</a>
+            <a href="../../about.html">About</a>
+            <a href="../../contact.html">Contact</a>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <h1>Document Workflows</h1>
+        <p class="tool-description">
+            Automate your document processing with powerful workflows. Combine multiple tools into seamless sequences
+            to save time and streamline your document management.
+        </p>
+
+        <div class="workflow-grid">
+            <div class="workflow-card">
+                <h3><i class="fas fa-file-signature"></i> Contract Processing</h3>
+                <p>Automate the entire contract lifecycle from creation to signing and archiving.</p>
+                
+                <div class="workflow-steps">
+                    <div class="workflow-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Upload Contract</h4>
+                            <p>Drag and drop your contract template</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Fill Fields</h4>
+                            <p>Automatically populate with client data</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Add Watermark</h4>
+                            <p>Mark as "Draft" or "Confidential"</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4>Protect PDF</h4>
+                            <p>Encrypt with password and restrictions</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-purple">Run Workflow</button>
+            </div>
+
+            <div class="workflow-card">
+                <h3><i class="fas fa-file-invoice-dollar"></i> Invoice Processing</h3>
+                <p>Streamline your invoice approval and payment workflow.</p>
+                
+                <div class="workflow-steps">
+                    <div class="workflow-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Upload Invoice</h4>
+                            <p>Scan or upload digital invoices</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>OCR Processing</h4>
+                            <p>Extract text and data automatically</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Approval Routing</h4>
+                            <p>Send to appropriate approvers</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4>Archive</h4>
+                            <p>Store in organized digital filing system</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-purple">Run Workflow</button>
+            </div>
+
+            <div class="workflow-card">
+                <h3><i class="fas fa-file-medical"></i> HR Onboarding</h3>
+                <p>Automate new employee document processing.</p>
+                
+                <div class="workflow-steps">
+                    <div class="workflow-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Collect Documents</h4>
+                            <p>Employment contracts, tax forms, etc.</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Fill Templates</h4>
+                            <p>Auto-populate with employee data</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>E-Signature</h4>
+                            <p>Digital signing by employee and HR</p>
+                        </div>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4>Secure Storage</h4>
+                            <p>Encrypt and store in personnel files</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-purple">Run Workflow</button>
+            </div>
+        </div>
+
+        <div class="create-workflow">
+            <h2><i class="fas fa-plus-circle"></i> Create Custom Workflow</h2>
+            
+            <form class="workflow-form" id="workflowForm">
+                <div class="form-group">
+                    <label for="workflowName">Workflow Name</label>
+                    <input type="text" id="workflowName" placeholder="e.g., Contract Approval Process" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="workflowDescription">Description</label>
+                    <textarea id="workflowDescription" placeholder="Describe what this workflow does"></textarea>
+                </div>
+                
+                <div class="form-group tool-selection">
+                    <label>Select Tools to Include</label>
+                    <div class="tool-grid">
+                        <div class="tool-option" data-tool="upload">
+                            <i class="fas fa-file-upload"></i>
+                            <h4>File Upload</h4>
+                            <p>Upload documents to start processing</p>
+                        </div>
+                        <div class="tool-option" data-tool="watermark">
+                            <i class="fas fa-stamp"></i>
+                            <h4>Watermark</h4>
+                            <p>Add text or image watermarks</p>
+                        </div>
+                        <div class="tool-option" data-tool="protect">
+                            <i class="fas fa-lock"></i>
+                            <h4>Protect PDF</h4>
+                            <p>Encrypt and restrict documents</p>
+                        </div>
+                        <div class="tool-option" data-tool="convert">
+                            <i class="fas fa-exchange-alt"></i>
+                            <h4>Convert</h4>
+                            <p>Change file formats</p>
+                        </div>
+                        <div class="tool-option" data-tool="ocr">
+                            <i class="fas fa-text-height"></i>
+                            <h4>OCR</h4>
+                            <p>Extract text from images/PDFs</p>
+                        </div>
+                        <div class="tool-option" data-tool="sign">
+                            <i class="fas fa-signature"></i>
+                            <h4>E-Sign</h4>
+                            <p>Digital signatures</p>
+                        </div>
+                        <div class="tool-option" data-tool="compress">
+                            <i class="fas fa-compress-alt"></i>
+                            <h4>Compress</h4>
+                            <p>Reduce file size</p>
+                        </div>
+                        <div class="tool-option" data-tool="split">
+                            <i class="fas fa-cut"></i>
+                            <h4>Split</h4>
+                            <p>Divide documents</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="triggerType">Trigger</label>
+                    <select id="triggerType">
+                        <option value="manual">Manual Start</option>
+                        <option value="upload">File Upload</option>
+                        <option value="schedule">Scheduled</option>
+                        <option value="api">API Call</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="outputFormat">Output Format</label>
+                    <select id="outputFormat">
+                        <option value="pdf">PDF</option>
+                        <option value="docx">Word</option>
+                        <option value="xlsx">Excel</option>
+                        <option value="original">Original Format</option>
+                    </select>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-purple">
+                        <i class="fas fa-save"></i> Save Workflow
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="upload-area" id="uploadArea">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <h3>Upload Files for Workflow</h3>
+            <p>Drag & drop your files here or click to browse (Max 50MB each)</p>
+            <button class="btn">Select Files</button>
+            <input type="file" id="fileInput" multiple>
+        </div>
+
+        <div class="file-info" id="fileInfo">
+            <p>
+                <span>Files Selected:</span>
+                <span id="fileCount">0</span>
+            </p>
+            <p>
+                <span>Total Size:</span>
+                <span id="totalSize">0 MB</span>
+            </p>
+        </div>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress" id="progressBar"></div>
+            </div>
+            <p class="progress-text" id="progressText">Processing your files...</p>
+        </div>
+
+        <div class="result-section" id="resultSection">
+            <i class="fas fa-check-circle"></i>
+            <h3>Workflow Completed Successfully!</h3>
+            <p>Your documents have been processed through the workflow.</p>
+            <button class="btn download-btn" id="downloadBtn">
+                <i class="fas fa-download"></i> Download Processed Files
+            </button>
+            <button class="btn btn-secondary" id="newWorkflowBtn" style="margin-left: 1rem;">
+                <i class="fas fa-redo"></i> Run Another Workflow
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Success! Your workflow has been saved.</span>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const fileInfo = document.getElementById('fileInfo');
+            const fileCount = document.getElementById('fileCount');
+            const totalSize = document.getElementById('totalSize');
+            const workflowForm = document.getElementById('workflowForm');
+            const toolOptions = document.querySelectorAll('.tool-option');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const resultSection = document.getElementById('resultSection');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const newWorkflowBtn = document.getElementById('newWorkflowBtn');
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+
+            // Variables
+            let selectedFiles = [];
+            const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+            let selectedTools = [];
+
+            // Create background particles
+            function createParticles() {
+                const bgAnimation = document.querySelector('.bg-animation');
+                for (let i = 0; i < 10; i++) {
+                    const particle = document.createElement('div');
+                    particle.classList.add('particle');
+                    
+                    const size = Math.random() * 100 + 50;
+                    const posX = Math.random() * 100;
+                    const posY = Math.random() * 100;
+                    const delay = Math.random() * 10;
+                    const duration = Math.random() * 10 + 10;
+                    
+                    particle.style.width = `${size}px`;
+                    particle.style.height = `${size}px`;
+                    particle.style.top = `${posY}%`;
+                    particle.style.left = `${posX}%`;
+                    particle.style.animationDelay = `${delay}s`;
+                    particle.style.animationDuration = `${duration}s`;
+                    
+                    bgAnimation.appendChild(particle);
+                }
+            }
+
+            // Event Listeners
+            uploadArea.addEventListener('click', () => fileInput.click());
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+            fileInput.addEventListener('change', handleFileSelect);
+            workflowForm.addEventListener('submit', handleWorkflowSubmit);
+            toolOptions.forEach(option => {
+                option.addEventListener('click', toggleToolSelection);
+            });
+            downloadBtn.addEventListener('click', downloadFiles);
+            newWorkflowBtn.addEventListener('click', resetWorkflow);
+
+            // Initialize
+            createParticles();
+
+            // Functions
+            function handleDragOver(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.add('active');
+            }
+
+            function handleDragLeave(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.remove('active');
+            }
+
+            function handleDrop(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.remove('active');
+
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFileSelect({ target: fileInput });
+                }
+            }
+
+            function handleFileSelect(e) {
+                const files = Array.from(e.target.files);
+                
+                if (files.length === 0) return;
+                
+                // Validate files
+                const validFiles = files.filter(file => {
+                    if (file.size > MAX_FILE_SIZE) {
+                        showToast(`File ${file.name} exceeds 50MB limit`, 'error');
+                        return false;
+                    }
+                    return true;
+                });
+                
+                if (validFiles.length === 0) {
+                    uploadArea.classList.add('error');
+                    setTimeout(() => uploadArea.classList.remove('error'), 2000);
+                    return;
+                }
+                
+                selectedFiles = validFiles;
+                
+                // Update file info
+                fileCount.textContent = selectedFiles.length;
+                totalSize.textContent = formatFileSize(
+                    selectedFiles.reduce((total, file) => total + file.size, 0)
+                );
+                
+                // Show file info
+                fileInfo.classList.add('active');
+                
+                showToast(`${selectedFiles.length} files selected for workflow`);
+            }
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            function toggleToolSelection(e) {
+                const tool = this.dataset.tool;
+                if (selectedTools.includes(tool)) {
+                    selectedTools = selectedTools.filter(t => t !== tool);
+                    this.classList.remove('selected');
+                } else {
+                    selectedTools.push(tool);
+                    this.classList.add('selected');
+                }
+            }
+
+            function handleWorkflowSubmit(e) {
+                e.preventDefault();
+                
+                const workflowName = document.getElementById('workflowName').value;
+                if (!workflowName) {
+                    showToast('Please enter a workflow name', 'error');
+                    return;
+                }
+                
+                if (selectedTools.length === 0) {
+                    showToast('Please select at least one tool', 'error');
+                    return;
+                }
+                
+                // Show processing
+                progressContainer.classList.add('active');
+                
+                // Simulate workflow processing
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 10;
+                    if (progress > 100) progress = 100;
+                    
+                    progressBar.style.width = progress + '%';
+                    progressText.textContent = getProgressMessage(progress);
+                    
+                    if (progress === 100) {
+                        clearInterval(interval);
+                        setTimeout(() => {
+                            showResult();
+                            showToast(`Workflow "${workflowName}" completed successfully`);
+                        }, 500);
+                    }
+                }, 300);
+            }
+
+            function getProgressMessage(progress) {
+                if (progress < 30) return "Preparing files...";
+                if (progress < 60) return "Processing through workflow...";
+                if (progress < 90) return "Finalizing output...";
+                return "Workflow complete!";
+            }
+
+            function showResult() {
+                progressContainer.classList.remove('active');
+                resultSection.classList.add('active');
+                
+                // Scroll to result
+                resultSection.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            function downloadFiles() {
+                if (selectedFiles.length === 0) {
+                    showToast('No files to download', 'error');
+                    return;
+                }
+                
+                // In a real app, this would download the processed files
+                // For demo, we'll just show a success message
+                showToast('Download started for processed files', 'success');
+            }
+
+            function resetWorkflow() {
+                // Reset form
+                workflowForm.reset();
+                selectedTools = [];
+                toolOptions.forEach(option => {
+                    option.classList.remove('selected');
+                });
+                
+                // Reset file selection
+                fileInput.value = '';
+                selectedFiles = [];
+                fileInfo.classList.remove('active');
+                fileCount.textContent = '0';
+                totalSize.textContent = '0 MB';
+                
+                // Hide result
+                resultSection.classList.remove('active');
+                
+                showToast('Workflow reset. Ready to create a new one.');
+            }
+
+            function showToast(message, type = 'success') {
+                toastMessage.textContent = message;
+                toast.className = 'toast ' + type;
+                toast.innerHTML = `
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                    <span id="toastMessage">${message}</span>
+                `;
+                
+                toast.classList.add('show');
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>

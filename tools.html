@@ -5,14 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tools - FilePro</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --primary: #6e48ff;
-      --primary-dark: #4a2dcc;
-      --secondary: #00d4ff;
-      --dark: #1a1a2e;
-      --light: #f5f5fa;
-      --accent: #ff4d8d;
+      --primary: #00f0ff;
+      --secondary: #7209b7;
+      --accent: #f72585;
+      --dark: #0a0a1a;
+      --light: #f8f9fa;
+      --success: #4cc9f0;
+      --warning: #ffbe0b;
+      --danger: #ef233c;
+      --neon-glow: 0 0 10px rgba(0, 240, 255, 0.8),
+                   0 0 20px rgba(0, 240, 255, 0.6),
+                   0 0 30px rgba(0, 240, 255, 0.4);
       --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
 
@@ -20,60 +26,225 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
     body {
+      font-family: 'Roboto', sans-serif;
       background-color: var(--dark);
       color: var(--light);
-      min-height: 100vh;
       overflow-x: hidden;
-      background-image: 
-        radial-gradient(circle at 10% 20%, rgba(110, 72, 255, 0.1) 0%, transparent 20%),
-        radial-gradient(circle at 90% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 20%);
+      min-height: 100vh;
+      position: relative;
     }
 
+    /* Loading Screen */
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--dark);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 1s ease, visibility 1s ease;
+    }
+
+    .loading-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .loading-logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--primary);
+      text-shadow: var(--neon-glow);
+      letter-spacing: 2px;
+      margin-bottom: 2rem;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .loading-logo i {
+      margin-right: 15px;
+      animation: pulse 2s infinite;
+    }
+
+    .loading-progress {
+      width: 300px;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+
+    .loading-progress-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--secondary), var(--primary));
+      border-radius: 10px;
+      transition: width 0.3s ease;
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+    }
+
+    .loading-stats {
+      display: flex;
+      justify-content: space-between;
+      width: 300px;
+      margin-bottom: 2rem;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.9rem;
+    }
+
+    .loading-message {
+      color: var(--primary);
+      text-align: center;
+      max-width: 300px;
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+      min-height: 2rem;
+    }
+
+    .loading-animation {
+      position: relative;
+      width: 200px;
+      height: 100px;
+      margin-bottom: 2rem;
+    }
+
+    .file-icon {
+      position: absolute;
+      font-size: 2rem;
+      color: var(--primary);
+      opacity: 0;
+      animation: floatFile 4s infinite ease-in-out;
+    }
+
+    .file-icon:nth-child(1) {
+      left: 0;
+      animation-delay: 0s;
+    }
+
+    .file-icon:nth-child(2) {
+      left: 40px;
+      animation-delay: 0.5s;
+    }
+
+    .file-icon:nth-child(3) {
+      left: 80px;
+      animation-delay: 1s;
+    }
+
+    .file-icon:nth-child(4) {
+      left: 120px;
+      animation-delay: 1.5s;
+    }
+
+    .file-icon:nth-child(5) {
+      left: 160px;
+      animation-delay: 2s;
+    }
+
+    @keyframes floatFile {
+      0% {
+        transform: translateY(0) scale(0.8);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      50% {
+        transform: translateY(-40px) scale(1.2);
+      }
+      100% {
+        transform: translateY(0) scale(0.8);
+        opacity: 0;
+      }
+    }
+
+    /* Background Animation */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+      border-radius: 50%;
+      opacity: 0.3;
+      animation: float 15s infinite linear;
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 0.3;
+      }
+      100% {
+        transform: translateY(-1000px) rotate(720deg);
+        opacity: 0;
+      }
+    }
+
+    /* Header */
     header {
-      background: rgba(26, 26, 46, 0.8);
+      background: rgba(10, 10, 26, 0.8);
       backdrop-filter: blur(10px);
-      padding: 1.5rem 5%;
+      padding: 1.5rem 3rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       position: fixed;
       width: 100%;
       top: 0;
-      z-index: 1000;
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 100;
+      border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+      animation: slideDown 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes slideDown {
+      from {
+        transform: translateY(-100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
     }
 
     .logo {
+      font-family: 'Orbitron', sans-serif;
       font-size: 1.8rem;
       font-weight: 700;
-      background: linear-gradient(45deg, var(--primary), var(--secondary));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      color: var(--primary);
+      text-shadow: var(--neon-glow);
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
     }
 
-    .logo::before {
-      content: "";
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      background: var(--secondary);
-      border-radius: 50%;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0% { transform: scale(0.95); opacity: 1; }
-      50% { transform: scale(1.1); opacity: 0.7; }
-      100% { transform: scale(0.95); opacity: 1; }
+    .logo:hover {
+      transform: scale(1.05);
+      text-shadow: 0 0 15px rgba(0, 240, 255, 0.9),
+                  0 0 30px rgba(0, 240, 255, 0.7),
+                  0 0 45px rgba(0, 240, 255, 0.5);
     }
 
     nav {
@@ -84,47 +255,62 @@
     nav a {
       color: var(--light);
       text-decoration: none;
+      font-size: 1.1rem;
       font-weight: 500;
       position: relative;
-      transition: var(--transition);
-      opacity: 0.8;
-    }
-
-    nav a:hover {
-      opacity: 1;
-      color: var(--secondary);
+      padding: 0.5rem 0;
+      transition: all 0.3s ease;
     }
 
     nav a::after {
       content: '';
       position: absolute;
+      bottom: 0;
+      left: 0;
       width: 0;
       height: 2px;
-      bottom: -5px;
-      left: 0;
-      background: linear-gradient(90deg, var(--primary), var(--secondary));
-      transition: var(--transition);
+      background: var(--primary);
+      transition: width 0.3s ease;
+    }
+
+    nav a:hover {
+      color: var(--primary);
     }
 
     nav a:hover::after {
       width: 100%;
     }
 
+    /* Main Content */
     .page {
-      padding: 8rem 5% 4rem;
+      padding: 10rem 3rem 5rem;
       max-width: 1400px;
       margin: 0 auto;
+      animation: fadeIn 1s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     h1 {
-      font-size: 3rem;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 3.5rem;
       margin-bottom: 3rem;
-      background: linear-gradient(45deg, var(--primary), var(--secondary));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      text-align: center;
+      color: var(--primary);
+      text-shadow: var(--neon-glow);
+      letter-spacing: 2px;
       position: relative;
+      display: inline-block;
+      text-align: center;
+      width: 100%;
     }
 
     h1::after {
@@ -133,10 +319,19 @@
       bottom: -10px;
       left: 50%;
       transform: translateX(-50%);
-      width: 100px;
+      width: 200px;
       height: 3px;
-      background: linear-gradient(90deg, var(--primary), var(--secondary));
-      border-radius: 3px;
+      background: linear-gradient(90deg, transparent, var(--primary), transparent);
+      animation: expand 1s ease-out;
+    }
+
+    @keyframes expand {
+      from {
+        width: 0;
+      }
+      to {
+        width: 200px;
+      }
     }
 
     .tool-section {
@@ -145,12 +340,17 @@
     }
 
     h2 {
+      font-family: 'Orbitron', sans-serif;
       font-size: 1.8rem;
       margin-bottom: 1.5rem;
-      color: var(--secondary);
+      color: var(--primary);
       display: flex;
       align-items: center;
       gap: 0.8rem;
+    }
+
+    h2 i {
+      text-shadow: var(--neon-glow);
     }
 
     h2::before {
@@ -165,13 +365,13 @@
 
     .tools-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
       gap: 1.5rem;
     }
 
     .tool-btn {
       background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(0, 240, 255, 0.3);
       border-radius: 10px;
       padding: 1.5rem 1rem;
       text-align: center;
@@ -186,22 +386,25 @@
       align-items: center;
       justify-content: center;
       height: 120px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     }
 
     .tool-btn::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
       background: linear-gradient(
-        90deg,
+        to bottom right,
         transparent,
-        rgba(255, 255, 255, 0.1),
-        transparent
+        transparent,
+        transparent,
+        rgba(0, 240, 255, 0.1)
       );
-      transition: 0.5s;
+      transform: rotate(45deg);
+      transition: all 0.5s ease;
     }
 
     .tool-btn:hover::before {
@@ -210,130 +413,16 @@
 
     .tool-btn:hover {
       transform: translateY(-5px);
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 10px 20px rgba(0, 240, 255, 0.2);
       border-color: var(--primary);
-      background: rgba(110, 72, 255, 0.1);
+      background: rgba(0, 240, 255, 0.1);
     }
 
     .tool-btn i {
       font-size: 2rem;
       margin-bottom: 0.8rem;
-      background: linear-gradient(45deg, var(--primary), var(--secondary));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-    }
-
-    footer {
-      text-align: center;
-      padding: 2rem;
-      margin-top: 4rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      color: rgba(255, 255, 255, 0.6);
-      font-size: 0.9rem;
-    }
-
-    /* Futuristic floating elements */
-    .floating {
-      position: absolute;
-      border-radius: 50%;
-      background: linear-gradient(45deg, var(--primary), var(--secondary));
-      opacity: 0.1;
-      filter: blur(30px);
-      z-index: -1;
-      animation: float 15s infinite ease-in-out;
-    }
-
-    .floating:nth-child(1) {
-      width: 300px;
-      height: 300px;
-      top: 10%;
-      left: 5%;
-      animation-delay: 0s;
-    }
-
-    .floating:nth-child(2) {
-      width: 200px;
-      height: 200px;
-      top: 60%;
-      left: 80%;
-      animation-delay: 3s;
-    }
-
-    .floating:nth-child(3) {
-      width: 150px;
-      height: 150px;
-      top: 30%;
-      left: 70%;
-      animation-delay: 6s;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0) translateX(0); }
-      25% { transform: translateY(-50px) translateX(20px); }
-      50% { transform: translateY(20px) translateX(-30px); }
-      75% { transform: translateY(-30px) translateX(-20px); }
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-      header {
-        flex-direction: column;
-        padding: 1rem;
-      }
-
-      nav {
-        margin-top: 1rem;
-        gap: 1rem;
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-
-      .page {
-        padding: 7rem 1rem 2rem;
-      }
-
-      h1 {
-        font-size: 2.2rem;
-      }
-
-      .tools-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      }
-
-      .tool-btn {
-        padding: 1rem 0.5rem;
-        height: 100px;
-        font-size: 0.9rem;
-      }
-
-      .tool-btn i {
-        font-size: 1.5rem;
-      }
-    }
-
-    /* Glow effect for section headers */
-    .tool-section::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: radial-gradient(circle at center, rgba(110, 72, 255, 0.1) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: -1;
-      opacity: 0;
-      transition: opacity 0.5s ease;
-    }
-
-    .tool-section:hover::after {
-      opacity: 1;
-    }
-
-    /* Hover effect for section headers */
-    h2:hover {
-      text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+      color: var(--primary);
+      text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
     }
 
     /* Tooltip for icons */
@@ -358,14 +447,190 @@
       opacity: 1;
       bottom: -35px;
     }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      margin-top: 4rem;
+      background: rgba(10, 10, 26, 0.8);
+      border-top: 1px solid rgba(0, 240, 255, 0.2);
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.9rem;
+    }
+
+    /* Floating Animation */
+    .float {
+      animation: floating 3s ease-in-out infinite;
+    }
+
+    @keyframes floating {
+      0% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+      100% {
+        transform: translateY(0);
+      }
+    }
+
+    /* Glow effect for section headers */
+    .tool-section::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, rgba(0, 240, 255, 0.1) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .tool-section:hover::after {
+      opacity: 1;
+    }
+
+    /* Hover effect for section headers */
+    h2:hover {
+      text-shadow: var(--neon-glow);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      header {
+        padding: 1rem 1.5rem;
+        flex-direction: column;
+      }
+
+      nav {
+        margin-top: 1rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .page {
+        padding: 8rem 1.5rem 3rem;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+      }
+
+      .tools-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      }
+
+      .tool-btn {
+        padding: 1rem 0.5rem;
+        height: 100px;
+        font-size: 0.9rem;
+      }
+
+      .tool-btn i {
+        font-size: 1.5rem;
+      }
+
+      .loading-logo {
+        font-size: 2rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .tools-grid {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .tool-btn {
+        padding: 1.5rem 1rem;
+      }
+
+      .loading-logo {
+        font-size: 1.8rem;
+      }
+
+      .loading-progress,
+      .loading-stats {
+        width: 250px;
+      }
+    }
+
+    /* Advanced Effects */
+    .glow {
+      animation: glow 2s infinite alternate;
+    }
+
+    @keyframes glow {
+      from {
+        text-shadow: 0 0 5px rgba(0, 240, 255, 0.5);
+      }
+      to {
+        text-shadow: 0 0 15px rgba(0, 240, 255, 0.8),
+                    0 0 30px rgba(0, 240, 255, 0.6);
+      }
+    }
+
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(0, 240, 255, 0.4);
+      }
+      70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 15px rgba(0, 240, 255, 0);
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(0, 240, 255, 0);
+      }
+    }
   </style>
 </head>
 <body>
-  <!-- Floating background elements -->
-  <div class="floating"></div>
-  <div class="floating"></div>
-  <div class="floating"></div>
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-logo">
+      <i class="fas fa-file-import"></i>
+      <span>FilePro</span>
+    </div>
+    
+    <div class="loading-animation">
+      <i class="fas fa-file-pdf file-icon"></i>
+      <i class="fas fa-file-word file-icon"></i>
+      <i class="fas fa-file-excel file-icon"></i>
+      <i class="fas fa-file-image file-icon"></i>
+      <i class="fas fa-file-powerpoint file-icon"></i>
+    </div>
+    
+    <div class="loading-message" id="loadingMessage">Initializing application...</div>
+    
+    <div class="loading-progress">
+      <div class="loading-progress-bar" id="loadingProgress"></div>
+    </div>
+    
+    <div class="loading-stats">
+      <span id="loadingPercentage">0%</span>
+      <span id="loadingStatus">Loading modules...</span>
+    </div>
+  </div>
 
+  <!-- Background Particles -->
+  <div class="particles" id="particles"></div>
+
+  <!-- Header -->
   <header>
     <div class="logo">⚡ FilePro</div>
     <nav>
@@ -377,61 +642,61 @@
   </header>
 
   <div class="page">
-    <h1>Advanced PDF Toolkit</h1>
+    <h1 class="glow">Advanced PDF Toolkit</h1>
 
     <!-- Organize PDF Section -->
     <section class="tool-section">
       <h2><i class="fas fa-layer-group"></i> Organize PDF</h2>
       <div class="tools-grid">
-        <a class="tool-btn" href="tools/organize-pdf/merge-pdf.html" data-tooltip="Combine multiple PDFs">
+        <a class="tool-btn float" href="tools/organize-pdf/merge-pdf.html" data-tooltip="Combine multiple PDFs">
           <i class="fas fa-object-group"></i>
           Merge PDF
         </a>
-        <a class="tool-btn" href="tools/organize-pdf/split-pdf.html" data-tooltip="Divide PDF into parts">
+        <a class="tool-btn float" href="tools/organize-pdf/split-pdf.html" data-tooltip="Divide PDF into parts">
           <i class="fas fa-cut"></i>
           Split PDF
         </a>
-        <a class="tool-btn" href="tools/organize-pdf/remove-pages.html" data-tooltip="Delete specific pages">
+        <a class="tool-btn float" href="tools/organize-pdf/remove-pages.html" data-tooltip="Delete specific pages">
           <i class="fas fa-minus-circle"></i>
           Remove Pages
         </a>
-        <a class="tool-btn" href="tools/organize-pdf/extract-pages.html" data-tooltip="Extract selected pages">
+        <a class="tool-btn float" href="tools/organize-pdf/extract-pages.html" data-tooltip="Extract selected pages">
           <i class="fas fa-expand"></i>
           Extract Pages
         </a>
-        <a class="tool-btn" href="tools/organize-pdf/organize-pdf.html" data-tooltip="Rearrange pages">
+        <a class="tool-btn float" href="tools/organize-pdf/organize-pdf.html" data-tooltip="Rearrange pages">
           <i class="fas fa-sort-amount-down"></i>
           Organize PDF
         </a>
-        <a class="tool-btn" href="tools/organize-pdf/scan-to-pdf.html" data-tooltip="Create PDF from scans">
+        <a class="tool-btn float" href="tools/organize-pdf/scan-to-pdf.html" data-tooltip="Create PDF from scans">
           <i class="fas fa-scanner"></i>
           Scan to PDF
         </a>
-        <a class="tool-btn" href="tools/organize-pdf/alternate-mix.html" data-tooltip="Interleave PDF pages">
+        <a class="tool-btn float" href="tools/organize-pdf/alternate-mix.html" data-tooltip="Interleave PDF pages">
           <i class="fas fa-random"></i>
           Alternate & Mix
         </a>
-        <a class="tool-btn" href="tools/organize-pdf/split-by-pages.html" data-tooltip="Split at specific pages">
+        <a class="tool-btn float" href="tools/organize-pdf/split-by-pages.html" data-tooltip="Split at specific pages">
           <i class="fas fa-file-export"></i>
           Split by pages
         </a>
-        <a class="tool-btn" href="tools/organize-pdf/split-by-bookmarks.html" data-tooltip="Split using bookmarks">
+        <a class="tool-btn float" href="tools/organize-pdf/split-by-bookmarks.html" data-tooltip="Split using bookmarks">
           <i class="fas fa-bookmark"></i>
           Split by bookmarks
         </a>
-        <a class="tool-btn" href="tools/organize-pdf/split-in-half.html" data-tooltip="Divide PDF in two">
+        <a class="tool-btn float" href="tools/organize-pdf/split-in-half.html" data-tooltip="Divide PDF in two">
           <i class="fas fa-divide"></i>
           Split in half
         </a>
-        <a class="tool-btn" href="tools/organize-pdf/split-by-size.html" data-tooltip="Split by file size">
+        <a class="tool-btn float" href="tools/organize-pdf/split-by-size.html" data-tooltip="Split by file size">
           <i class="fas fa-weight-hanging"></i>
           Split by size
         </a>
-        <a class="tool-btn" href="tools/organize-pdf/split-by-text.html" data-tooltip="Split at text matches">
+        <a class="tool-btn float" href="tools/organize-pdf/split-by-text.html" data-tooltip="Split at text matches">
           <i class="fas fa-font"></i>
           Split by text
         </a>
-        <a class="tool-btn" href="tools/organize-pdf/rename.html" data-tooltip="Rename PDF files">
+        <a class="tool-btn float" href="tools/organize-pdf/rename.html" data-tooltip="Rename PDF files">
           <i class="fas fa-tag"></i>
           Rename
         </a>
@@ -442,31 +707,31 @@
     <section class="tool-section">
       <h2><i class="fas fa-tachometer-alt"></i> Optimize PDF</h2>
       <div class="tools-grid">
-        <a class="tool-btn" href="tools/optimize-pdf/compress-pdf.html" data-tooltip="Reduce PDF file size">
+        <a class="tool-btn float" href="tools/optimize-pdf/compress-pdf.html" data-tooltip="Reduce PDF file size">
           <i class="fas fa-compress-alt"></i>
           Compress PDF
         </a>
-        <a class="tool-btn" href="tools/optimize-pdf/repair-pdf.html" data-tooltip="Fix corrupted PDFs">
+        <a class="tool-btn float" href="tools/optimize-pdf/repair-pdf.html" data-tooltip="Fix corrupted PDFs">
           <i class="fas fa-wrench"></i>
           Repair PDF
         </a>
-        <a class="tool-btn" href="tools/optimize-pdf/ocr-pdf.html" data-tooltip="Make scanned text searchable">
+        <a class="tool-btn float" href="tools/optimize-pdf/ocr-pdf.html" data-tooltip="Make scanned text searchable">
           <i class="fas fa-eye"></i>
           OCR PDF
         </a>
-        <a class="tool-btn" href="tools/optimize-pdf/deskew.html" data-tooltip="Straighten scanned pages">
+        <a class="tool-btn float" href="tools/optimize-pdf/deskew.html" data-tooltip="Straighten scanned pages">
           <i class="fas fa-ruler-combined"></i>
           Deskew
         </a>
-        <a class="tool-btn" href="tools/optimize-pdf/grayscale.html" data-tooltip="Convert to grayscale">
+        <a class="tool-btn float" href="tools/optimize-pdf/grayscale.html" data-tooltip="Convert to grayscale">
           <i class="fas fa-palette"></i>
           Grayscale
         </a>
-        <a class="tool-btn" href="tools/optimize-pdf/resize.html" data-tooltip="Adjust page dimensions">
+        <a class="tool-btn float" href="tools/optimize-pdf/resize.html" data-tooltip="Adjust page dimensions">
           <i class="fas fa-arrows-alt"></i>
           Resize
         </a>
-        <a class="tool-btn" href="tools/optimize-pdf/flatten.html" data-tooltip="Merge layers and annotations">
+        <a class="tool-btn float" href="tools/optimize-pdf/flatten.html" data-tooltip="Merge layers and annotations">
           <i class="fas fa-layer-group"></i>
           Flatten
         </a>
@@ -477,23 +742,23 @@
     <section class="tool-section">
       <h2><i class="fas fa-file-import"></i> Convert to PDF</h2>
       <div class="tools-grid">
-        <a class="tool-btn" href="tools/convert-to-pdf/jpg-to-pdf.html" data-tooltip="Images to PDF">
+        <a class="tool-btn float" href="tools/convert-to-pdf/jpg-to-pdf.html" data-tooltip="Images to PDF">
           <i class="fas fa-file-image"></i>
           JPG to PDF
         </a>
-        <a class="tool-btn" href="tools/convert-to-pdf/word-to-pdf.html" data-tooltip="Word documents to PDF">
+        <a class="tool-btn float" href="tools/convert-to-pdf/word-to-pdf.html" data-tooltip="Word documents to PDF">
           <i class="fas fa-file-word"></i>
           WORD to PDF
         </a>
-        <a class="tool-btn" href="tools/convert-to-pdf/ppt-to-pdf.html" data-tooltip="Presentations to PDF">
+        <a class="tool-btn float" href="tools/convert-to-pdf/ppt-to-pdf.html" data-tooltip="Presentations to PDF">
           <i class="fas fa-file-powerpoint"></i>
           POWERPOINT to PDF
         </a>
-        <a class="tool-btn" href="tools/convert-to-pdf/excel-to-pdf.html" data-tooltip="Spreadsheets to PDF">
+        <a class="tool-btn float" href="tools/convert-to-pdf/excel-to-pdf.html" data-tooltip="Spreadsheets to PDF">
           <i class="fas fa-file-excel"></i>
           EXCEL to PDF
         </a>
-        <a class="tool-btn" href="tools/convert-to-pdf/html-to-pdf.html" data-tooltip="Web pages to PDF">
+        <a class="tool-btn float" href="tools/convert-to-pdf/html-to-pdf.html" data-tooltip="Web pages to PDF">
           <i class="fas fa-code"></i>
           HTML to PDF
         </a>
@@ -504,23 +769,23 @@
     <section class="tool-section">
       <h2><i class="fas fa-file-export"></i> Convert from PDF</h2>
       <div class="tools-grid">
-        <a class="tool-btn" href="tools/convert-from-pdf/pdf-to-jpg.html" data-tooltip="PDF to images">
+        <a class="tool-btn float" href="tools/convert-from-pdf/pdf-to-jpg.html" data-tooltip="PDF to images">
           <i class="fas fa-image"></i>
           PDF to JPG
         </a>
-        <a class="tool-btn" href="tools/convert-from-pdf/pdf-to-word.html" data-tooltip="PDF to Word documents">
+        <a class="tool-btn float" href="tools/convert-from-pdf/pdf-to-word.html" data-tooltip="PDF to Word documents">
           <i class="fas fa-file-word"></i>
           PDF to WORD
         </a>
-        <a class="tool-btn" href="tools/convert-from-pdf/pdf-to-ppt.html" data-tooltip="PDF to presentations">
+        <a class="tool-btn float" href="tools/convert-from-pdf/pdf-to-ppt.html" data-tooltip="PDF to presentations">
           <i class="fas fa-file-powerpoint"></i>
           PDF to POWERPOINT
         </a>
-        <a class="tool-btn" href="tools/convert-from-pdf/pdf-to-excel.html" data-tooltip="PDF to spreadsheets">
+        <a class="tool-btn float" href="tools/convert-from-pdf/pdf-to-excel.html" data-tooltip="PDF to spreadsheets">
           <i class="fas fa-file-excel"></i>
           PDF to EXCEL
         </a>
-        <a class="tool-btn" href="tools/convert-from-pdf/pdf-to-text.html" data-tooltip="Extract text content">
+        <a class="tool-btn float" href="tools/convert-from-pdf/pdf-to-text.html" data-tooltip="Extract text content">
           <i class="fas fa-file-alt"></i>
           PDF to Text
         </a>
@@ -531,63 +796,63 @@
     <section class="tool-section">
       <h2><i class="fas fa-edit"></i> Edit PDF</h2>
       <div class="tools-grid">
-        <a class="tool-btn" href="tools/edit-pdf/rotate-pdf.html" data-tooltip="Rotate pages">
+        <a class="tool-btn float" href="tools/edit-pdf/rotate-pdf.html" data-tooltip="Rotate pages">
           <i class="fas fa-redo"></i>
           Rotate PDF
         </a>
-        <a class="tool-btn" href="tools/edit-pdf/add-page-numbers.html" data-tooltip="Add page numbering">
+        <a class="tool-btn float" href="tools/edit-pdf/add-page-numbers.html" data-tooltip="Add page numbering">
           <i class="fas fa-list-ol"></i>
           Add Page Numbers
         </a>
-        <a class="tool-btn" href="tools/edit-pdf/add-watermark.html" data-tooltip="Add watermark">
+        <a class="tool-btn float" href="tools/edit-pdf/add-watermark.html" data-tooltip="Add watermark">
           <i class="fas fa-stamp"></i>
           Add Watermark
         </a>
-        <a class="tool-btn" href="tools/edit-pdf/edit.html" data-tooltip="Edit content">
+        <a class="tool-btn float" href="tools/edit-pdf/edit.html" data-tooltip="Edit content">
           <i class="fas fa-pencil-alt"></i>
           Edit
         </a>
-        <a class="tool-btn" href="tools/edit-pdf/fill-sign.html" data-tooltip="Fill and sign forms">
+        <a class="tool-btn float" href="tools/edit-pdf/fill-sign.html" data-tooltip="Fill and sign forms">
           <i class="fas fa-signature"></i>
           Fill & Sign
         </a>
-        <a class="tool-btn" href="tools/edit-pdf/create-forms.html" data-tooltip="Create fillable forms">
+        <a class="tool-btn float" href="tools/edit-pdf/create-forms.html" data-tooltip="Create fillable forms">
           <i class="fas fa-keyboard"></i>
           Create Forms
         </a>
-        <a class="tool-btn" href="tools/edit-pdf/delete-pages.html" data-tooltip="Remove pages">
+        <a class="tool-btn float" href="tools/edit-pdf/delete-pages.html" data-tooltip="Remove pages">
           <i class="fas fa-trash-alt"></i>
           Delete Pages
         </a>
-        <a class="tool-btn" href="tools/edit-pdf/crop.html" data-tooltip="Crop pages">
+        <a class="tool-btn float" href="tools/edit-pdf/crop.html" data-tooltip="Crop pages">
           <i class="fas fa-crop"></i>
           Crop
         </a>
-        <a class="tool-btn" href="tools/edit-pdf/extract-images.html" data-tooltip="Extract images">
+        <a class="tool-btn float" href="tools/edit-pdf/extract-images.html" data-tooltip="Extract images">
           <i class="fas fa-images"></i>
           Extract Images
         </a>
-        <a class="tool-btn" href="tools/edit-pdf/header-footer.html" data-tooltip="Add headers/footers">
+        <a class="tool-btn float" href="tools/edit-pdf/header-footer.html" data-tooltip="Add headers/footers">
           <i class="fas fa-heading"></i>
           Header & Footer
         </a>
-        <a class="tool-btn" href="tools/edit-pdf/edit-metadata.html" data-tooltip="Edit document properties">
+        <a class="tool-btn float" href="tools/edit-pdf/edit-metadata.html" data-tooltip="Edit document properties">
           <i class="fas fa-info-circle"></i>
           Edit Metadata
         </a>
-        <a class="tool-btn" href="tools/edit-pdf/n-up.html" data-tooltip="Multiple pages per sheet">
+        <a class="tool-btn float" href="tools/edit-pdf/n-up.html" data-tooltip="Multiple pages per sheet">
           <i class="fas fa-copy"></i>
           N-up
         </a>
-        <a class="tool-btn" href="tools/edit-pdf/remove-annotations.html" data-tooltip="Remove comments/markup">
+        <a class="tool-btn float" href="tools/edit-pdf/remove-annotations.html" data-tooltip="Remove comments/markup">
           <i class="fas fa-comment-slash"></i>
           Remove annotations
         </a>
-        <a class="tool-btn" href="tools/edit-pdf/bates-numbering.html" data-tooltip="Add legal numbering">
+        <a class="tool-btn float" href="tools/edit-pdf/bates-numbering.html" data-tooltip="Add legal numbering">
           <i class="fas fa-hashtag"></i>
           Bates Numbering
         </a>
-        <a class="tool-btn" href="tools/edit-pdf/create-bookmarks.html" data-tooltip="Create navigation bookmarks">
+        <a class="tool-btn float" href="tools/edit-pdf/create-bookmarks.html" data-tooltip="Create navigation bookmarks">
           <i class="fas fa-bookmark"></i>
           Create Bookmarks
         </a>
@@ -598,19 +863,19 @@
     <section class="tool-section">
       <h2><i class="fas fa-lock"></i> PDF Security</h2>
       <div class="tools-grid">
-        <a class="tool-btn" href="tools/pdf-security/unlock-pdf.html" data-tooltip="Remove password protection">
+        <a class="tool-btn float" href="tools/pdf-security/unlock-pdf.html" data-tooltip="Remove password protection">
           <i class="fas fa-unlock"></i>
           Unlock PDF
         </a>
-        <a class="tool-btn" href="tools/pdf-security/protect-pdf.html" data-tooltip="Add password protection">
+        <a class="tool-btn float" href="tools/pdf-security/protect-pdf.html" data-tooltip="Add password protection">
           <i class="fas fa-lock"></i>
           Protect PDF
         </a>
-        <a class="tool-btn" href="tools/pdf-security/sign-pdf.html" data-tooltip="Add digital signatures">
+        <a class="tool-btn float" href="tools/pdf-security/sign-pdf.html" data-tooltip="Add digital signatures">
           <i class="fas fa-signature"></i>
           Sign PDF
         </a>
-        <a class="tool-btn" href="tools/pdf-security/watermark.html" data-tooltip="Add security watermarks">
+        <a class="tool-btn float" href="tools/pdf-security/watermark.html" data-tooltip="Add security watermarks">
           <i class="fas fa-shield-alt"></i>
           Watermark
         </a>
@@ -621,7 +886,7 @@
     <section class="tool-section">
       <h2><i class="fas fa-robot"></i> Automation</h2>
       <div class="tools-grid">
-        <a class="tool-btn" href="tools/automation/workflows.html" data-tooltip="Automate PDF tasks">
+        <a class="tool-btn float" href="tools/automation/workflows.html" data-tooltip="Automate PDF tasks">
           <i class="fas fa-project-diagram"></i>
           Workflows
         </a>
@@ -634,6 +899,107 @@
   </footer>
 
   <script>
+    // Loading screen functionality
+    function simulateLoading() {
+      const loadingScreen = document.getElementById('loadingScreen');
+      const progressBar = document.getElementById('loadingProgress');
+      const percentage = document.getElementById('loadingPercentage');
+      const status = document.getElementById('loadingStatus');
+      const message = document.getElementById('loadingMessage');
+      
+      const messages = [
+        "Initializing application...",
+        "Loading core modules...",
+        "Preparing file processors...",
+        "Optimizing conversion algorithms...",
+        "Setting up security protocols...",
+        "Almost there...",
+        "Ready to transform your files!"
+      ];
+      
+      const statuses = [
+        "Loading modules...",
+        "Preparing components...",
+        "Initializing converters...",
+        "Optimizing performance...",
+        "Securing environment...",
+        "Finalizing setup...",
+        "Complete!"
+      ];
+      
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 5 + 1;
+        if (progress > 100) progress = 100;
+        
+        progressBar.style.width = `${progress}%`;
+        percentage.textContent = `${Math.floor(progress)}%`;
+        
+        // Update message and status at certain intervals
+        if (progress < 20) {
+          message.textContent = messages[0];
+          status.textContent = statuses[0];
+        } else if (progress < 35) {
+          message.textContent = messages[1];
+          status.textContent = statuses[1];
+        } else if (progress < 50) {
+          message.textContent = messages[2];
+          status.textContent = statuses[2];
+        } else if (progress < 65) {
+          message.textContent = messages[3];
+          status.textContent = statuses[3];
+        } else if (progress < 80) {
+          message.textContent = messages[4];
+          status.textContent = statuses[4];
+        } else if (progress < 95) {
+          message.textContent = messages[5];
+          status.textContent = statuses[5];
+        } else {
+          message.textContent = messages[6];
+          status.textContent = statuses[6];
+        }
+        
+        if (progress >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            loadingScreen.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+          }, 500);
+        }
+      }, 100);
+    }
+    
+    // Create background particles
+    function createParticles() {
+      const container = document.getElementById('particles');
+      const particleCount = window.innerWidth < 768 ? 15 : 30;
+      
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+        
+        // Random size between 5px and 15px
+        const size = Math.random() * 10 + 5;
+        
+        // Random position
+        const posX = Math.random() * 100;
+        const posY = Math.random() * 100;
+        
+        // Random animation duration and delay
+        const duration = Math.random() * 10 + 10;
+        const delay = Math.random() * 10;
+        
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.left = `${posX}%`;
+        particle.style.top = `${posY}%`;
+        particle.style.animationDuration = `${duration}s`;
+        particle.style.animationDelay = `${delay}s`;
+        
+        container.appendChild(particle);
+      }
+    }
+    
     // Add futuristic hover effects
     document.addEventListener('DOMContentLoaded', function() {
       const toolBtns = document.querySelectorAll('.tool-btn');
@@ -649,7 +1015,7 @@
           ripple.style.width = '0';
           ripple.style.height = '0';
           ripple.style.borderRadius = '50%';
-          ripple.style.background = 'radial-gradient(circle, rgba(110,72,255,0.3) 0%, transparent 70%)';
+          ripple.style.background = 'radial-gradient(circle, rgba(0,240,255,0.3) 0%, transparent 70%)';
           ripple.style.transform = 'translate(-50%, -50%)';
           ripple.style.left = x + 'px';
           ripple.style.top = y + 'px';
@@ -671,16 +1037,15 @@
         });
       });
       
-      // Add subtle parallax effect to floating elements
-      const floaters = document.querySelectorAll('.floating');
-      window.addEventListener('mousemove', (e) => {
-        const x = e.clientX / window.innerWidth;
-        const y = e.clientY / window.innerHeight;
-        
-        floaters.forEach((floater, index) => {
-          const speed = 0.05 * (index + 1);
-          floater.style.transform = `translate(${x * 20 * speed}px, ${y * 20 * speed}px)`;
-        });
+      // Initialize
+      document.body.style.overflow = 'hidden';
+      simulateLoading();
+      createParticles();
+      
+      // Add floating animation delay to tool buttons
+      const toolButtons = document.querySelectorAll('.tool-btn');
+      toolButtons.forEach((btn, index) => {
+        btn.style.animationDelay = `${index * 0.1}s`;
       });
     });
   </script>
