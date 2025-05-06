@@ -1,4 +1,4 @@
-# FilePro - Ultimate File Conversion Suite
+# FilePro - Ultimate File Conversion Site
 
 ![FilePro Logo](https://i.imgur.com/JQ7w3Hk.png)
 
