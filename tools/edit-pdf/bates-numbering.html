@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bates Numbering – FilePro</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet"/>
+  <style>
+    :root {
+      --primary: #4a6bff;
+      --secondary: #ff6b6b;
+      --dark: #1a1f38;
+      --light: #f8f9fa;
+      --success: #28a745;
+      --danger: #dc3545;
+      --shadow: 0 8px 32px 0 rgba(74,107,255,0.15);
+      --neon: 0 0 8px #4a6bff, 0 0 16px #4a6bff;
+    }
+    html, body { height: 100%; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--dark);
+      position: relative;
+      background: linear-gradient(135deg, #181c2e 0%, #232855 100%);
+      overflow-x: hidden;
+    }
+    /* Animated Background */
+    body::before, body::after {
+      content: "";
+      position: fixed;
+      z-index: 0;
+      pointer-events: none;
+      width: 100vw; height: 100vh;
+      left: 0; top: 0;
+      background: radial-gradient(circle at 20% 30%, rgba(74,107,255,0.18) 0, transparent 60%),
+                  radial-gradient(circle at 80% 70%, rgba(255,107,107,0.18) 0, transparent 60%);
+      animation: bgMove 12s linear infinite alternate;
+    }
+    body::after {
+      background: radial-gradient(circle at 60% 20%, rgba(74,255,255,0.08) 0, transparent 70%),
+                  radial-gradient(circle at 30% 80%, rgba(255,255,107,0.10) 0, transparent 70%);
+      animation: bgMove2 18s linear infinite alternate;
+    }
+    @keyframes bgMove {
+      0% { background-position: 20% 30%, 80% 70%; }
+      100% { background-position: 40% 50%, 60% 90%; }
+    }
+    @keyframes bgMove2 {
+      0% { background-position: 60% 20%, 30% 80%; }
+      100% { background-position: 80% 40%, 10% 60%; }
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      box-shadow: var(--shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.3rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      animation: fadeInDown 0.9s cubic-bezier(.55,.06,.68,.19);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 2px;
+      gap: 0.6rem;
+      text-shadow: var(--neon);
+      animation: neonPulse 2s infinite alternate;
+    }
+    nav a {
+      color: #fff;
+      margin-left: 1.8rem;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 1.13rem;
+      position: relative;
+      transition: color 0.2s;
+    }
+    nav a::after {
+      content: '';
+      display: block;
+      width: 0;
+      height: 2px;
+      background: #fff;
+      transition: width .3s;
+      position: absolute;
+      left: 0; bottom: -4px;
+    }
+    nav a:hover, nav a:focus { color: var(--dark); }
+    nav a:hover::after, nav a:focus::after { width: 100%; }
+
+    .container {
+      max-width: 1200px;
+      margin: 2.5rem auto 1rem auto;
+      padding: 2rem;
+      background: rgba(255,255,255,0.06);
+      border-radius: 18px;
+      box-shadow: 0 10px 40px 0 rgba(74,107,255,0.13);
+      animation: fadeInUp 1.2s cubic-bezier(.55,.06,.68,.19);
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+    }
+    h1 {
+      font-size: 2.7rem;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 0.2rem;
+      letter-spacing: 1px;
+      animation: pulse 2.5s infinite;
+    }
+    .subtitle {
+      text-align: center;
+      color: #b8c1ec;
+      font-size: 1.18rem;
+      margin-bottom: 2.2rem;
+    }
+    .tool-container {
+      background: rgba(255,255,255,0.98);
+      border-radius: 16px;
+      box-shadow: 0 6px 32px 0 rgba(74,107,255,0.08);
+      padding: 2.2rem 1.2rem 2.5rem 1.2rem;
+      margin-bottom: 2rem;
+      animation: fadeIn 1.1s;
+      position: relative;
+      overflow: hidden;
+      z-index: 2;
+    }
+    .upload-area {
+      border: 2.5px dashed #6b8cff;
+      border-radius: 12px;
+      padding: 3.2rem 1rem 2.2rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(74,107,255,0.06);
+      margin-bottom: 1.5rem;
+      transition: all 0.4s cubic-bezier(.55,.06,.68,.19);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 20px 0 rgba(74,107,255,0.09);
+      z-index: 2;
+    }
+    .upload-area:hover, .upload-area.active {
+      border-color: var(--secondary);
+      background: rgba(255,107,107,0.07);
+      box-shadow: 0 0 40px 0 var(--secondary);
+      transform: translateY(-3px) scale(1.03);
+    }
+    .upload-icon {
+      font-size: 3.3rem;
+      color: var(--primary);
+      margin-bottom: 1rem;
+      animation: float 3s ease-in-out infinite;
+    }
+    .upload-area h3 {
+      color: var(--primary);
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+      letter-spacing: 0.5px;
+      text-shadow: 0 0 10px var(--primary);
+    }
+    .upload-area p {
+      color: #b8c1ec;
+      font-size: 1rem;
+      margin-bottom: 0;
+    }
+    input[type="file"] { display: none; }
+
+    .loading-animation {
+      display: none;
+      text-align: center;
+      margin: 2rem 0 1rem 0;
+    }
+    .spinner {
+      width: 52px; height: 52px;
+      border: 6px solid rgba(74,107,255,0.18);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem auto;
+    }
+    .preview-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.1rem;
+      margin-bottom: 2rem;
+      justify-content: center;
+      min-height: 40px;
+    }
+    .page-preview {
+      width: 140px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #22264a;
+      box-shadow: 0 2px 12px 0 rgba(74,107,255,0.08);
+      transition: transform 0.27s cubic-bezier(.55,.06,.68,.19), box-shadow 0.27s;
+      position: relative;
+      border: 1.5px solid #3a5bef;
+      cursor: pointer;
+      animation: fadeIn 1s;
+    }
+    .page-preview:hover {
+      transform: translateY(-10px) scale(1.03) rotateZ(-1.5deg);
+      box-shadow: 0 0 30px var(--secondary);
+      z-index: 10;
+    }
+    .page-preview canvas {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.2rem;
+      margin-bottom: 1.6rem;
+      align-items: center;
+      justify-content: center;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      min-width: 130px;
+    }
+    .control-group label {
+      font-weight: 600;
+      color: var(--primary);
+      font-size: 1rem;
+    }
+    .control-group input, .control-group select {
+      padding: 0.5rem 0.7rem;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      font-size: 1rem;
+      background: #f4f7ff;
+      color: #222;
+      box-shadow: 0 0 8px rgba(74,107,255,0.08);
+      transition: box-shadow 0.3s;
+    }
+    .control-group input:focus, .control-group select:focus {
+      outline: none;
+      box-shadow: 0 0 15px var(--primary);
+    }
+    .btn {
+      padding: 0.8rem 1.6rem;
+      border-radius: 7px;
+      font-weight: 700;
+      font-size: 1.09rem;
+      cursor: pointer;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 0 18px var(--primary);
+      transition: all 0.27s cubic-bezier(.55,.06,.68,.19);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      box-shadow: none;
+      background: #b8c1ec;
+      color: #444;
+    }
+    .btn:hover:not(:disabled) {
+      background: var(--secondary);
+      box-shadow: 0 0 32px var(--secondary);
+      transform: translateY(-2px) scale(1.04);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--primary);
+      color: var(--primary);
+      box-shadow: none;
+    }
+    .btn-outline:hover:not(:disabled) {
+      background: rgba(74,107,255,0.09);
+      color: var(--secondary);
+      border-color: var(--secondary);
+    }
+    .status {
+      margin-top: 1.1rem;
+      padding: 1.1rem;
+      border-radius: 7px;
+      text-align: center;
+      font-weight: 600;
+      display: none;
+      font-size: 1.1rem;
+      letter-spacing: 0.2px;
+      z-index: 2;
+      position: relative;
+      animation: fadeIn 0.7s;
+    }
+    .status.success {
+      background-color: rgba(40,167,69,0.13);
+      color: var(--success);
+      border: 1.5px solid var(--success);
+      display: block;
+    }
+    .status.error {
+      background-color: rgba(220,53,69,0.13);
+      color: var(--danger);
+      border: 1.5px solid var(--danger);
+      display: block;
+    }
+    .advanced-options {
+      margin-top: 2.2rem;
+      padding-top: 1.5rem;
+      border-top: 1.5px solid #3a5bef;
+    }
+    .toggle-advanced {
+      background: none;
+      border: none;
+      color: var(--primary);
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      transition: color 0.2s;
+    }
+    .toggle-advanced:hover { color: var(--secondary); }
+    .advanced-content { display: none; animation: fadeIn 0.6s; }
+    .advanced-content.show { display: block; }
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin-bottom: 1.2rem;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      font-size: 1.05rem;
+    }
+    .checkbox-label input { width: 18px; height: 18px; }
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: #b8c1ec;
+      font-size: 0.99rem;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-30px);}
+      to   { opacity: 1; transform: translateY(0);}
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px);}
+      to   { opacity: 1; transform: translateY(0);}
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg);}
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1);}
+      50% { transform: scale(1.04);}
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0);}
+      50% { transform: translateY(-10px);}
+    }
+    @keyframes neonPulse {
+      0%, 100% { text-shadow: 0 0 8px var(--primary), 0 0 16px var(--secondary);}
+      50% { text-shadow: 0 0 24px var(--secondary), 0 0 32px var(--primary);}
+    }
+    @media (max-width: 900px) {
+      .container { padding: 1rem;}
+      .page-preview { width: 110px;}
+    }
+    @media (max-width: 600px) {
+      header { flex-direction: column; gap: 1rem; padding: 1rem;}
+      .container { padding: 0.6rem;}
+      h1 { font-size: 1.6rem;}
+      .page-preview { width: 85px;}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <i class="fas fa-bolt"></i>
+      <span>FilePro</span>
+    </div>
+    <nav>
+      <a href="../../index.html">Home</a>
+      <a href="../../tools.html">Tools</a>
+      <a href="../../about.html">About</a>
+      <a href="../../contact.html">Contact</a>
+    </nav>
+  </header>
+  <div class="container">
+    <h1>Bates Numbering</h1>
+    <p class="subtitle">Add professional Bates numbering to every page of your PDF for legal, discovery, or archival purposes.</p>
+    <div class="tool-container">
+      <div class="upload-area" id="uploadArea" tabindex="0" aria-label="Upload PDF file">
+        <div class="upload-icon"><i class="fas fa-file-pdf"></i></div>
+        <h3>Drag & Drop your PDF here</h3>
+        <p>or click to browse files</p>
+        <input type="file" id="fileInput" accept=".pdf" aria-label="Select PDF file"/>
+      </div>
+      <div class="loading-animation" id="loadingAnimation" aria-live="polite">
+        <div class="spinner"></div>
+        <p>Loading PDF document...</p>
+      </div>
+      <div class="preview-container" id="previewContainer" aria-live="polite"></div>
+      <form class="controls" id="batesForm" autocomplete="off">
+        <div class="control-group">
+          <label for="prefix">Prefix</label>
+          <input type="text" id="prefix" placeholder="e.g. FILEPRO-" maxlength="20">
+        </div>
+        <div class="control-group">
+          <label for="startNumber">Start Number</label>
+          <input type="number" id="startNumber" value="1" min="1" max="999999">
+        </div>
+        <div class="control-group">
+          <label for="padLength">Pad Length</label>
+          <input type="number" id="padLength" value="6" min="1" max="10">
+        </div>
+        <div class="control-group">
+          <label for="suffix">Suffix</label>
+          <input type="text" id="suffix" placeholder="e.g. -A" maxlength="20">
+        </div>
+        <div class="control-group">
+          <label for="fontSelect">Font</label>
+          <select id="fontSelect">
+            <option value="Helvetica" selected>Helvetica</option>
+            <option value="TimesRoman">Times</option>
+            <option value="Courier">Courier</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label for="fontSize">Font Size</label>
+          <input type="number" id="fontSize" value="12" min="6" max="48">
+        </div>
+        <div class="control-group">
+          <label for="fontColor">Font Color</label>
+          <input type="color" id="fontColor" value="#222222">
+        </div>
+        <div class="control-group">
+          <label for="position">Position</label>
+          <select id="position">
+            <option value="bottom-right" selected>Bottom Right</option>
+            <option value="bottom-left">Bottom Left</option>
+            <option value="bottom-center">Bottom Center</option>
+            <option value="top-right">Top Right</option>
+            <option value="top-left">Top Left</option>
+            <option value="top-center">Top Center</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" id="applyBtn" disabled>
+          <i class="fas fa-stamp"></i> Apply Bates Numbering
+        </button>
+        <button type="button" class="btn btn-outline" id="downloadBtn" disabled>
+          <i class="fas fa-download"></i> Download PDF
+        </button>
+      </form>
+      <div class="advanced-options">
+        <button class="toggle-advanced" id="toggleAdvanced">
+          <i class="fas fa-sliders-h"></i> Advanced Options
+          <i class="fas fa-chevron-down" id="advancedChevron"></i>
+        </button>
+        <div class="advanced-content" id="advancedContent">
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="preserveMetadata" checked> Preserve Metadata
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="optimizePdf"> Optimize PDF (reduce file size)
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="loading-animation" id="processingAnimation" style="display:none;">
+        <div class="spinner"></div>
+        <p>Applying Bates numbering...</p>
+      </div>
+      <div class="status" id="statusMessage" role="alert" aria-live="assertive"></div>
+    </div>
+  </div>
+  <footer>
+    &copy; 2025 FilePro. All rights reserved.
+  </footer>
+  <script>
+    // UI Elements
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const previewContainer = document.getElementById('previewContainer');
+    const loadingAnimation = document.getElementById('loadingAnimation');
+    const processingAnimation = document.getElementById('processingAnimation');
+    const statusMessage = document.getElementById('statusMessage');
+    const batesForm = document.getElementById('batesForm');
+    const applyBtn = document.getElementById('applyBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const prefix = document.getElementById('prefix');
+    const startNumber = document.getElementById('startNumber');
+    const padLength = document.getElementById('padLength');
+    const suffix = document.getElementById('suffix');
+    const fontSelect = document.getElementById('fontSelect');
+    const fontSize = document.getElementById('fontSize');
+    const fontColor = document.getElementById('fontColor');
+    const position = document.getElementById('position');
+    const preserveMetadata = document.getElementById('preserveMetadata');
+    const optimizePdf = document.getElementById('optimizePdf');
+    const toggleAdvanced = document.getElementById('toggleAdvanced');
+    const advancedContent = document.getElementById('advancedContent');
+    const advancedChevron = document.getElementById('advancedChevron');
+
+    let pdfDoc = null;
+    let pdfPages = [];
+    let pdfBytes = null;
+    let batesPdfBytes = null;
+    let loadedMetadata = null;
+    let statusTimeout = null;
+
+    // --- Animations ---
+    toggleAdvanced.addEventListener('click', () => {
+      advancedContent.classList.toggle('show');
+      advancedChevron.classList.toggle('fa-chevron-down');
+      advancedChevron.classList.toggle('fa-chevron-up');
+    });
+
+    // --- Upload Area Interactions ---
+    uploadArea.addEventListener('click', () => fileInput.click());
+    uploadArea.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        fileInput.click();
+      }
+    });
+    uploadArea.addEventListener('dragover', e => {
+      e.preventDefault();
+      uploadArea.classList.add('active');
+    });
+    uploadArea.addEventListener('dragleave', e => {
+      e.preventDefault();
+      uploadArea.classList.remove('active');
+    });
+    uploadArea.addEventListener('drop', e => {
+      e.preventDefault();
+      uploadArea.classList.remove('active');
+      if (e.dataTransfer.files.length) {
+        const file = e.dataTransfer.files[0];
+        if (file.type === 'application/pdf') {
+          fileInput.files = e.dataTransfer.files;
+          loadPdf(file);
+        } else {
+          showStatus('Please upload a valid PDF file.', true, 10000);
+        }
+      }
+    });
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) {
+        const file = fileInput.files[0];
+        if (file.type === 'application/pdf') {
+          loadPdf(file);
+        } else {
+          showStatus('Please upload a valid PDF file.', true, 10000);
+        }
+      }
+    });
+
+    function showStatus(msg, isError = false, duration = 10000) {
+      statusMessage.textContent = msg;
+      statusMessage.className = 'status ' + (isError ? 'error' : 'success');
+      statusMessage.style.display = 'block';
+      if (statusTimeout) clearTimeout(statusTimeout);
+      statusTimeout = setTimeout(() => {
+        statusMessage.style.display = 'none';
+      }, duration);
+    }
+
+    // --- PDF Loading & Preview ---
+    async function loadPdf(file) {
+      loadingAnimation.style.display = 'block';
+      previewContainer.innerHTML = '';
+      applyBtn.disabled = true;
+      downloadBtn.disabled = true;
+      batesPdfBytes = null;
+      pdfDoc = null;
+      pdfPages = [];
+      pdfBytes = null;
+      loadedMetadata = null;
+      showStatus('Loading PDF...', false, 2000);
+
+      try {
+        pdfBytes = await file.arrayBuffer();
+        pdfDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+        loadedMetadata = await pdfDoc.getMetadata().catch(() => null);
+
+        for (let i = 1; i <= pdfDoc.numPages; i++) {
+          const page = await pdfDoc.getPage(i);
+          pdfPages.push(page);
+        }
+        // Render previews
+        for (const page of pdfPages) {
+          const previewDiv = document.createElement('div');
+          previewDiv.className = 'page-preview';
+          await renderPagePreview(page, previewDiv);
+          previewContainer.appendChild(previewDiv);
+        }
+        showStatus(`Loaded ${pdfDoc.numPages} pages.`, false, 4000);
+        applyBtn.disabled = false;
+      } catch (err) {
+        showStatus('Error loading PDF file.', true, 10000);
+        console.error(err);
+      } finally {
+        loadingAnimation.style.display = 'none';
+      }
+    }
+
+    async function renderPagePreview(page, container) {
+      const viewport = page.getViewport({ scale: 0.23 });
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext('2d');
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      container.appendChild(canvas);
+    }
+
+    // --- Bates Numbering Logic ---
+    batesForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!pdfBytes) return;
+      applyBtn.disabled = true;
+      downloadBtn.disabled = true;
+      processingAnimation.style.display = 'block';
+      showStatus('Applying Bates numbering...', false, 4000);
+
+      try {
+        const pdfDocLib = await PDFLib.PDFDocument.load(pdfBytes);
+
+        // Optionally preserve metadata
+        let meta = {};
+        if (preserveMetadata.checked && loadedMetadata) {
+          meta = {
+            title: loadedMetadata.info?.Title || '',
+            author: loadedMetadata.info?.Author || '',
+            subject: loadedMetadata.info?.Subject || '',
+            keywords: loadedMetadata.info?.Keywords || '',
+            creator: loadedMetadata.info?.Creator || '',
+            producer: loadedMetadata.info?.Producer || '',
+            creationDate: loadedMetadata.info?.CreationDate || '',
+            modDate: loadedMetadata.info?.ModDate || ''
+          };
+        }
+
+        // Font
+        let font;
+        switch (fontSelect.value) {
+          case "TimesRoman":
+            font = await pdfDocLib.embedFont(PDFLib.StandardFonts.TimesRoman);
+            break;
+          case "Courier":
+            font = await pdfDocLib.embedFont(PDFLib.StandardFonts.Courier);
+            break;
+          default:
+            font = await pdfDocLib.embedFont(PDFLib.StandardFonts.Helvetica);
+        }
+        const colorHex = fontColor.value;
+        const colorRgb = hexToRgb(colorHex);
+
+        // Get Bates settings
+        const pre = prefix.value || "";
+        const suf = suffix.value || "";
+        const start = parseInt(startNumber.value) || 1;
+        const pad = parseInt(padLength.value) || 6;
+        const size = parseInt(fontSize.value) || 12;
+        const pos = position.value;
+
+        // Add Bates number to each page
+        const pages = pdfDocLib.getPages();
+        for (let i = 0; i < pages.length; i++) {
+          const page = pages[i];
+          const batesNum = pre + String(start + i).padStart(pad, "0") + suf;
+          const { width, height } = page.getSize();
+          let x, y;
+          switch (pos) {
+            case "bottom-right":
+              x = width - font.widthOfTextAtSize(batesNum, size) - 30;
+              y = 30;
+              break;
+            case "bottom-left":
+              x = 30;
+              y = 30;
+              break;
+            case "bottom-center":
+              x = (width - font.widthOfTextAtSize(batesNum, size)) / 2;
+              y = 30;
+              break;
+            case "top-right":
+              x = width - font.widthOfTextAtSize(batesNum, size) - 30;
+              y = height - size - 20;
+              break;
+            case "top-left":
+              x = 30;
+              y = height - size - 20;
+              break;
+            case "top-center":
+              x = (width - font.widthOfTextAtSize(batesNum, size)) / 2;
+              y = height - size - 20;
+              break;
+            default:
+              x = width - font.widthOfTextAtSize(batesNum, size) - 30;
+              y = 30;
+          }
+          page.drawText(batesNum, {
+            x, y,
+            size,
+            font,
+            color: PDFLib.rgb(colorRgb.r / 255, colorRgb.g / 255, colorRgb.b / 255),
+            opacity: 0.95
+          });
+        }
+
+        // Optionally optimize PDF (remove unused objects, compress)
+        if (optimizePdf.checked) {
+          pdfDocLib.setProducer('FilePro Optimized');
+          pdfDocLib.setCreator('FilePro PDF Bates Numbering');
+        }
+
+        // Restore metadata if requested
+        if (preserveMetadata.checked && meta) {
+          if (meta.title) pdfDocLib.setTitle(meta.title);
+          if (meta.author) pdfDocLib.setAuthor(meta.author);
+          if (meta.subject) pdfDocLib.setSubject(meta.subject);
+          if (meta.keywords) pdfDocLib.setKeywords(meta.keywords);
+          if (meta.creator) pdfDocLib.setCreator(meta.creator);
+          if (meta.producer) pdfDocLib.setProducer(meta.producer);
+        }
+
+        batesPdfBytes = await pdfDocLib.save();
+        showStatus(`Bates numbering applied to ${pages.length} pages. Ready for download.`, false, 10000);
+        downloadBtn.disabled = false;
+      } catch (err) {
+        showStatus('Failed to apply Bates numbering.', true, 10000);
+        console.error(err);
+      } finally {
+        processingAnimation.style.display = 'none';
+        applyBtn.disabled = false;
+      }
+    });
+
+    // --- Download PDF ---
+    downloadBtn.addEventListener('click', () => {
+      if (!batesPdfBytes) return;
+      const blob = new Blob([batesPdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'bates-numbered.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showStatus('Download started.', false, 2000);
+    });
+
+    // Utility
+    function hexToRgb(hex) {
+      hex = hex.replace(/^#/, "");
+      if (hex.length === 3) hex = hex.split("").map(x => x + x).join("");
+      const num = parseInt(hex, 16);
+      return {
+        r: (num >> 16) & 255,
+        g: (num >> 8) & 255,
+        b: num & 255
+      };
+    }
+  </script>
+</body>
+</html>

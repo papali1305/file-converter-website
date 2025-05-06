@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Advanced PDF N-up Imposition</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+<style>
+  :root {
+    --primary-color: #4a6bff;
+    --secondary-color: #ff6b6b;
+    --dark-color: #1a1f38;
+    --light-color: #f0f2ff;
+    --neon-blue: #4a6bff;
+    --neon-pink: #ff6b6b;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0; padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  body {
+    background: linear-gradient(135deg, #12142b, #1a1f38);
+    color: var(--light-color);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    padding: 1.5rem 2rem;
+    box-shadow: 0 4px 15px rgba(74, 107, 255, 0.6);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: 1.2px;
+    user-select: none;
+    animation: neonGlow 2.5s ease-in-out infinite alternate;
+  }
+
+  main.container {
+    max-width: 1100px;
+    margin: 2rem auto;
+    background: rgba(30, 35, 60, 0.85);
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 0 40px rgba(74, 107, 255, 0.3);
+    animation: fadeInUp 1s ease forwards;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 2.8rem;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    color: transparent;
+    margin-bottom: 0.2rem;
+    animation: pulse 3s ease-in-out infinite;
+  }
+
+  p.subtitle {
+    text-align: center;
+    color: #bbb;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+  }
+
+  .upload-area {
+    border: 3px dashed var(--primary-color);
+    border-radius: 12px;
+    padding: 3rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    background: rgba(74, 107, 255, 0.05);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(74, 107, 255, 0.3);
+  }
+
+  .upload-area:hover {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 40px var(--secondary-color);
+    transform: translateY(-5px);
+  }
+
+  .upload-area.active {
+    border-color: var(--secondary-color);
+    background: rgba(255, 107, 107, 0.1);
+    box-shadow: 0 0 50px var(--secondary-color);
+  }
+
+  .upload-icon {
+    font-size: 4rem;
+    color: var(--primary-color);
+    animation: float 3s ease-in-out infinite;
+    margin-bottom: 1rem;
+  }
+
+  .upload-area h3 {
+    font-weight: 700;
+    font-size: 1.8rem;
+    color: var(--primary-color);
+    text-shadow: 0 0 10px var(--primary-color);
+  }
+
+  .upload-area p {
+    color: #aaa;
+    margin-top: 0.3rem;
+    font-size: 1rem;
+  }
+
+  input.file-input {
+    display: none;
+  }
+
+  .preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 2rem;
+    justify-content: center;
+  }
+
+  .page-preview {
+    width: 140px;
+    height: 180px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(74, 107, 255, 0.3);
+    background: #0f1224;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+  }
+
+  .page-preview:hover {
+    transform: translateY(-10px) scale(1.05);
+    box-shadow: 0 0 30px var(--secondary-color);
+    z-index: 10;
+  }
+
+  .page-preview canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .controls {
+    margin-top: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    color: var(--light-color);
+    min-width: 150px;
+  }
+
+  label {
+    font-weight: 600;
+  }
+
+  select, input[type="number"] {
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    border: none;
+    font-size: 1rem;
+    background: #222746;
+    color: var(--light-color);
+    box-shadow: inset 0 0 8px rgba(74, 107, 255, 0.5);
+    transition: box-shadow 0.3s ease;
+  }
+
+  select:focus, input[type="number"]:focus {
+    outline: none;
+    box-shadow: 0 0 15px var(--primary-color);
+  }
+
+  button.btn {
+    background: var(--primary-color);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 700;
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 0 15px var(--primary-color);
+  }
+
+  button.btn:hover {
+    background: var(--secondary-color);
+    box-shadow: 0 0 25px var(--secondary-color);
+    transform: translateY(-3px);
+  }
+
+  button.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .status {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+    display: none;
+  }
+
+  .status.success {
+    background-color: rgba(40, 167, 69, 0.15);
+    color: #28a745;
+    display: block;
+  }
+
+  .status.error {
+    background-color: rgba(220, 53, 69, 0.15);
+    color: #dc3545;
+    display: block;
+  }
+
+  .loading-animation {
+    display: none;
+    margin-top: 2rem;
+    text-align: center;
+    color: var(--primary-color);
+  }
+
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid rgba(74, 107, 255, 0.2);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1.2s linear infinite;
+    margin: 0 auto 1rem;
+  }
+
+  /* Animations */
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes neonGlow {
+    0%, 100% { text-shadow: 0 0 10px var(--primary-color), 0 0 20px var(--primary-color); }
+    50% { text-shadow: 0 0 20px var(--secondary-color), 0 0 30px var(--secondary-color); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .preview-container {
+      justify-content: center;
+    }
+    .page-preview {
+      width: 110px;
+      height: 140px;
+    }
+    .controls {
+      flex-direction: column;
+      gap: 1rem;
+    }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div><i class="fas fa-layer-group"></i> PDF N-up Imposer</div>
+</header>
+
+<main class="container">
+  <h1>Arrange Multiple PDF Pages Per Sheet (N-up)</h1>
+  <p class="subtitle">Upload your PDF and select how many pages per sheet you want to create an imposed PDF layout.</p>
+
+  <div class="upload-area" id="uploadArea" tabindex="0" aria-label="Upload PDF file">
+    <div class="upload-icon"><i class="fas fa-file-pdf"></i></div>
+    <h3>Drag & Drop your PDF here</h3>
+    <p>or click to browse files</p>
+    <input type="file" id="fileInput" class="file-input" accept=".pdf" aria-label="Select PDF file" />
+  </div>
+
+  <div class="loading-animation" id="loadingAnimation" aria-live="polite" role="status">
+    <div class="spinner"></div>
+    <p>Loading PDF document...</p>
+  </div>
+
+  <div class="preview-container" id="previewContainer" aria-live="polite" aria-label="PDF page previews"></div>
+
+  <div class="controls" aria-label="N-up controls">
+    <div class="control-group">
+      <label for="nUpSelect">Pages per Sheet (N-up):</label>
+      <select id="nUpSelect" aria-describedby="nUpDesc">
+        <option value="1">1 (Original)</option>
+        <option value="2">2-up (2 pages per sheet)</option>
+        <option value="4" selected>4-up (4 pages per sheet)</option>
+        <option value="6">6-up</option>
+        <option value="8">8-up</option>
+        <option value="9">9-up</option>
+        <option value="16">16-up</option>
+      </select>
+      <small id="nUpDesc" style="color:#999;">Select how many pages to arrange per sheet</small>
+    </div>
+
+    <div class="control-group">
+      <label for="pageOrderSelect">Page Order:</label>
+      <select id="pageOrderSelect" aria-label="Page order selection">
+        <option value="across">Across (Left to Right)</option>
+        <option value="down" selected>Down (Top to Bottom)</option>
+      </select>
+    </div>
+
+    <button id="processBtn" class="btn" disabled>
+      <i class="fas fa-layer-group"></i> Create N-up PDF
+    </button>
+
+    <button id="downloadBtn" class="btn" disabled>
+      <i class="fas fa-download"></i> Download PDF
+    </button>
+  </div>
+
+  <div class="status" id="statusMessage" role="alert" aria-live="assertive"></div>
+</main>
+
+<script>
+  const uploadArea = document.getElementById('uploadArea');
+  const fileInput = document.getElementById('fileInput');
+  const previewContainer = document.getElementById('previewContainer');
+  const loadingAnimation = document.getElementById('loadingAnimation');
+  const processBtn = document.getElementById('processBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const statusMessage = document.getElementById('statusMessage');
+  const nUpSelect = document.getElementById('nUpSelect');
+  const pageOrderSelect = document.getElementById('pageOrderSelect');
+
+  let pdfDoc = null;
+  let pdfPages = [];
+  let imposedPdfBytes = null;
+
+  // Utility: clear previews
+  function clearPreviews() {
+    previewContainer.innerHTML = '';
+  }
+
+  // Render a single page preview canvas
+  async function renderPagePreview(page, container) {
+    const viewport = page.getViewport({ scale: 0.2 });
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    const ctx = canvas.getContext('2d');
+
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    container.appendChild(canvas);
+  }
+
+  // Load PDF and render previews
+  async function loadPdf(file) {
+    try {
+      loadingAnimation.style.display = 'block';
+      clearPreviews();
+      statusMessage.style.display = 'none';
+      processBtn.disabled = true;
+      downloadBtn.disabled = true;
+
+      const arrayBuffer = await file.arrayBuffer();
+      pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      pdfPages = [];
+
+      for (let i = 1; i <= pdfDoc.numPages; i++) {
+        const page = await pdfDoc.getPage(i);
+        pdfPages.push(page);
+      }
+
+      // Render previews
+      for (const page of pdfPages) {
+        const previewDiv = document.createElement('div');
+        previewDiv.className = 'page-preview';
+        await renderPagePreview(page, previewDiv);
+        previewContainer.appendChild(previewDiv);
+      }
+
+      loadingAnimation.style.display = 'none';
+      processBtn.disabled = false;
+      statusMessage.textContent = `Loaded ${pdfDoc.numPages} pages.`;
+      statusMessage.className = 'status success';
+      statusMessage.style.display = 'block';
+    } catch (error) {
+      loadingAnimation.style.display = 'none';
+      statusMessage.textContent = 'Error loading PDF file.';
+      statusMessage.className = 'status error';
+      statusMessage.style.display = 'block';
+      console.error(error);
+    }
+  }
+
+  // N-up imposition logic
+  async function createNupPdf() {
+    if (!pdfDoc) return;
+
+    processBtn.disabled = true;
+    downloadBtn.disabled = true;
+    statusMessage.textContent = 'Processing N-up layout...';
+    statusMessage.className = 'status';
+    statusMessage.style.display = 'block';
+
+    const nUp = parseInt(nUpSelect.value);
+    const pageOrder = pageOrderSelect.value;
+
+    try {
+      // Load original PDF bytes for pdf-lib
+      const file = fileInput.files[0];
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfLibDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+      const totalPages = pdfLibDoc.getPageCount();
+
+      // Calculate rows and columns for N-up layout (try square root)
+      let cols = Math.ceil(Math.sqrt(nUp));
+      let rows = Math.ceil(nUp / cols);
+
+      // Create new PDF document for imposed pages
+      const newPdfDoc = await PDFLib.PDFDocument.create();
+
+      // Get original pages as copied pages
+      const copiedPages = await newPdfDoc.copyPages(pdfLibDoc, Array.from({length: totalPages}, (_, i) => i));
+
+      // Page size of original PDF (assume first page)
+      const firstPage = pdfLibDoc.getPage(0);
+      const { width: origWidth, height: origHeight } = firstPage.getSize();
+
+      // Define new page size for imposed sheet (keep original width and height)
+      // For simplicity, keep page size same as original but scale pages down to fit N-up
+      const newPageWidth = origWidth;
+      const newPageHeight = origHeight;
+
+      // Calculate scale factor for each page to fit in grid
+      const scaleX = newPageWidth / cols / origWidth;
+      const scaleY = newPageHeight / rows / origHeight;
+      const scale = Math.min(scaleX, scaleY) * 0.95; // 5% margin
+
+      // Arrange pages in N-up layout
+      for (let i = 0; i < totalPages; i += nUp) {
+        const page = newPdfDoc.addPage([newPageWidth, newPageHeight]);
+
+        for (let j = 0; j < nUp; j++) {
+          const pageIndex = i + j;
+          if (pageIndex >= totalPages) break;
+
+          const copiedPage = copiedPages[pageIndex];
+
+          // Calculate position based on pageOrder
+          let col, row;
+          if (pageOrder === 'across') {
+            row = Math.floor(j / cols);
+            col = j % cols;
+          } else {
+            col = Math.floor(j / rows);
+            row = j % rows;
+          }
+
+          const x = col * (origWidth * scale);
+          const y = newPageHeight - (row + 1) * (origHeight * scale);
+
+          page.drawPage(copiedPage, {
+            x,
+            y,
+            xScale: scale,
+            yScale: scale,
+          });
+        }
+      }
+
+      const pdfBytes = await newPdfDoc.save();
+      imposedPdfBytes = pdfBytes;
+
+      statusMessage.textContent = 'N-up PDF created successfully!';
+      statusMessage.className = 'status success';
+      downloadBtn.disabled = false;
+    } catch (err) {
+      console.error(err);
+      statusMessage.textContent = 'Failed to create N-up PDF.';
+      statusMessage.className = 'status error';
+    } finally {
+      processBtn.disabled = false;
+    }
+  }
+
+  // Download imposed PDF
+  function downloadPdf() {
+    if (!imposedPdfBytes) return;
+    const blob = new Blob([imposedPdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'nup-imposed.pdf';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  // Event listeners
+  uploadArea.addEventListener('click', () => fileInput.click());
+  uploadArea.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      fileInput.click();
+    }
+  });
+
+  uploadArea.addEventListener('dragover', e => {
+    e.preventDefault();
+    uploadArea.classList.add('active');
+  });
+
+  uploadArea.addEventListener('dragleave', e => {
+    e.preventDefault();
+    uploadArea.classList.remove('active');
+  });
+
+  uploadArea.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadArea.classList.remove('active');
+    if (e.dataTransfer.files.length) {
+      const file = e.dataTransfer.files[0];
+      if (file.type === 'application/pdf') {
+        fileInput.files = e.dataTransfer.files;
+        loadPdf(file);
+      } else {
+        statusMessage.textContent = 'Please upload a valid PDF file.';
+        statusMessage.className = 'status error';
+        statusMessage.style.display = 'block';
+      }
+    }
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) {
+      const file = fileInput.files[0];
+      if (file.type === 'application/pdf') {
+        loadPdf(file);
+      } else {
+        statusMessage.textContent = 'Please upload a valid PDF file.';
+        statusMessage.className = 'status error';
+        statusMessage.style.display = 'block';
+      }
+    }
+  });
+
+  processBtn.addEventListener('click', createNupPdf);
+  downloadBtn.addEventListener('click', downloadPdf);
+</script>
+</body>
+</html>

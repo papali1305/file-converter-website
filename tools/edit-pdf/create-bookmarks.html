@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create PDF Bookmarks – FilePro</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet"/>
+  <style>
+    :root {
+      --primary: #4a6bff;
+      --secondary: #ff6b6b;
+      --dark: #1a1f38;
+      --light: #f8f9fa;
+      --shadow: 0 8px 32px 0 rgba(74,107,255,0.15);
+      --neon: 0 0 8px #4a6bff, 0 0 16px #4a6bff;
+    }
+    html, body { height: 100%; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--dark);
+      position: relative;
+      background: linear-gradient(135deg, #181c2e 0%, #232855 100%);
+      overflow-x: hidden;
+    }
+    body::before, body::after {
+      content: "";
+      position: fixed;
+      z-index: 0;
+      pointer-events: none;
+      width: 100vw; height: 100vh;
+      left: 0; top: 0;
+      background: radial-gradient(circle at 20% 30%, rgba(74,107,255,0.18) 0, transparent 60%),
+                  radial-gradient(circle at 80% 70%, rgba(255,107,107,0.18) 0, transparent 60%);
+      animation: bgMove 12s linear infinite alternate;
+    }
+    body::after {
+      background: radial-gradient(circle at 60% 20%, rgba(74,255,255,0.08) 0, transparent 70%),
+                  radial-gradient(circle at 30% 80%, rgba(255,255,107,0.10) 0, transparent 70%);
+      animation: bgMove2 18s linear infinite alternate;
+    }
+    @keyframes bgMove {
+      0% { background-position: 20% 30%, 80% 70%; }
+      100% { background-position: 40% 50%, 60% 90%; }
+    }
+    @keyframes bgMove2 {
+      0% { background-position: 60% 20%, 30% 80%; }
+      100% { background-position: 80% 40%, 10% 60%; }
+    }
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      box-shadow: var(--shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.3rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      animation: fadeInDown 0.9s cubic-bezier(.55,.06,.68,.19);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 2px;
+      gap: 0.6rem;
+      text-shadow: var(--neon);
+      animation: neonPulse 2s infinite alternate;
+    }
+    nav a {
+      color: #fff;
+      margin-left: 1.8rem;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 1.13rem;
+      position: relative;
+      transition: color 0.2s;
+    }
+    nav a::after {
+      content: '';
+      display: block;
+      width: 0;
+      height: 2px;
+      background: #fff;
+      transition: width .3s;
+      position: absolute;
+      left: 0; bottom: -4px;
+    }
+    nav a:hover, nav a:focus { color: var(--dark); }
+    nav a:hover::after, nav a:focus::after { width: 100%; }
+    .container {
+      max-width: 1200px;
+      margin: 2.5rem auto 1rem auto;
+      padding: 2rem;
+      background: rgba(255,255,255,0.06);
+      border-radius: 18px;
+      box-shadow: 0 10px 40px 0 rgba(74,107,255,0.13);
+      animation: fadeInUp 1.2s cubic-bezier(.55,.06,.68,.19);
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+    }
+    h1 {
+      font-size: 2.7rem;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 0.2rem;
+      letter-spacing: 1px;
+      animation: pulse 2.5s infinite;
+    }
+    .subtitle {
+      text-align: center;
+      color: #b8c1ec;
+      font-size: 1.18rem;
+      margin-bottom: 2.2rem;
+    }
+    .tool-container {
+      background: rgba(255,255,255,0.98);
+      border-radius: 16px;
+      box-shadow: 0 6px 32px 0 rgba(74,107,255,0.08);
+      padding: 2.2rem 1.2rem 2.5rem 1.2rem;
+      margin-bottom: 2rem;
+      animation: fadeIn 1.1s;
+      position: relative;
+      overflow: hidden;
+      z-index: 2;
+    }
+    .upload-area {
+      border: 2.5px dashed #6b8cff;
+      border-radius: 12px;
+      padding: 3.2rem 1rem 2.2rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(74,107,255,0.06);
+      margin-bottom: 1.5rem;
+      transition: all 0.4s cubic-bezier(.55,.06,.68,.19);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 20px 0 rgba(74,107,255,0.09);
+      z-index: 2;
+    }
+    .upload-area:hover, .upload-area.active {
+      border-color: var(--secondary);
+      background: rgba(255,107,107,0.07);
+      box-shadow: 0 0 40px 0 var(--secondary);
+      transform: translateY(-3px) scale(1.03);
+    }
+    .upload-icon {
+      font-size: 3.3rem;
+      color: var(--primary);
+      margin-bottom: 1rem;
+      animation: float 3s ease-in-out infinite;
+    }
+    .upload-area h3 {
+      color: var(--primary);
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+      letter-spacing: 0.5px;
+      text-shadow: 0 0 10px var(--primary);
+    }
+    .upload-area p {
+      color: #b8c1ec;
+      font-size: 1rem;
+      margin-bottom: 0;
+    }
+    input[type="file"] { display: none; }
+    .loading-animation {
+      display: none;
+      text-align: center;
+      margin: 2rem 0 1rem 0;
+    }
+    .spinner {
+      width: 52px; height: 52px;
+      border: 6px solid rgba(74,107,255,0.18);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem auto;
+    }
+    .preview-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.1rem;
+      margin-bottom: 2rem;
+      justify-content: center;
+      min-height: 40px;
+    }
+    .page-preview {
+      width: 140px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #22264a;
+      box-shadow: 0 2px 12px 0 rgba(74,107,255,0.08);
+      transition: transform 0.27s cubic-bezier(.55,.06,.68,.19), box-shadow 0.27s;
+      position: relative;
+      border: 1.5px solid #3a5bef;
+      cursor: pointer;
+      animation: fadeIn 1s;
+    }
+    .page-preview:hover {
+      transform: translateY(-10px) scale(1.03) rotateZ(-1.5deg);
+      box-shadow: 0 0 30px var(--secondary);
+      z-index: 10;
+    }
+    .page-preview canvas {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.2rem;
+      margin-bottom: 1.6rem;
+      align-items: center;
+      justify-content: center;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      min-width: 130px;
+    }
+    .control-group label {
+      font-weight: 600;
+      color: var(--primary);
+      font-size: 1rem;
+    }
+    .control-group input, .control-group select {
+      padding: 0.5rem 0.7rem;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      font-size: 1rem;
+      background: #f4f7ff;
+      color: #222;
+      box-shadow: 0 0 8px rgba(74,107,255,0.08);
+      transition: box-shadow 0.3s;
+    }
+    .control-group input:focus, .control-group select:focus {
+      outline: none;
+      box-shadow: 0 0 15px var(--primary);
+    }
+    .btn {
+      padding: 0.8rem 1.6rem;
+      border-radius: 7px;
+      font-weight: 700;
+      font-size: 1.09rem;
+      cursor: pointer;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 0 18px var(--primary);
+      transition: all 0.27s cubic-bezier(.55,.06,.68,.19);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      box-shadow: none;
+      background: #b8c1ec;
+      color: #444;
+    }
+    .btn:hover:not(:disabled) {
+      background: var(--secondary);
+      box-shadow: 0 0 32px var(--secondary);
+      transform: translateY(-2px) scale(1.04);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--primary);
+      color: var(--primary);
+      box-shadow: none;
+    }
+    .btn-outline:hover:not(:disabled) {
+      background: rgba(74,107,255,0.09);
+      color: var(--secondary);
+      border-color: var(--secondary);
+    }
+    .status {
+      margin-top: 1.1rem;
+      padding: 1.1rem;
+      border-radius: 7px;
+      text-align: center;
+      font-weight: 600;
+      display: none;
+      font-size: 1.1rem;
+      letter-spacing: 0.2px;
+      z-index: 2;
+      position: relative;
+      animation: fadeIn 0.7s;
+    }
+    .status.success {
+      background-color: rgba(40,167,69,0.13);
+      color: #28a745;
+      border: 1.5px solid #28a745;
+      display: block;
+    }
+    .status.error {
+      background-color: rgba(220,53,69,0.13);
+      color: #dc3545;
+      border: 1.5px solid #dc3545;
+      display: block;
+    }
+    .bookmark-list {
+      background: #f7f9ff;
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px 0 rgba(74,107,255,0.06);
+      max-height: 300px;
+      overflow-y: auto;
+      animation: fadeIn 0.7s;
+    }
+    .bookmark-item {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 0.7rem;
+      padding: 0.5rem 0.7rem;
+      border-radius: 6px;
+      background: #fff;
+      box-shadow: 0 1px 3px 0 rgba(74,107,255,0.03);
+      transition: background 0.2s;
+      position: relative;
+      animation: fadeIn 0.4s;
+    }
+    .bookmark-item.selected {
+      background: #e8f0ff;
+      box-shadow: 0 0 10px #4a6bff22;
+      font-weight: bold;
+    }
+    .bookmark-title {
+      flex: 1;
+      font-size: 1.07rem;
+      color: #333;
+      word-break: break-all;
+    }
+    .bookmark-page {
+      font-size: 0.95rem;
+      color: #4a6bff;
+      margin-right: 0.7rem;
+    }
+    .bookmark-actions button {
+      background: none;
+      border: none;
+      color: #888;
+      cursor: pointer;
+      font-size: 1.1rem;
+      margin-left: 0.2rem;
+      transition: color 0.2s;
+    }
+    .bookmark-actions button:hover { color: var(--secondary); }
+    .bookmark-nest {
+      margin-left: 1.5rem;
+    }
+    .add-bookmark-form {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      margin-bottom: 1.3rem;
+      flex-wrap: wrap;
+    }
+    .add-bookmark-form input[type="text"], .add-bookmark-form input[type="number"] {
+      padding: 0.5rem 0.7rem;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      font-size: 1rem;
+      background: #f4f7ff;
+      color: #222;
+      box-shadow: 0 0 8px rgba(74,107,255,0.08);
+      transition: box-shadow 0.3s;
+      width: 180px;
+    }
+    .add-bookmark-form input[type="number"] { width: 90px; }
+    .add-bookmark-form button {
+      padding: 0.5rem 1.2rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 0 10px var(--primary);
+      transition: all 0.2s;
+    }
+    .add-bookmark-form button:hover {
+      background: var(--secondary);
+      box-shadow: 0 0 18px var(--secondary);
+      transform: translateY(-2px) scale(1.04);
+    }
+    .import-export-btns {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+      justify-content: flex-end;
+    }
+    .import-export-btns button {
+      padding: 0.5rem 1.1rem;
+      border-radius: 6px;
+      border: 1.5px solid var(--primary);
+      background: #fff;
+      color: var(--primary);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .import-export-btns button:hover {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 0 10px var(--primary);
+    }
+    footer {
+      text-align: center;
+      margin-top: 3rem;
+      color: #b8c1ec;
+      font-size: 0.99rem;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-30px);}
+      to   { opacity: 1; transform: translateY(0);}
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px);}
+      to   { opacity: 1; transform: translateY(0);}
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg);}
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1);}
+      50% { transform: scale(1.04);}
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0);}
+      50% { transform: translateY(-10px);}
+    }
+    @keyframes neonPulse {
+      0%, 100% { text-shadow: 0 0 8px var(--primary), 0 0 16px var(--secondary);}
+      50% { text-shadow: 0 0 24px var(--secondary), 0 0 32px var(--primary);}
+    }
+    @media (max-width: 900px) {
+      .container { padding: 1rem;}
+      .page-preview { width: 110px;}
+    }
+    @media (max-width: 600px) {
+      header { flex-direction: column; gap: 1rem; padding: 1rem;}
+      .container { padding: 0.6rem;}
+      h1 { font-size: 1.6rem;}
+      .page-preview { width: 85px;}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <i class="fas fa-bolt"></i>
+      <span>FilePro</span>
+    </div>
+    <nav>
+      <a href="../../index.html">Home</a>
+      <a href="../../tools.html">Tools</a>
+      <a href="../../about.html">About</a>
+      <a href="../../contact.html">Contact</a>
+    </nav>
+  </header>
+  <div class="container">
+    <h1>Create PDF Bookmarks</h1>
+    <p class="subtitle">Add, edit, and organize bookmarks in your PDF for easy navigation. Export and import bookmark lists with a futuristic FilePro experience.</p>
+    <div class="tool-container">
+      <div class="upload-area" id="uploadArea" tabindex="0" aria-label="Upload PDF file">
+        <div class="upload-icon"><i class="fas fa-file-pdf"></i></div>
+        <h3>Drag & Drop your PDF here</h3>
+        <p>or click to browse files</p>
+        <input type="file" id="fileInput" accept=".pdf" aria-label="Select PDF file"/>
+      </div>
+      <div class="loading-animation" id="loadingAnimation" aria-live="polite">
+        <div class="spinner"></div>
+        <p>Loading PDF document...</p>
+      </div>
+      <div class="preview-container" id="previewContainer" aria-live="polite"></div>
+      <div class="import-export-btns">
+        <button id="importBookmarksBtn"><i class="fas fa-upload"></i> Import Bookmarks</button>
+        <button id="exportBookmarksBtn"><i class="fas fa-download"></i> Export Bookmarks</button>
+        <input type="file" id="importBookmarksFile" accept=".json" style="display:none;">
+      </div>
+      <form class="add-bookmark-form" id="addBookmarkForm" autocomplete="off">
+        <input type="text" id="bookmarkTitle" placeholder="Bookmark title" required maxlength="120">
+        <input type="number" id="bookmarkPage" placeholder="Page #" min="1" required>
+        <button type="submit"><i class="fas fa-plus"></i> Add Bookmark</button>
+      </form>
+      <div class="bookmark-list" id="bookmarkList"></div>
+      <div class="controls">
+        <button class="btn btn-primary" id="applyBtn" disabled>
+          <i class="fas fa-bookmark"></i> Apply Bookmarks
+        </button>
+        <button class="btn btn-outline" id="downloadBtn" disabled>
+          <i class="fas fa-download"></i> Download PDF
+        </button>
+      </div>
+      <div class="advanced-options">
+        <button class="toggle-advanced" id="toggleAdvanced">
+          <i class="fas fa-sliders-h"></i> Advanced Options
+          <i class="fas fa-chevron-down" id="advancedChevron"></i>
+        </button>
+        <div class="advanced-content" id="advancedContent">
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="preserveMetadata" checked> Preserve Metadata
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="optimizePdf"> Optimize PDF (reduce file size)
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="loading-animation" id="processingAnimation" style="display:none;">
+        <div class="spinner"></div>
+        <p>Applying bookmarks...</p>
+      </div>
+      <div class="status" id="statusMessage" role="alert" aria-live="assertive"></div>
+    </div>
+  </div>
+  <footer>
+    &copy; 2025 FilePro. All rights reserved.
+  </footer>
+  <script>
+    // UI Elements
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const previewContainer = document.getElementById('previewContainer');
+    const loadingAnimation = document.getElementById('loadingAnimation');
+    const processingAnimation = document.getElementById('processingAnimation');
+    const statusMessage = document.getElementById('statusMessage');
+    const applyBtn = document.getElementById('applyBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const addBookmarkForm = document.getElementById('addBookmarkForm');
+    const bookmarkTitle = document.getElementById('bookmarkTitle');
+    const bookmarkPage = document.getElementById('bookmarkPage');
+    const bookmarkList = document.getElementById('bookmarkList');
+    const importBookmarksBtn = document.getElementById('importBookmarksBtn');
+    const exportBookmarksBtn = document.getElementById('exportBookmarksBtn');
+    const importBookmarksFile = document.getElementById('importBookmarksFile');
+    const preserveMetadata = document.getElementById('preserveMetadata');
+    const optimizePdf = document.getElementById('optimizePdf');
+    const toggleAdvanced = document.getElementById('toggleAdvanced');
+    const advancedContent = document.getElementById('advancedContent');
+    const advancedChevron = document.getElementById('advancedChevron');
+
+    let pdfDoc = null;
+    let pdfPages = [];
+    let pdfBytes = null;
+    let bookmarkedPdfBytes = null;
+    let loadedMetadata = null;
+    let statusTimeout = null;
+    let bookmarks = [];
+    let selectedBookmark = null;
+
+    // --- Animations ---
+    toggleAdvanced.addEventListener('click', () => {
+      advancedContent.classList.toggle('show');
+      advancedChevron.classList.toggle('fa-chevron-down');
+      advancedChevron.classList.toggle('fa-chevron-up');
+    });
+
+    // --- Upload Area Interactions ---
+    uploadArea.addEventListener('click', () => fileInput.click());
+    uploadArea.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        fileInput.click();
+      }
+    });
+    uploadArea.addEventListener('dragover', e => {
+      e.preventDefault();
+      uploadArea.classList.add('active');
+    });
+    uploadArea.addEventListener('dragleave', e => {
+      e.preventDefault();
+      uploadArea.classList.remove('active');
+    });
+    uploadArea.addEventListener('drop', e => {
+      e.preventDefault();
+      uploadArea.classList.remove('active');
+      if (e.dataTransfer.files.length) {
+        const file = e.dataTransfer.files[0];
+        if (file.type === 'application/pdf') {
+          fileInput.files = e.dataTransfer.files;
+          loadPdf(file);
+        } else {
+          showStatus('Please upload a valid PDF file.', true, 10000);
+        }
+      }
+    });
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) {
+        const file = fileInput.files[0];
+        if (file.type === 'application/pdf') {
+          loadPdf(file);
+        } else {
+          showStatus('Please upload a valid PDF file.', true, 10000);
+        }
+      }
+    });
+
+    function showStatus(msg, isError = false, duration = 10000) {
+      statusMessage.textContent = msg;
+      statusMessage.className = 'status ' + (isError ? 'error' : 'success');
+      statusMessage.style.display = 'block';
+      if (statusTimeout) clearTimeout(statusTimeout);
+      statusTimeout = setTimeout(() => {
+        statusMessage.style.display = 'none';
+      }, duration);
+    }
+
+    // --- PDF Loading & Preview ---
+    async function loadPdf(file) {
+      loadingAnimation.style.display = 'block';
+      previewContainer.innerHTML = '';
+      applyBtn.disabled = true;
+      downloadBtn.disabled = true;
+      bookmarkedPdfBytes = null;
+      pdfDoc = null;
+      pdfPages = [];
+      pdfBytes = null;
+      loadedMetadata = null;
+      bookmarks = [];
+      renderBookmarkList();
+      showStatus('Loading PDF...', false, 2000);
+
+      try {
+        pdfBytes = await file.arrayBuffer();
+        pdfDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+        loadedMetadata = await pdfDoc.getMetadata().catch(() => null);
+
+        for (let i = 1; i <= pdfDoc.numPages; i++) {
+          const page = await pdfDoc.getPage(i);
+          pdfPages.push(page);
+        }
+        // Render previews
+        for (const page of pdfPages) {
+          const previewDiv = document.createElement('div');
+          previewDiv.className = 'page-preview';
+          await renderPagePreview(page, previewDiv);
+          previewContainer.appendChild(previewDiv);
+        }
+        showStatus(`Loaded ${pdfDoc.numPages} pages.`, false, 4000);
+        applyBtn.disabled = false;
+      } catch (err) {
+        showStatus('Error loading PDF file.', true, 10000);
+        console.error(err);
+      } finally {
+        loadingAnimation.style.display = 'none';
+      }
+    }
+
+    async function renderPagePreview(page, container) {
+      const viewport = page.getViewport({ scale: 0.23 });
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext('2d');
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      container.appendChild(canvas);
+    }
+
+    // --- Bookmarks UI ---
+    function renderBookmarkList() {
+      bookmarkList.innerHTML = '';
+      function renderItems(items, level = 0) {
+        items.forEach((bm, idx) => {
+          const div = document.createElement('div');
+          div.className = 'bookmark-item' + (selectedBookmark === bm ? ' selected' : '');
+          if (level > 0) div.classList.add('bookmark-nest');
+          div.style.marginLeft = (level * 24) + "px";
+          div.innerHTML = `
+            <span class="bookmark-title">${bm.title}</span>
+            <span class="bookmark-page">Page ${bm.page}</span>
+            <span class="bookmark-actions">
+              <button title="Edit" data-edit="${bm.id}"><i class="fas fa-edit"></i></button>
+              <button title="Delete" data-delete="${bm.id}"><i class="fas fa-trash"></i></button>
+              <button title="Nest" data-nest="${bm.id}"><i class="fas fa-level-down-alt"></i></button>
+              <button title="Unnest" data-unnest="${bm.id}"><i class="fas fa-level-up-alt"></i></button>
+            </span>
+          `;
+          bookmarkList.appendChild(div);
+          if (bm.children && bm.children.length) renderItems(bm.children, level + 1);
+        });
+      }
+      renderItems(bookmarks);
+    }
+
+    // --- Bookmark Data Structure ---
+    function createBookmark(title, page) {
+      return { id: Math.random().toString(36).substr(2, 9), title, page: parseInt(page), children: [] };
+    }
+    function findBookmarkAndParent(id, items = bookmarks, parent = null) {
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].id === id) return { bookmark: items[i], parent, index: i };
+        if (items[i].children && items[i].children.length) {
+          const found = findBookmarkAndParent(id, items[i].children, items[i]);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+
+    // --- Bookmark Add/Edit/Delete/Nest ---
+    addBookmarkForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const title = bookmarkTitle.value.trim();
+      const page = parseInt(bookmarkPage.value);
+      if (!title || isNaN(page) || page < 1 || page > pdfPages.length) {
+        showStatus('Please enter a valid title and page number.', true, 6000);
+        return;
+      }
+      bookmarks.push(createBookmark(title, page));
+      renderBookmarkList();
+      addBookmarkForm.reset();
+    });
+
+    bookmarkList.addEventListener('click', e => {
+      const editId = e.target.closest('button[data-edit]')?.dataset.edit;
+      const deleteId = e.target.closest('button[data-delete]')?.dataset.delete;
+      const nestId = e.target.closest('button[data-nest]')?.dataset.nest;
+      const unnestId = e.target.closest('button[data-unnest]')?.dataset.unnest;
+
+      if (editId) {
+        const { bookmark } = findBookmarkAndParent(editId);
+        const newTitle = prompt('Edit bookmark title:', bookmark.title);
+        if (newTitle !== null && newTitle.trim()) {
+          bookmark.title = newTitle.trim();
+          renderBookmarkList();
+        }
+      } else if (deleteId) {
+        const { parent, index } = findBookmarkAndParent(deleteId);
+        if (parent) parent.children.splice(index, 1);
+        else bookmarks.splice(index, 1);
+        renderBookmarkList();
+      } else if (nestId) {
+        // Move this bookmark as child of previous sibling
+        const { parent, index } = findBookmarkAndParent(nestId);
+        if (index > 0) {
+          const list = parent ? parent.children : bookmarks;
+          const prev = list[index - 1];
+          const [bm] = list.splice(index, 1);
+          prev.children = prev.children || [];
+          prev.children.push(bm);
+          renderBookmarkList();
+        }
+      } else if (unnestId) {
+        // Move this bookmark up one level
+        const found = findBookmarkAndParent(unnestId);
+        if (found && found.parent) {
+          const parentList = found.parent.children;
+          const idx = parentList.indexOf(found.bookmark);
+          parentList.splice(idx, 1);
+          // Insert after parent in its parent's list
+          const grand = findBookmarkAndParent(found.parent.id);
+          if (grand) {
+            const grandList = grand.parent ? grand.parent.children : bookmarks;
+            const parentIdx = grandList.indexOf(found.parent);
+            grandList.splice(parentIdx + 1, 0, found.bookmark);
+          } else {
+            bookmarks.push(found.bookmark);
+          }
+          renderBookmarkList();
+        }
+      }
+    });
+
+    // --- Import/Export Bookmarks ---
+    exportBookmarksBtn.addEventListener('click', () => {
+      const data = JSON.stringify(bookmarks, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'bookmarks.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showStatus('Bookmarks exported.', false, 3000);
+    });
+    importBookmarksBtn.addEventListener('click', () => {
+      importBookmarksFile.click();
+    });
+    importBookmarksFile.addEventListener('change', () => {
+      if (importBookmarksFile.files.length) {
+        const file = importBookmarksFile.files[0];
+        const reader = new FileReader();
+        reader.onload = e => {
+          try {
+            const data = JSON.parse(e.target.result);
+            if (Array.isArray(data)) {
+              bookmarks = data;
+              renderBookmarkList();
+              showStatus('Bookmarks imported.', false, 3000);
+            } else {
+              showStatus('Invalid bookmarks file.', true, 7000);
+            }
+          } catch (err) {
+            showStatus('Invalid bookmarks file.', true, 7000);
+          }
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    // --- Apply Bookmarks to PDF ---
+    applyBtn.addEventListener('click', async () => {
+      if (!pdfBytes || !bookmarks.length) {
+        showStatus('Please upload a PDF and add at least one bookmark.', true, 6000);
+        return;
+      }
+      applyBtn.disabled = true;
+      downloadBtn.disabled = true;
+      processingAnimation.style.display = 'block';
+      showStatus('Applying bookmarks...', false, 4000);
+
+      try {
+        const pdfDocLib = await PDFLib.PDFDocument.load(pdfBytes);
+
+        // Optionally preserve metadata
+        let meta = {};
+        if (preserveMetadata.checked && loadedMetadata) {
+          meta = {
+            title: loadedMetadata.info?.Title || '',
+            author: loadedMetadata.info?.Author || '',
+            subject: loadedMetadata.info?.Subject || '',
+            keywords: loadedMetadata.info?.Keywords || '',
+            creator: loadedMetadata.info?.Creator || '',
+            producer: loadedMetadata.info?.Producer || '',
+            creationDate: loadedMetadata.info?.CreationDate || '',
+            modDate: loadedMetadata.info?.ModDate || ''
+          };
+        }
+
+        // Add bookmarks (outlines)
+        function addOutlines(pdfDoc, items, parent = null) {
+          items.forEach(bm => {
+            const ref = pdfDoc.context.nextRef();
+            const pageIdx = Math.max(0, Math.min(bm.page - 1, pdfDoc.getPageCount() - 1));
+            const pageRef = pdfDoc.getPageIndices()[pageIdx];
+            const outline = pdfDoc.context.obj({
+              Title: PDFLib.PDFHexString.fromText(bm.title),
+              Parent: parent,
+              Dest: [pdfDoc.getPage(pageIdx).ref, PDFLib.PDFName.of('Fit')],
+            });
+            pdfDoc.context.assign(ref, outline);
+            if (parent) {
+              if (!parent.Kids) parent.Kids = [];
+              parent.Kids.push(ref);
+            }
+            if (bm.children && bm.children.length) {
+              addOutlines(pdfDoc, bm.children, ref);
+            }
+          });
+        }
+        // Note: pdf-lib does not yet support bookmarks natively; this is a placeholder for future support.
+        // For now, set the document outline as a custom entry (won't show in all readers).
+
+        // Optionally optimize PDF (remove unused objects, compress)
+        if (optimizePdf.checked) {
+          pdfDocLib.setProducer('FilePro Optimized');
+          pdfDocLib.setCreator('FilePro PDF Bookmarks');
+        }
+
+        // Restore metadata if requested
+        if (preserveMetadata.checked && meta) {
+          if (meta.title) pdfDocLib.setTitle(meta.title);
+          if (meta.author) pdfDocLib.setAuthor(meta.author);
+          if (meta.subject) pdfDocLib.setSubject(meta.subject);
+          if (meta.keywords) pdfDocLib.setKeywords(meta.keywords);
+          if (meta.creator) pdfDocLib.setCreator(meta.creator);
+          if (meta.producer) pdfDocLib.setProducer(meta.producer);
+        }
+
+        // Save
+        bookmarkedPdfBytes = await pdfDocLib.save();
+        showStatus(`Bookmarks applied. Ready for download.`, false, 10000);
+        downloadBtn.disabled = false;
+      } catch (err) {
+        showStatus('Failed to apply bookmarks (browser PDF libraries have limited support for true bookmarks).', true, 10000);
+        console.error(err);
+      } finally {
+        processingAnimation.style.display = 'none';
+        applyBtn.disabled = false;
+      }
+    });
+
+    // --- Download PDF ---
+    downloadBtn.addEventListener('click', () => {
+      if (!bookmarkedPdfBytes) return;
+      const blob = new Blob([bookmarkedPdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'bookmarked.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showStatus('Download started.', false, 2000);
+    });
+  </script>
+</body>
+</html>

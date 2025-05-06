@@ -2,119 +2,629 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tools - FilePro</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    :root {
+      --primary: #6e48ff;
+      --primary-dark: #4a2dcc;
+      --secondary: #00d4ff;
+      --dark: #1a1a2e;
+      --light: #f5f5fa;
+      --accent: #ff4d8d;
+      --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--dark);
+      color: var(--light);
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(110, 72, 255, 0.1) 0%, transparent 20%),
+        radial-gradient(circle at 90% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 20%);
+    }
+
+    header {
+      background: rgba(26, 26, 46, 0.8);
+      backdrop-filter: blur(10px);
+      padding: 1.5rem 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      width: 100%;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo::before {
+      content: "";
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      background: var(--secondary);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.7; }
+      100% { transform: scale(0.95); opacity: 1; }
+    }
+
+    nav {
+      display: flex;
+      gap: 2rem;
+    }
+
+    nav a {
+      color: var(--light);
+      text-decoration: none;
+      font-weight: 500;
+      position: relative;
+      transition: var(--transition);
+      opacity: 0.8;
+    }
+
+    nav a:hover {
+      opacity: 1;
+      color: var(--secondary);
+    }
+
+    nav a::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 2px;
+      bottom: -5px;
+      left: 0;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      transition: var(--transition);
+    }
+
+    nav a:hover::after {
+      width: 100%;
+    }
+
+    .page {
+      padding: 8rem 5% 4rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 3rem;
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-align: center;
+      position: relative;
+    }
+
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      border-radius: 3px;
+    }
+
+    .tool-section {
+      margin-bottom: 4rem;
+      position: relative;
+    }
+
+    h2 {
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+      color: var(--secondary);
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    h2::before {
+      content: '';
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background: var(--primary);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--primary);
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .tool-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 1.5rem 1rem;
+      text-align: center;
+      text-decoration: none;
+      color: var(--light);
+      font-weight: 500;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 120px;
+    }
+
+    .tool-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+      );
+      transition: 0.5s;
+    }
+
+    .tool-btn:hover::before {
+      left: 100%;
+    }
+
+    .tool-btn:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      border-color: var(--primary);
+      background: rgba(110, 72, 255, 0.1);
+    }
+
+    .tool-btn i {
+      font-size: 2rem;
+      margin-bottom: 0.8rem;
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      margin-top: 4rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.9rem;
+    }
+
+    /* Futuristic floating elements */
+    .floating {
+      position: absolute;
+      border-radius: 50%;
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      opacity: 0.1;
+      filter: blur(30px);
+      z-index: -1;
+      animation: float 15s infinite ease-in-out;
+    }
+
+    .floating:nth-child(1) {
+      width: 300px;
+      height: 300px;
+      top: 10%;
+      left: 5%;
+      animation-delay: 0s;
+    }
+
+    .floating:nth-child(2) {
+      width: 200px;
+      height: 200px;
+      top: 60%;
+      left: 80%;
+      animation-delay: 3s;
+    }
+
+    .floating:nth-child(3) {
+      width: 150px;
+      height: 150px;
+      top: 30%;
+      left: 70%;
+      animation-delay: 6s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) translateX(0); }
+      25% { transform: translateY(-50px) translateX(20px); }
+      50% { transform: translateY(20px) translateX(-30px); }
+      75% { transform: translateY(-30px) translateX(-20px); }
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      header {
+        flex-direction: column;
+        padding: 1rem;
+      }
+
+      nav {
+        margin-top: 1rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .page {
+        padding: 7rem 1rem 2rem;
+      }
+
+      h1 {
+        font-size: 2.2rem;
+      }
+
+      .tools-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      }
+
+      .tool-btn {
+        padding: 1rem 0.5rem;
+        height: 100px;
+        font-size: 0.9rem;
+      }
+
+      .tool-btn i {
+        font-size: 1.5rem;
+      }
+    }
+
+    /* Glow effect for section headers */
+    .tool-section::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, rgba(110, 72, 255, 0.1) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .tool-section:hover::after {
+      opacity: 1;
+    }
+
+    /* Hover effect for section headers */
+    h2:hover {
+      text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+    }
+
+    /* Tooltip for icons */
+    .tool-btn::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: -40px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      opacity: 0;
+      transition: var(--transition);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .tool-btn:hover::after {
+      opacity: 1;
+      bottom: -35px;
+    }
+  </style>
 </head>
 <body>
+  <!-- Floating background elements -->
+  <div class="floating"></div>
+  <div class="floating"></div>
+  <div class="floating"></div>
+
   <header>
     <div class="logo">⚡ FilePro</div>
     <nav>
       <a href="index.html">Home</a>
-      <a href="tools.html">Tools</a>
+      <a href="tools.html" class="active">Tools</a>
       <a href="about.html">About</a>
       <a href="contact.html">Contact</a>
     </nav>
   </header>
 
   <div class="page">
-    <h1>Available Tools</h1>
+    <h1>Advanced PDF Toolkit</h1>
 
     <!-- Organize PDF Section -->
     <section class="tool-section">
-      <h2>Organize PDF</h2>
+      <h2><i class="fas fa-layer-group"></i> Organize PDF</h2>
       <div class="tools-grid">
-        <a class="tool-btn" href="tools/organize-pdf/merge-pdf.html">Merge PDF</a>
-        <a class="tool-btn" href="tools/organize-pdf/split-pdf.html">Split PDF</a>
-        <a class="tool-btn" href="tools/organize-pdf/remove-pages.html">Remove Pages</a>
-        <a class="tool-btn" href="tools/organize-pdf/extract-pages.html">Extract Pages</a>
-        <a class="tool-btn" href="tools/organize-pdf/organize-pdf.html">Organize PDF</a>
-        <a class="tool-btn" href="tools/organize-pdf/scan-to-pdf.html">Scan to PDF</a>
-        <a class="tool-btn" href="tools/organize-pdf/alternate-mix.html">Alternate & Mix</a>
-        <a class="tool-btn" href="tools/organize-pdf/split-by-pages.html">Split by pages</a>
-        <a class="tool-btn" href="tools/organize-pdf/split-by-bookmarks.html">Split by bookmarks</a>
-        <a class="tool-btn" href="tools/organize-pdf/split-in-half.html">Split in half</a>
-        <a class="tool-btn" href="tools/organize-pdf/split-by-size.html">Split by size</a>
-        <a class="tool-btn" href="tools/organize-pdf/split-by-text.html">Split by text</a>
-        <a class="tool-btn" href="tools/organize-pdf/rename.html">Rename</a>
+        <a class="tool-btn" href="tools/organize-pdf/merge-pdf.html" data-tooltip="Combine multiple PDFs">
+          <i class="fas fa-object-group"></i>
+          Merge PDF
+        </a>
+        <a class="tool-btn" href="tools/organize-pdf/split-pdf.html" data-tooltip="Divide PDF into parts">
+          <i class="fas fa-cut"></i>
+          Split PDF
+        </a>
+        <a class="tool-btn" href="tools/organize-pdf/remove-pages.html" data-tooltip="Delete specific pages">
+          <i class="fas fa-minus-circle"></i>
+          Remove Pages
+        </a>
+        <a class="tool-btn" href="tools/organize-pdf/extract-pages.html" data-tooltip="Extract selected pages">
+          <i class="fas fa-expand"></i>
+          Extract Pages
+        </a>
+        <a class="tool-btn" href="tools/organize-pdf/organize-pdf.html" data-tooltip="Rearrange pages">
+          <i class="fas fa-sort-amount-down"></i>
+          Organize PDF
+        </a>
+        <a class="tool-btn" href="tools/organize-pdf/scan-to-pdf.html" data-tooltip="Create PDF from scans">
+          <i class="fas fa-scanner"></i>
+          Scan to PDF
+        </a>
+        <a class="tool-btn" href="tools/organize-pdf/alternate-mix.html" data-tooltip="Interleave PDF pages">
+          <i class="fas fa-random"></i>
+          Alternate & Mix
+        </a>
+        <a class="tool-btn" href="tools/organize-pdf/split-by-pages.html" data-tooltip="Split at specific pages">
+          <i class="fas fa-file-export"></i>
+          Split by pages
+        </a>
+        <a class="tool-btn" href="tools/organize-pdf/split-by-bookmarks.html" data-tooltip="Split using bookmarks">
+          <i class="fas fa-bookmark"></i>
+          Split by bookmarks
+        </a>
+        <a class="tool-btn" href="tools/organize-pdf/split-in-half.html" data-tooltip="Divide PDF in two">
+          <i class="fas fa-divide"></i>
+          Split in half
+        </a>
+        <a class="tool-btn" href="tools/organize-pdf/split-by-size.html" data-tooltip="Split by file size">
+          <i class="fas fa-weight-hanging"></i>
+          Split by size
+        </a>
+        <a class="tool-btn" href="tools/organize-pdf/split-by-text.html" data-tooltip="Split at text matches">
+          <i class="fas fa-font"></i>
+          Split by text
+        </a>
+        <a class="tool-btn" href="tools/organize-pdf/rename.html" data-tooltip="Rename PDF files">
+          <i class="fas fa-tag"></i>
+          Rename
+        </a>
       </div>
     </section>
 
     <!-- Optimize PDF Section -->
     <section class="tool-section">
-      <h2>Optimize PDF</h2>
+      <h2><i class="fas fa-tachometer-alt"></i> Optimize PDF</h2>
       <div class="tools-grid">
-        <a class="tool-btn" href="tools/optimize-pdf/compress-pdf.html">Compress PDF</a>
-        <a class="tool-btn" href="tools/optimize-pdf/repair-pdf.html">Repair PDF</a>
-        <a class="tool-btn" href="tools/optimize-pdf/ocr-pdf.html">OCR PDF</a>
-        <a class="tool-btn" href="tools/optimize-pdf/deskew.html">Deskew</a>
-        <a class="tool-btn" href="tools/optimize-pdf/grayscale.html">Grayscale</a>
-        <a class="tool-btn" href="tools/optimize-pdf/resize.html">Resize</a>
-        <a class="tool-btn" href="tools/optimize-pdf/flatten.html">Flatten</a>
+        <a class="tool-btn" href="tools/optimize-pdf/compress-pdf.html" data-tooltip="Reduce PDF file size">
+          <i class="fas fa-compress-alt"></i>
+          Compress PDF
+        </a>
+        <a class="tool-btn" href="tools/optimize-pdf/repair-pdf.html" data-tooltip="Fix corrupted PDFs">
+          <i class="fas fa-wrench"></i>
+          Repair PDF
+        </a>
+        <a class="tool-btn" href="tools/optimize-pdf/ocr-pdf.html" data-tooltip="Make scanned text searchable">
+          <i class="fas fa-eye"></i>
+          OCR PDF
+        </a>
+        <a class="tool-btn" href="tools/optimize-pdf/deskew.html" data-tooltip="Straighten scanned pages">
+          <i class="fas fa-ruler-combined"></i>
+          Deskew
+        </a>
+        <a class="tool-btn" href="tools/optimize-pdf/grayscale.html" data-tooltip="Convert to grayscale">
+          <i class="fas fa-palette"></i>
+          Grayscale
+        </a>
+        <a class="tool-btn" href="tools/optimize-pdf/resize.html" data-tooltip="Adjust page dimensions">
+          <i class="fas fa-arrows-alt"></i>
+          Resize
+        </a>
+        <a class="tool-btn" href="tools/optimize-pdf/flatten.html" data-tooltip="Merge layers and annotations">
+          <i class="fas fa-layer-group"></i>
+          Flatten
+        </a>
       </div>
     </section>
 
     <!-- Convert to PDF Section -->
     <section class="tool-section">
-      <h2>Convert to PDF</h2>
+      <h2><i class="fas fa-file-import"></i> Convert to PDF</h2>
       <div class="tools-grid">
-        <a class="tool-btn" href="tools/convert-to-pdf/jpg-to-pdf.html">JPG to PDF</a>
-        <a class="tool-btn" href="tools/convert-to-pdf/word-to-pdf.html">WORD to PDF</a>
-        <a class="tool-btn" href="tools/convert-to-pdf/ppt-to-pdf.html">POWERPOINT to PDF</a>
-        <a class="tool-btn" href="tools/convert-to-pdf/excel-to-pdf.html">EXCEL to PDF</a>
-        <a class="tool-btn" href="tools/convert-to-pdf/html-to-pdf.html">HTML to PDF</a>
+        <a class="tool-btn" href="tools/convert-to-pdf/jpg-to-pdf.html" data-tooltip="Images to PDF">
+          <i class="fas fa-file-image"></i>
+          JPG to PDF
+        </a>
+        <a class="tool-btn" href="tools/convert-to-pdf/word-to-pdf.html" data-tooltip="Word documents to PDF">
+          <i class="fas fa-file-word"></i>
+          WORD to PDF
+        </a>
+        <a class="tool-btn" href="tools/convert-to-pdf/ppt-to-pdf.html" data-tooltip="Presentations to PDF">
+          <i class="fas fa-file-powerpoint"></i>
+          POWERPOINT to PDF
+        </a>
+        <a class="tool-btn" href="tools/convert-to-pdf/excel-to-pdf.html" data-tooltip="Spreadsheets to PDF">
+          <i class="fas fa-file-excel"></i>
+          EXCEL to PDF
+        </a>
+        <a class="tool-btn" href="tools/convert-to-pdf/html-to-pdf.html" data-tooltip="Web pages to PDF">
+          <i class="fas fa-code"></i>
+          HTML to PDF
+        </a>
       </div>
     </section>
 
     <!-- Convert from PDF Section -->
     <section class="tool-section">
-      <h2>Convert from PDF</h2>
+      <h2><i class="fas fa-file-export"></i> Convert from PDF</h2>
       <div class="tools-grid">
-        <a class="tool-btn" href="tools/convert-from-pdf/pdf-to-jpg.html">PDF to JPG</a>
-        <a class="tool-btn" href="tools/convert-from-pdf/pdf-to-word.html">PDF to WORD</a>
-        <a class="tool-btn" href="tools/convert-from-pdf/pdf-to-ppt.html">PDF to POWERPOINT</a>
-        <a class="tool-btn" href="tools/convert-from-pdf/pdf-to-excel.html">PDF to EXCEL</a>
-        <a class="tool-btn" href="tools/convert-from-pdf/pdf-to-text.html">PDF to Text</a>
+        <a class="tool-btn" href="tools/convert-from-pdf/pdf-to-jpg.html" data-tooltip="PDF to images">
+          <i class="fas fa-image"></i>
+          PDF to JPG
+        </a>
+        <a class="tool-btn" href="tools/convert-from-pdf/pdf-to-word.html" data-tooltip="PDF to Word documents">
+          <i class="fas fa-file-word"></i>
+          PDF to WORD
+        </a>
+        <a class="tool-btn" href="tools/convert-from-pdf/pdf-to-ppt.html" data-tooltip="PDF to presentations">
+          <i class="fas fa-file-powerpoint"></i>
+          PDF to POWERPOINT
+        </a>
+        <a class="tool-btn" href="tools/convert-from-pdf/pdf-to-excel.html" data-tooltip="PDF to spreadsheets">
+          <i class="fas fa-file-excel"></i>
+          PDF to EXCEL
+        </a>
+        <a class="tool-btn" href="tools/convert-from-pdf/pdf-to-text.html" data-tooltip="Extract text content">
+          <i class="fas fa-file-alt"></i>
+          PDF to Text
+        </a>
       </div>
     </section>
 
     <!-- Edit PDF Section -->
     <section class="tool-section">
-      <h2>Edit PDF</h2>
+      <h2><i class="fas fa-edit"></i> Edit PDF</h2>
       <div class="tools-grid">
-        <a class="tool-btn" href="tools/edit-pdf/rotate-pdf.html">Rotate PDF</a>
-        <a class="tool-btn" href="tools/edit-pdf/add-page-numbers.html">Add Page Numbers</a>
-        <a class="tool-btn" href="tools/edit-pdf/add-watermark.html">Add Watermark</a>
-        <a class="tool-btn" href="tools/edit-pdf/edit.html">Edit</a>
-        <a class="tool-btn" href="tools/edit-pdf/fill-sign.html">Fill & Sign</a>
-        <a class="tool-btn" href="tools/edit-pdf/create-forms.html">Create Forms</a>
-        <a class="tool-btn" href="tools/edit-pdf/delete-pages.html">Delete Pages</a>
-        <a class="tool-btn" href="tools/edit-pdf/crop.html">Crop</a>
-        <a class="tool-btn" href="tools/edit-pdf/extract-images.html">Extract Images</a>
-        <a class="tool-btn" href="tools/edit-pdf/header-footer.html">Header & Footer</a>
-        <a class="tool-btn" href="tools/edit-pdf/edit-metadata.html">Edit Metadata</a>
-        <a class="tool-btn" href="tools/edit-pdf/n-up.html">N-up</a>
-        <a class="tool-btn" href="tools/edit-pdf/remove-annotations.html">Remove annotations</a>
-        <a class="tool-btn" href="tools/edit-pdf/bates-numbering.html">Bates Numbering</a>
-        <a class="tool-btn" href="tools/edit-pdf/create-bookmarks.html">Create Bookmarks</a>
+        <a class="tool-btn" href="tools/edit-pdf/rotate-pdf.html" data-tooltip="Rotate pages">
+          <i class="fas fa-redo"></i>
+          Rotate PDF
+        </a>
+        <a class="tool-btn" href="tools/edit-pdf/add-page-numbers.html" data-tooltip="Add page numbering">
+          <i class="fas fa-list-ol"></i>
+          Add Page Numbers
+        </a>
+        <a class="tool-btn" href="tools/edit-pdf/add-watermark.html" data-tooltip="Add watermark">
+          <i class="fas fa-stamp"></i>
+          Add Watermark
+        </a>
+        <a class="tool-btn" href="tools/edit-pdf/edit.html" data-tooltip="Edit content">
+          <i class="fas fa-pencil-alt"></i>
+          Edit
+        </a>
+        <a class="tool-btn" href="tools/edit-pdf/fill-sign.html" data-tooltip="Fill and sign forms">
+          <i class="fas fa-signature"></i>
+          Fill & Sign
+        </a>
+        <a class="tool-btn" href="tools/edit-pdf/create-forms.html" data-tooltip="Create fillable forms">
+          <i class="fas fa-keyboard"></i>
+          Create Forms
+        </a>
+        <a class="tool-btn" href="tools/edit-pdf/delete-pages.html" data-tooltip="Remove pages">
+          <i class="fas fa-trash-alt"></i>
+          Delete Pages
+        </a>
+        <a class="tool-btn" href="tools/edit-pdf/crop.html" data-tooltip="Crop pages">
+          <i class="fas fa-crop"></i>
+          Crop
+        </a>
+        <a class="tool-btn" href="tools/edit-pdf/extract-images.html" data-tooltip="Extract images">
+          <i class="fas fa-images"></i>
+          Extract Images
+        </a>
+        <a class="tool-btn" href="tools/edit-pdf/header-footer.html" data-tooltip="Add headers/footers">
+          <i class="fas fa-heading"></i>
+          Header & Footer
+        </a>
+        <a class="tool-btn" href="tools/edit-pdf/edit-metadata.html" data-tooltip="Edit document properties">
+          <i class="fas fa-info-circle"></i>
+          Edit Metadata
+        </a>
+        <a class="tool-btn" href="tools/edit-pdf/n-up.html" data-tooltip="Multiple pages per sheet">
+          <i class="fas fa-copy"></i>
+          N-up
+        </a>
+        <a class="tool-btn" href="tools/edit-pdf/remove-annotations.html" data-tooltip="Remove comments/markup">
+          <i class="fas fa-comment-slash"></i>
+          Remove annotations
+        </a>
+        <a class="tool-btn" href="tools/edit-pdf/bates-numbering.html" data-tooltip="Add legal numbering">
+          <i class="fas fa-hashtag"></i>
+          Bates Numbering
+        </a>
+        <a class="tool-btn" href="tools/edit-pdf/create-bookmarks.html" data-tooltip="Create navigation bookmarks">
+          <i class="fas fa-bookmark"></i>
+          Create Bookmarks
+        </a>
       </div>
     </section>
 
     <!-- PDF Security Section -->
     <section class="tool-section">
-      <h2>PDF Security</h2>
+      <h2><i class="fas fa-lock"></i> PDF Security</h2>
       <div class="tools-grid">
-        <a class="tool-btn" href="tools/pdf-security/unlock-pdf.html">Unlock PDF</a>
-        <a class="tool-btn" href="tools/pdf-security/protect-pdf.html">Protect PDF</a>
-        <a class="tool-btn" href="tools/pdf-security/sign-pdf.html">Sign PDF</a>
-        <a class="tool-btn" href="tools/pdf-security/watermark.html">Watermark</a>
+        <a class="tool-btn" href="tools/pdf-security/unlock-pdf.html" data-tooltip="Remove password protection">
+          <i class="fas fa-unlock"></i>
+          Unlock PDF
+        </a>
+        <a class="tool-btn" href="tools/pdf-security/protect-pdf.html" data-tooltip="Add password protection">
+          <i class="fas fa-lock"></i>
+          Protect PDF
+        </a>
+        <a class="tool-btn" href="tools/pdf-security/sign-pdf.html" data-tooltip="Add digital signatures">
+          <i class="fas fa-signature"></i>
+          Sign PDF
+        </a>
+        <a class="tool-btn" href="tools/pdf-security/watermark.html" data-tooltip="Add security watermarks">
+          <i class="fas fa-shield-alt"></i>
+          Watermark
+        </a>
       </div>
     </section>
 
     <!-- Automation Section -->
     <section class="tool-section">
-      <h2>Automation</h2>
+      <h2><i class="fas fa-robot"></i> Automation</h2>
       <div class="tools-grid">
-        <a class="tool-btn" href="tools/automation/workflows.html">Workflows</a>
+        <a class="tool-btn" href="tools/automation/workflows.html" data-tooltip="Automate PDF tasks">
+          <i class="fas fa-project-diagram"></i>
+          Workflows
+        </a>
       </div>
     </section>
   </div>
@@ -122,5 +632,57 @@
   <footer>
     <p>&copy; 2025 FilePro. All rights reserved.</p>
   </footer>
+
+  <script>
+    // Add futuristic hover effects
+    document.addEventListener('DOMContentLoaded', function() {
+      const toolBtns = document.querySelectorAll('.tool-btn');
+      
+      toolBtns.forEach(btn => {
+        btn.addEventListener('mouseenter', function() {
+          const rect = this.getBoundingClientRect();
+          const x = rect.left + rect.width/2;
+          const y = rect.top + rect.height/2;
+          
+          const ripple = document.createElement('div');
+          ripple.style.position = 'fixed';
+          ripple.style.width = '0';
+          ripple.style.height = '0';
+          ripple.style.borderRadius = '50%';
+          ripple.style.background = 'radial-gradient(circle, rgba(110,72,255,0.3) 0%, transparent 70%)';
+          ripple.style.transform = 'translate(-50%, -50%)';
+          ripple.style.left = x + 'px';
+          ripple.style.top = y + 'px';
+          ripple.style.pointerEvents = 'none';
+          ripple.style.zIndex = '999';
+          ripple.style.transition = 'all 0.6s ease-out';
+          
+          document.body.appendChild(ripple);
+          
+          setTimeout(() => {
+            ripple.style.width = '300px';
+            ripple.style.height = '300px';
+            ripple.style.opacity = '0';
+          }, 10);
+          
+          setTimeout(() => {
+            ripple.remove();
+          }, 600);
+        });
+      });
+      
+      // Add subtle parallax effect to floating elements
+      const floaters = document.querySelectorAll('.floating');
+      window.addEventListener('mousemove', (e) => {
+        const x = e.clientX / window.innerWidth;
+        const y = e.clientY / window.innerHeight;
+        
+        floaters.forEach((floater, index) => {
+          const speed = 0.05 * (index + 1);
+          floater.style.transform = `translate(${x * 20 * speed}px, ${y * 20 * speed}px)`;
+        });
+      });
+    });
+  </script>
 </body>
 </html>
