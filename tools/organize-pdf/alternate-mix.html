@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Advanced PDF Mixer | FilePro</title>
+  <title>Advanced PDF Bookmark Creator | FilePro</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
   <style>
     :root {
       --primary: #00f0ff;
@@ -38,6 +37,36 @@
       position: relative;
     }
 
+    /* Background Animation */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+      border-radius: 50%;
+      opacity: 0.1;
+      animation: float 15s infinite linear;
+    }
+
+    @keyframes float {
+      0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 0.1;
+      }
+      100% {
+        transform: translateY(-1000px) rotate(720deg);
+        opacity: 0;
+      }
+    }
+
     /* Header - Futuristic Theme */
     header {
       background: rgba(10, 10, 26, 0.9);
@@ -52,6 +81,12 @@
       z-index: 1000;
       border-bottom: 1px solid rgba(0, 240, 255, 0.2);
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      animation: slideDown 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes slideDown {
+      from { transform: translateY(-100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
 
     .logo {
@@ -143,6 +178,12 @@
       width: 100%;
       height: 3px;
       background: linear-gradient(90deg, var(--primary), transparent);
+      animation: expand 1s ease-out;
+    }
+
+    @keyframes expand {
+      from { width: 0; }
+      to { width: 100%; }
     }
 
     .subtitle {
@@ -161,6 +202,17 @@
       padding: 2rem;
       margin-bottom: 3rem;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      animation: neonPulse 3s infinite alternate;
+    }
+
+    @keyframes neonPulse {
+      from {
+        box-shadow: 0 0 5px rgba(0, 240, 255, 0.3);
+      }
+      to {
+        box-shadow: 0 0 15px rgba(0, 240, 255, 0.5),
+                    0 0 30px rgba(0, 240, 255, 0.3);
+      }
     }
 
     /* Upload Section - Futuristic Style */
@@ -188,7 +240,7 @@
     .upload-box:hover {
       border-color: var(--primary);
       background: rgba(0, 240, 255, 0.1);
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.1);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
     }
 
     .upload-box i {
@@ -196,6 +248,13 @@
       color: var(--primary);
       margin-bottom: 1rem;
       text-shadow: var(--neon-glow);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
     }
 
     .upload-box h3 {
@@ -247,74 +306,71 @@
       background: rgba(0, 240, 255, 0.1);
     }
 
-    /* File List - Sortable */
-    #file-list {
-      width: 100%;
+    /* Bookmark Editor */
+    .editor-section {
       margin: 2rem 0;
+      display: none;
+      animation: fadeIn 0.5s ease-out;
     }
 
-    .file-item {
-      background: rgba(30, 30, 60, 0.7);
+    .bookmark-list {
+      width: 100%;
+      margin: 1rem 0;
+      max-height: 400px;
+      overflow-y: auto;
       border: 1px solid rgba(0, 240, 255, 0.2);
       border-radius: 8px;
       padding: 1rem;
-      margin-bottom: 0.8rem;
+      background: rgba(30, 30, 60, 0.5);
+    }
+
+    .bookmark-item {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      padding: 0.8rem;
+      margin-bottom: 0.5rem;
+      background: rgba(0, 240, 255, 0.05);
+      border-radius: 6px;
       transition: all 0.3s ease;
     }
 
-    .file-item:hover {
-      border-color: var(--primary);
-      background: rgba(0, 240, 255, 0.05);
+    .bookmark-item:hover {
+      background: rgba(0, 240, 255, 0.1);
     }
 
-    .file-info {
-      display: flex;
-      align-items: center;
-      flex-grow: 1;
-    }
-
-    .file-icon {
-      font-size: 1.5rem;
+    .bookmark-icon {
       color: var(--primary);
       margin-right: 1rem;
+      font-size: 1.2rem;
     }
 
-    .file-details {
+    .bookmark-details {
       flex-grow: 1;
+      display: flex;
+      flex-direction: column;
     }
 
-    .file-name {
+    .bookmark-title {
       font-weight: 500;
       margin-bottom: 0.3rem;
+      color: var(--light);
     }
 
-    .file-meta {
+    .bookmark-page {
       font-size: 0.8rem;
       color: rgba(255, 255, 255, 0.6);
     }
 
-    .file-actions {
+    .bookmark-controls {
       display: flex;
-      align-items: center;
+      gap: 0.5rem;
     }
 
-    .page-count {
+    .bookmark-btn {
       background: rgba(0, 240, 255, 0.1);
       color: var(--primary);
-      padding: 0.3rem 0.8rem;
-      border-radius: 50px;
-      font-size: 0.8rem;
-      margin-right: 1rem;
-    }
-
-    .remove-file {
-      background: rgba(239, 35, 60, 0.2);
-      color: var(--danger);
       border: none;
-      border-radius: 50%;
+      border-radius: 4px;
       width: 32px;
       height: 32px;
       display: flex;
@@ -324,63 +380,37 @@
       transition: all 0.3s ease;
     }
 
-    .remove-file:hover {
-      background: rgba(239, 35, 60, 0.4);
+    .bookmark-btn:hover {
+      background: rgba(0, 240, 255, 0.2);
     }
 
-    /* Mixing Options */
-    .options-section {
-      margin: 2rem 0;
-      padding: 1.5rem;
-      background: rgba(30, 30, 60, 0.5);
-      border-radius: 8px;
-      border: 1px solid rgba(0, 240, 255, 0.2);
+    .bookmark-btn.delete {
+      background: rgba(239, 35, 60, 0.1);
+      color: var(--danger);
     }
 
-    .options-title {
-      font-size: 1.2rem;
-      margin-bottom: 1rem;
-      color: var(--primary);
+    .bookmark-btn.delete:hover {
+      background: rgba(239, 35, 60, 0.2);
+    }
+
+    .add-bookmark-form {
       display: flex;
-      align-items: center;
+      gap: 1rem;
+      margin-top: 1.5rem;
     }
 
-    .options-title i {
-      margin-right: 0.8rem;
+    .form-group {
+      flex-grow: 1;
     }
 
-    .option-group {
-      margin-bottom: 1.5rem;
-    }
-
-    .option-label {
+    .form-label {
       display: block;
       margin-bottom: 0.5rem;
       color: rgba(255, 255, 255, 0.9);
-    }
-
-    .option-description {
       font-size: 0.9rem;
-      color: rgba(255, 255, 255, 0.6);
-      margin-bottom: 1rem;
     }
 
-    .radio-group {
-      display: flex;
-      gap: 1.5rem;
-      margin-bottom: 1rem;
-    }
-
-    .radio-option {
-      display: flex;
-      align-items: center;
-    }
-
-    .radio-option input {
-      margin-right: 0.5rem;
-    }
-
-    .select-control {
+    .form-control {
       width: 100%;
       padding: 0.8rem;
       background: rgba(0, 0, 0, 0.3);
@@ -391,7 +421,7 @@
       transition: all 0.3s ease;
     }
 
-    .select-control:focus {
+    .form-control:focus {
       outline: none;
       border-color: var(--primary);
       box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
@@ -665,14 +695,8 @@
         padding: 1.5rem;
       }
 
-      .radio-group {
+      .add-bookmark-form {
         flex-direction: column;
-        gap: 0.8rem;
-      }
-
-      .download-actions {
-        flex-direction: column;
-        align-items: center;
       }
     }
 
@@ -685,30 +709,15 @@
         padding: 2rem 1rem;
       }
 
-      .file-item {
+      .bookmark-item {
         flex-direction: column;
         align-items: flex-start;
       }
 
-      .file-actions {
-        margin-top: 1rem;
+      .bookmark-controls {
+        margin-top: 0.5rem;
         width: 100%;
-        justify-content: space-between;
-      }
-    }
-
-    /* Advanced Effects */
-    .neon-pulse {
-      animation: neonPulse 2s infinite alternate;
-    }
-
-    @keyframes neonPulse {
-      from {
-        box-shadow: 0 0 5px rgba(0, 240, 255, 0.5);
-      }
-      to {
-        box-shadow: 0 0 15px rgba(0, 240, 255, 0.8),
-                    0 0 30px rgba(0, 240, 255, 0.6);
+        justify-content: flex-end;
       }
     }
 
@@ -768,44 +777,6 @@
       transform: rotate(45deg);
     }
 
-    /* Range Slider */
-    .range-slider {
-      width: 100%;
-      margin: 1rem 0;
-    }
-
-    .range-slider input[type="range"] {
-      -webkit-appearance: none;
-      width: 100%;
-      height: 8px;
-      background: rgba(0, 240, 255, 0.1);
-      border-radius: 4px;
-      outline: none;
-    }
-
-    .range-slider input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 18px;
-      height: 18px;
-      background: var(--primary);
-      border-radius: 50%;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .range-slider input[type="range"]::-webkit-slider-thumb:hover {
-      transform: scale(1.2);
-      box-shadow: 0 0 10px rgba(0, 240, 255, 0.8);
-    }
-
-    .range-value {
-      text-align: center;
-      font-size: 0.9rem;
-      color: var(--primary);
-      margin-top: 0.5rem;
-    }
-
     /* Tooltip */
     .tooltip {
       position: relative;
@@ -842,164 +813,85 @@
       opacity: 1;
     }
 
-    /* Page Thumbnails */
-    .thumbnail-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 1rem;
-      max-height: 300px;
-      overflow-y: auto;
-      padding: 5px;
+    /* Floating Animation */
+    .float {
+      animation: floating 3s ease-in-out infinite;
     }
 
-    .thumbnail-item {
-      width: 100px;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: all 0.3s ease;
-    }
-
-    .thumbnail-item:hover {
-      border-color: var(--primary);
-    }
-
-    .thumbnail-item.active {
-      border-color: var(--accent);
-    }
-
-    .thumbnail-canvas {
-      width: 100%;
-      height: auto;
-      border-radius: 4px;
-    }
-
-    .thumbnail-page-number {
-      text-align: center;
-      font-size: 0.7rem;
-      color: rgba(255, 255, 255, 0.7);
-      margin-top: 2px;
+    @keyframes floating {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0); }
     }
   </style>
 </head>
 <body>
+  <!-- Background Particles -->
+  <div class="particles" id="particles"></div>
 
+  <!-- Header -->
   <header>
     <div class="logo">
-      <i class="fas fa-file-import"></i>
+      <i class="fas fa-bolt"></i>
       <span>FilePro</span>
     </div>
     <nav>
-      <a href="../../index.html"><i class="fas fa-home"></i> Home</a>
-      <a href="../../tools.html"><i class="fas fa-tools"></i> Tools</a>
-      <a href="../../about.html"><i class="fas fa-info-circle"></i> About</a>
-      <a href="../../contact.html"><i class="fas fa-envelope"></i> Contact</a>
+      <a href="../../index.html">Home</a>
+      <a href="../../tools.html">Tools</a>
+      <a href="../../about.html">About</a>
+      <a href="../../contact.html">Contact</a>
     </nav>
   </header>
 
   <main>
-    <h1>Advanced PDF Mixer</h1>
-    <p class="subtitle">Combine multiple PDFs with precision using various mixing patterns, page selection, and advanced options.</p>
+    <h1>Advanced PDF Bookmark Creator</h1>
+    <p class="subtitle">Add, edit, and organize bookmarks in your PDF documents with precision and ease.</p>
 
-    <div class="tool-container neon-pulse">
+    <div class="tool-container">
       <!-- Upload Section -->
       <div class="upload-section">
         <div class="upload-box" id="upload-box">
           <i class="fas fa-cloud-upload-alt"></i>
-          <h3>Drag & Drop PDF Files Here</h3>
-          <p>or click to browse your files</p>
+          <h3>Upload Your PDF File</h3>
+          <p>Drag & drop your PDF here or click to browse</p>
           <button class="btn btn-outline">
-            <i class="fas fa-folder-open"></i> Select Files
+            <i class="fas fa-folder-open"></i> Select PDF
           </button>
-          <input type="file" id="pdf-upload" multiple accept=".pdf" style="display: none;" />
-        </div>
-        
-        <!-- File List -->
-        <div id="file-list"></div>
-      </div>
-
-      <!-- Mixing Options -->
-      <div class="options-section">
-        <h3 class="options-title"><i class="fas fa-sliders-h"></i> Mixing Options</h3>
-        
-        <div class="option-group">
-          <label class="option-label">Mixing Pattern:</label>
-          <p class="option-description">Choose how pages from different files should be combined.</p>
-          <div class="radio-group">
-            <label class="radio-option">
-              <input type="radio" name="mixing-pattern" value="alternate" checked>
-              Alternate Pages (A1, B1, A2, B2...)
-            </label>
-            <label class="radio-option">
-              <input type="radio" name="mixing-pattern" value="sequential">
-              Sequential (All A, then all B)
-            </label>
-            <label class="radio-option">
-              <input type="radio" name="mixing-pattern" value="reverse">
-              Reverse Order
-            </label>
-          </div>
-        </div>
-
-        <div class="option-group">
-          <label class="option-label">Page Range:</label>
-          <p class="option-description">Specify which pages to include from each document.</p>
-          <select class="select-control" id="page-range">
-            <option value="all">All Pages</option>
-            <option value="even">Even Pages Only</option>
-            <option value="odd">Odd Pages Only</option>
-            <option value="custom">Custom Range...</option>
-          </select>
-          
-          <div id="custom-range-container" style="display: none; margin-top: 1rem;">
-            <label class="option-label">Custom Page Range:</label>
-            <input type="text" class="select-control" placeholder="e.g. 1-5,8,10-12" id="custom-range-input">
-          </div>
-        </div>
-
-        <div class="option-group">
-          <label class="option-label">Advanced Options:</label>
-          <div class="custom-checkbox">
-            <input type="checkbox" id="optimize-size">
-            <span class="checkmark"></span>
-            <label for="optimize-size">Optimize File Size</label>
-            <div class="tooltip">
-              <i class="fas fa-question-circle"></i>
-              <span class="tooltip-text">Reduces file size by compressing images and removing unnecessary data.</span>
-            </div>
-          </div>
-          <div class="custom-checkbox">
-            <input type="checkbox" id="preserve-metadata">
-            <span class="checkmark"></span>
-            <label for="preserve-metadata">Preserve Document Metadata</label>
-          </div>
-          <div class="custom-checkbox">
-            <input type="checkbox" id="add-watermark">
-            <span class="checkmark"></span>
-            <label for="add-watermark">Add Watermark</label>
-          </div>
-          
-          <div id="watermark-options" style="display: none; margin-top: 1rem;">
-            <label class="option-label">Watermark Text:</label>
-            <input type="text" class="select-control" placeholder="Enter watermark text" id="watermark-text">
-            
-            <label class="option-label" style="margin-top: 1rem;">Opacity:</label>
-            <div class="range-slider">
-              <input type="range" min="10" max="90" value="50" class="slider" id="watermark-opacity">
-              <div class="range-value" id="watermark-opacity-value">50%</div>
-            </div>
-          </div>
+          <input type="file" id="pdf-upload" accept=".pdf" style="display: none;" />
         </div>
       </div>
 
-      <!-- Action Buttons -->
-      <div style="display: flex; justify-content: center; gap: 1rem; margin-top: 2rem;">
-        <button class="btn" id="mix-btn" onclick="processPDFs()">
-          <i class="fas fa-random"></i> Mix PDFs
-        </button>
-        <button class="btn btn-outline" onclick="resetTool()">
-          <i class="fas fa-redo"></i> Reset
-        </button>
+      <!-- Editor Section -->
+      <div class="editor-section" id="editor-section">
+        <h3><i class="fas fa-bookmark"></i> Bookmark Editor</h3>
+        
+        <div class="bookmark-list" id="bookmark-list">
+          <!-- Bookmarks will be added here dynamically -->
+        </div>
+        
+        <div class="add-bookmark-form">
+          <div class="form-group">
+            <label class="form-label">Bookmark Title</label>
+            <input type="text" class="form-control" id="bookmark-title" placeholder="Enter bookmark title">
+          </div>
+          <div class="form-group" style="width: 120px;">
+            <label class="form-label">Page Number</label>
+            <input type="number" class="form-control" id="bookmark-page" min="1" value="1">
+          </div>
+          <button class="btn" id="add-bookmark-btn" style="align-self: flex-end;">
+            <i class="fas fa-plus"></i> Add
+          </button>
+        </div>
+        
+        <div class="custom-checkbox" style="margin-top: 1.5rem;">
+          <input type="checkbox" id="auto-generate">
+          <span class="checkmark"></span>
+          <label for="auto-generate">Auto-generate bookmarks from headings</label>
+          <div class="tooltip">
+            <i class="fas fa-question-circle"></i>
+            <span class="tooltip-text">Automatically detect headings in the PDF and create bookmarks for them</span>
+          </div>
+        </div>
       </div>
 
       <!-- Progress Bar -->
@@ -1046,24 +938,22 @@
           </div>
           
           <div class="page-info" id="page-info">Page 1 of 1</div>
-          
-          <div class="thumbnail-container" id="thumbnail-container"></div>
         </div>
       </div>
 
       <!-- Download Section -->
       <div class="download-section" id="download-section">
-        <h3><i class="fas fa-check-circle" style="color: var(--success);"></i> Your Mixed PDF is Ready!</h3>
+        <h3><i class="fas fa-check-circle" style="color: var(--success);"></i> Your Bookmarked PDF is Ready!</h3>
         <p>Review the preview above and download your document when ready.</p>
         
         <div class="download-actions">
-          <a id="download-link" href="#" download="mixed-document.pdf">
+          <a id="download-link" href="#" download="bookmarked-document.pdf">
             <button class="btn">
               <i class="fas fa-download"></i> Download PDF
             </button>
           </a>
-          <button class="btn btn-outline" onclick="startNewMix()">
-            <i class="fas fa-plus"></i> Start New Mix
+          <button class="btn btn-outline" onclick="startNewDocument()">
+            <i class="fas fa-plus"></i> New Document
           </button>
           <button class="btn btn-outline" id="save-cloud">
             <i class="fas fa-cloud-upload-alt"></i> Save to Cloud
@@ -1074,16 +964,15 @@
 
     <!-- Instructions -->
     <section class="instructions">
-      <h2><i class="fas fa-graduation-cap"></i> How to Use the Advanced PDF Mixer</h2>
+      <h2><i class="fas fa-graduation-cap"></i> How to Create PDF Bookmarks</h2>
       <ul>
-        <li><strong>Upload Files:</strong> Drag and drop or select multiple PDF files to combine.</li>
-        <li><strong>Arrange Files:</strong> Drag to reorder files before mixing.</li>
-        <li><strong>Select Mixing Pattern:</strong> Choose how pages should be combined (alternating, sequential, etc.).</li>
-        <li><strong>Set Page Range:</strong> Include all pages or specify custom ranges for each document.</li>
-        <li><strong>Apply Advanced Options:</strong> Optimize size, add watermarks, or preserve metadata.</li>
-        <li><strong>Preview & Download:</strong> Review the mixed document before downloading.</li>
+        <li><strong>Upload PDF:</strong> Select your PDF file to add bookmarks to.</li>
+        <li><strong>Add Bookmarks:</strong> Enter a title and page number for each bookmark you want to add.</li>
+        <li><strong>Edit Bookmarks:</strong> Click the edit button to modify existing bookmarks.</li>
+        <li><strong>Auto-generate:</strong> Enable auto-generation to detect headings and create bookmarks automatically.</li>
+        <li><strong>Preview & Download:</strong> Review your bookmarks before downloading the final PDF.</li>
       </ul>
-      <p class="tip"><strong>Pro Tip:</strong> For large documents, use the "Optimize File Size" option to reduce the final PDF size.</p>
+      <p class="tip"><strong>Pro Tip:</strong> For large documents, use the auto-generate feature to quickly create bookmarks from headings.</p>
     </section>
   </main>
 
@@ -1093,13 +982,12 @@
 
   <script>
     // Global variables
-    let fileData = [];
     let pdfBlob = null;
     let pdfDoc = null;
     let currentPage = 1;
     let pageCount = 0;
     let currentScale = 1.0;
-    let pdfWorker = null;
+    let bookmarks = [];
     
     // Initialize PDF.js worker
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
@@ -1107,8 +995,12 @@
     // DOM Elements
     const uploadBox = document.getElementById('upload-box');
     const fileInput = document.getElementById('pdf-upload');
-    const fileList = document.getElementById('file-list');
-    const mixBtn = document.getElementById('mix-btn');
+    const editorSection = document.getElementById('editor-section');
+    const bookmarkList = document.getElementById('bookmark-list');
+    const bookmarkTitle = document.getElementById('bookmark-title');
+    const bookmarkPage = document.getElementById('bookmark-page');
+    const addBookmarkBtn = document.getElementById('add-bookmark-btn');
+    const autoGenerateCheckbox = document.getElementById('auto-generate');
     const progressContainer = document.getElementById('progress-container');
     const progressBar = document.getElementById('progress-bar');
     const progressPercent = document.getElementById('progress-percent');
@@ -1118,26 +1010,18 @@
     const previewSection = document.getElementById('preview-section');
     const downloadSection = document.getElementById('download-section');
     const downloadLink = document.getElementById('download-link');
-    const pageRangeSelect = document.getElementById('page-range');
-    const customRangeContainer = document.getElementById('custom-range-container');
-    const watermarkCheckbox = document.getElementById('add-watermark');
-    const watermarkOptions = document.getElementById('watermark-options');
-    const watermarkOpacitySlider = document.getElementById('watermark-opacity');
-    const watermarkOpacityValue = document.getElementById('watermark-opacity-value');
     const prevPageBtn = document.getElementById('prev-page');
     const nextPageBtn = document.getElementById('next-page');
     const zoomInBtn = document.getElementById('zoom-in');
     const zoomOutBtn = document.getElementById('zoom-out');
     const pageInfo = document.getElementById('page-info');
-    const thumbnailContainer = document.getElementById('thumbnail-container');
     
     // Event Listeners
     document.addEventListener('DOMContentLoaded', initTool);
     uploadBox.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', handleFileSelection);
-    pageRangeSelect.addEventListener('change', toggleCustomRange);
-    watermarkCheckbox.addEventListener('change', toggleWatermarkOptions);
-    watermarkOpacitySlider.addEventListener('input', updateWatermarkOpacity);
+    addBookmarkBtn.addEventListener('click', addBookmark);
+    autoGenerateCheckbox.addEventListener('change', toggleAutoGenerate);
     prevPageBtn.addEventListener('click', showPrevPage);
     nextPageBtn.addEventListener('click', showNextPage);
     zoomInBtn.addEventListener('click', zoomIn);
@@ -1148,14 +1032,42 @@
       // Set up drag and drop
       setupDragAndDrop();
       
-      // Initialize Sortable for file reordering
-      initSortable();
-      
-      // Update watermark opacity display
-      updateWatermarkOpacity();
+      // Create background particles
+      createParticles();
       
       // Show welcome message
-      showStatus('Ready to mix PDFs! Upload two or more files to begin.', false);
+      showStatus('Ready to add bookmarks to your PDF! Upload a file to begin.', false);
+    }
+    
+    // Create background particles
+    function createParticles() {
+      const container = document.getElementById('particles');
+      const particleCount = window.innerWidth < 768 ? 15 : 30;
+      
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+        
+        // Random size between 5px and 15px
+        const size = Math.random() * 10 + 5;
+        
+        // Random position
+        const posX = Math.random() * 100;
+        const posY = Math.random() * 100;
+        
+        // Random animation duration and delay
+        const duration = Math.random() * 10 + 10;
+        const delay = Math.random() * 10;
+        
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.left = `${posX}%`;
+        particle.style.top = `${posY}%`;
+        particle.style.animationDuration = `${duration}s`;
+        particle.style.animationDelay = `${delay}s`;
+        
+        container.appendChild(particle);
+      }
     }
     
     // Set up drag and drop functionality
@@ -1206,73 +1118,45 @@
       }
     }
     
-    // Initialize Sortable for file reordering
-    function initSortable() {
-      new Sortable(fileList, {
-        animation: 150,
-        ghostClass: 'sortable-ghost',
-        onEnd: function() {
-          // Update fileData array to match new order
-          const items = fileList.querySelectorAll('.file-item');
-          const newFileData = [];
-          
-          items.forEach(item => {
-            const fileIndex = parseInt(item.dataset.index);
-            newFileData.push(fileData[fileIndex]);
-          });
-          
-          fileData = newFileData;
-          updateMixButtonState();
-        }
-      });
-    }
-    
     // Handle file selection
     async function handleFileSelection() {
       const files = fileInput.files;
-      fileList.innerHTML = '';
-      fileData = [];
       
       if (files.length === 0) {
-        showStatus('No files selected.', true);
-        updateMixButtonState();
+        showStatus('No file selected.', true);
         return;
       }
       
-      // Show loading state
-      loadingSpinner.style.display = 'block';
-      progressContainer.style.display = 'block';
-      progressStatus.textContent = 'Validating PDF files...';
-      
       try {
-        // Process each file
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          
-          // Update progress
-          const progress = Math.floor((i / files.length) * 50);
-          updateProgress(progress, `Processing file ${i + 1} of ${files.length}`);
-          
-          try {
-            // Validate PDF
-            await validatePdf(file);
-            
-            // Add to file data
-            fileData.push(file);
-            
-            // Create file list item
-            createFileListItem(file, i);
-          } catch (error) {
-            console.error(`Error processing file ${file.name}:`, error);
-            showStatus(`Skipped ${file.name}: Not a valid PDF`, true);
-          }
+        // Show loading state
+        loadingSpinner.style.display = 'block';
+        progressContainer.style.display = 'block';
+        progressStatus.textContent = 'Loading PDF file...';
+        
+        const file = files[0];
+        
+        // Validate PDF
+        await validatePdf(file);
+        
+        // Load PDF for preview
+        const arrayBuffer = await file.arrayBuffer();
+        pdfBlob = new Blob([arrayBuffer], { type: 'application/pdf' });
+        
+        // Initialize preview
+        await initPreview(pdfBlob);
+        
+        // Show editor section
+        editorSection.style.display = 'block';
+        
+        // Auto-generate bookmarks if enabled
+        if (autoGenerateCheckbox.checked) {
+          await autoGenerateBookmarks();
         }
         
-        showStatus(`Successfully loaded ${fileData.length} PDF file(s)`, false);
-        updateMixButtonState();
+        showStatus('PDF loaded successfully! Add bookmarks as needed.', false);
       } catch (error) {
-        console.error('Error processing files:', error);
-        showStatus('Error processing files. Please try again.', true);
+        console.error('Error processing file:', error);
+        showStatus(error.message || 'An error occurred while processing the PDF.', true);
       } finally {
         loadingSpinner.style.display = 'none';
         progressContainer.style.display = 'none';
@@ -1291,387 +1175,20 @@
             await pdf.getMetadata(); // Check if we can access metadata
             resolve();
           } catch (error) {
-            reject(error);
+            reject(new Error('The selected file is not a valid PDF.'));
           }
         };
         
-        fileReader.onerror = reject;
+        fileReader.onerror = () => {
+          reject(new Error('Error reading the file. Please try again.'));
+        };
+        
         fileReader.readAsArrayBuffer(file);
-      });
-    }
-    
-    // Create file list item
-    function createFileListItem(file, index) {
-      const fileItem = document.createElement('div');
-      fileItem.className = 'file-item';
-      fileItem.dataset.index = index;
-      
-      // Get page count (simplified - in real app you'd get actual count)
-      const pageCount = Math.floor(Math.random() * 10) + 1; // Mock value
-      
-      fileItem.innerHTML = `
-        <div class="file-info">
-          <div class="file-icon">
-            <i class="fas fa-file-pdf"></i>
-          </div>
-          <div class="file-details">
-            <div class="file-name">${file.name}</div>
-            <div class="file-meta">${formatFileSize(file.size)}</div>
-          </div>
-        </div>
-        <div class="file-actions">
-          <span class="page-count">${pageCount} pages</span>
-          <button class="remove-file" onclick="removeFile(${index})">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-      `;
-      
-      fileList.appendChild(fileItem);
-    }
-    
-    // Format file size
-    function formatFileSize(bytes) {
-      if (bytes === 0) return '0 Bytes';
-      const k = 1024;
-      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
-    }
-    
-    // Remove file
-    function removeFile(index) {
-      fileData.splice(index, 1);
-      
-      // Update the file input (hacky but works)
-      const dataTransfer = new DataTransfer();
-      fileData.forEach(file => dataTransfer.items.add(file));
-      fileInput.files = dataTransfer.files;
-      
-      // Refresh the display
-      fileList.innerHTML = '';
-      fileData.forEach((file, i) => createFileListItem(file, i));
-      
-      updateMixButtonState();
-      
-      if (fileData.length === 0) {
-        showStatus('All files removed. Please add PDFs to mix.', true);
-      } else {
-        showStatus(`Removed file. ${fileData.length} file(s) remaining.`, false);
-      }
-    }
-    
-    // Update mix button state
-    function updateMixButtonState() {
-      mixBtn.disabled = fileData.length < 2;
-    }
-    
-    // Toggle custom range input
-    function toggleCustomRange() {
-      if (pageRangeSelect.value === 'custom') {
-        customRangeContainer.style.display = 'block';
-      } else {
-        customRangeContainer.style.display = 'none';
-      }
-    }
-    
-    // Toggle watermark options
-    function toggleWatermarkOptions() {
-      if (watermarkCheckbox.checked) {
-        watermarkOptions.style.display = 'block';
-      } else {
-        watermarkOptions.style.display = 'none';
-      }
-    }
-    
-    // Update watermark opacity display
-    function updateWatermarkOpacity() {
-      watermarkOpacityValue.textContent = `${watermarkOpacitySlider.value}%`;
-    }
-    
-    // Process PDFs
-    async function processPDFs() {
-      if (fileData.length < 2) {
-        showStatus('Please select at least two PDFs to mix.', true);
-        return;
-      }
-      
-      try {
-        // Show loading state
-        loadingSpinner.style.display = 'block';
-        mixBtn.disabled = true;
-        progressContainer.style.display = 'block';
-        statusMessage.style.display = 'none';
-        previewSection.style.display = 'none';
-        downloadSection.style.display = 'none';
-        
-        // Get selected options
-        const mixingPattern = document.querySelector('input[name="mixing-pattern"]:checked').value;
-        const pageRange = pageRangeSelect.value;
-        const customRange = pageRange === 'custom' ? document.getElementById('custom-range-input').value : '';
-        const optimizeSize = document.getElementById('optimize-size').checked;
-        const preserveMetadata = document.getElementById('preserve-metadata').checked;
-        const addWatermark = document.getElementById('add-watermark').checked;
-        const watermarkText = addWatermark ? document.getElementById('watermark-text').value : '';
-        const watermarkOpacity = addWatermark ? parseInt(watermarkOpacitySlider.value) / 100 : 0.5;
-        
-        // Load all PDFs
-        updateProgress(10, 'Loading PDF files...');
-        const pdfDocs = await Promise.all(
-          fileData.map(async (file, index) => {
-            try {
-              const arrayBuffer = await file.arrayBuffer();
-              const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
-              
-              // Update progress
-              const progress = 10 + (index * 30 / fileData.length);
-              updateProgress(progress, `Processing ${file.name}`);
-              
-              return {
-                doc: pdfDoc,
-                name: file.name,
-                pages: pdfDoc.getPageCount()
-              };
-            } catch (error) {
-              console.error(`Error loading PDF ${file.name}:`, error);
-              throw new Error(`Failed to load PDF: ${file.name}. It may be corrupt.`);
-            }
-          })
-        );
-        
-        // Create mixed PDF
-        updateProgress(70, 'Mixing pages...');
-        const mixedPdfBytes = await createMixedPdf(
-          pdfDocs, 
-          mixingPattern, 
-          pageRange, 
-          customRange,
-          optimizeSize,
-          preserveMetadata,
-          addWatermark,
-          watermarkText,
-          watermarkOpacity
-        );
-        
-        // Create download link
-        updateProgress(90, 'Preparing preview...');
-        const mixedPdfBlob = new Blob([mixedPdfBytes], { type: 'application/pdf' });
-        const downloadUrl = URL.createObjectURL(mixedPdfBlob);
-        
-        // Initialize preview
-        await initPreview(mixedPdfBlob);
-        
-        // Show download link
-        downloadLink.href = downloadUrl;
-        downloadSection.style.display = 'block';
-        
-        // Update UI
-        updateProgress(100, 'Done! Ready to preview and download.');
-        showStatus('PDF mixing completed successfully!', false);
-        
-        // Clean up after download
-        downloadLink.onclick = () => {
-          setTimeout(() => {
-            URL.revokeObjectURL(downloadUrl);
-          }, 100);
-        };
-      } catch (error) {
-        console.error('Error mixing PDFs:', error);
-        showStatus(error.message || 'An error occurred while mixing PDFs.', true);
-        updateProgress(0);
-      } finally {
-        loadingSpinner.style.display = 'none';
-        mixBtn.disabled = false;
-      }
-    }
-    
-    // Create mixed PDF
-    async function createMixedPdf(
-      pdfDocs, 
-      mixingPattern,
-      pageRange,
-      customRange,
-      optimizeSize,
-      preserveMetadata,
-      addWatermark,
-      watermarkText,
-      watermarkOpacity
-    ) {
-      const mixedPdf = await PDFLib.PDFDocument.create();
-      
-      // Preserve metadata if requested
-      if (preserveMetadata && pdfDocs[0].doc.getTitle()) {
-        const firstDoc = pdfDocs[0].doc;
-        mixedPdf.setTitle(firstDoc.getTitle() || 'Mixed Document');
-        mixedPdf.setAuthor(firstDoc.getAuthor() || '');
-        mixedPdf.setSubject(firstDoc.getSubject() || '');
-        mixedPdf.setKeywords(firstDoc.getKeywords() || []);
-        mixedPdf.setProducer(firstDoc.getProducer() || 'FilePro PDF Mixer');
-        mixedPdf.setCreator(firstDoc.getCreator() || 'FilePro');
-      } else {
-        mixedPdf.setTitle('Mixed Document');
-        mixedPdf.setProducer('FilePro PDF Mixer');
-        mixedPdf.setCreator('FilePro');
-      }
-      
-      // Get page ranges for each document
-      const pageRanges = pdfDocs.map(doc => {
-        return getPageRange(doc.pages, pageRange, customRange);
-      });
-      
-      // Mix pages according to pattern
-      if (mixingPattern === 'alternate') {
-        await alternatePages(mixedPdf, pdfDocs, pageRanges);
-      } else if (mixingPattern === 'sequential') {
-        await sequentialPages(mixedPdf, pdfDocs, pageRanges);
-      } else if (mixingPattern === 'reverse') {
-        await reversePages(mixedPdf, pdfDocs, pageRanges);
-      }
-      
-      // Add watermark if requested
-      if (addWatermark && watermarkText) {
-        await addWatermarkToPdf(mixedPdf, watermarkText, watermarkOpacity);
-      }
-      
-      // Optimize if requested
-      if (optimizeSize) {
-        // This would involve more advanced optimization in a real app
-        mixedPdf.setProducer('FilePro PDF Mixer (Optimized)');
-      }
-      
-      // Save the final PDF
-      return mixedPdf.save({
-        useObjectStreams: optimizeSize,
-        // Additional save options for optimization would go here
-      });
-    }
-    
-    // Get page range based on selection
-    function getPageRange(totalPages, rangeType, customRange) {
-      const pages = [];
-      
-      if (rangeType === 'all') {
-        for (let i = 0; i < totalPages; i++) {
-          pages.push(i);
-        }
-      } else if (rangeType === 'even') {
-        for (let i = 1; i < totalPages; i += 2) {
-          pages.push(i);
-        }
-      } else if (rangeType === 'odd') {
-        for (let i = 0; i < totalPages; i += 2) {
-          pages.push(i);
-        }
-      } else if (rangeType === 'custom' && customRange) {
-        // Parse custom range (e.g., "1-5,8,10-12")
-        const parts = customRange.split(',');
-        parts.forEach(part => {
-          if (part.includes('-')) {
-            const [start, end] = part.split('-').map(Number);
-            for (let i = start; i <= end; i++) {
-              if (i > 0 && i <= totalPages) {
-                pages.push(i - 1); // Convert to 0-based index
-              }
-            }
-          } else {
-            const num = Number(part);
-            if (num > 0 && num <= totalPages) {
-              pages.push(num - 1); // Convert to 0-based index
-            }
-          }
-        });
-      }
-      
-      return pages;
-    }
-    
-    // Alternate pages from different PDFs
-    async function alternatePages(mixedPdf, pdfDocs, pageRanges) {
-      const maxPages = Math.max(...pageRanges.map(range => range.length));
-      let pagesProcessed = 0;
-      const totalPages = pageRanges.reduce((sum, range) => sum + range.length, 0);
-      
-      for (let i = 0; i < maxPages; i++) {
-        for (let docIndex = 0; docIndex < pdfDocs.length; docIndex++) {
-          if (i < pageRanges[docIndex].length) {
-            const pageIndex = pageRanges[docIndex][i];
-            const [copiedPage] = await mixedPdf.copyPages(pdfDocs[docIndex].doc, [pageIndex]);
-            mixedPdf.addPage(copiedPage);
-            pagesProcessed++;
-            
-            // Update progress
-            const progress = 70 + (pagesProcessed / totalPages * 20);
-            updateProgress(Math.floor(progress), `Adding page ${pagesProcessed} of ${totalPages}`);
-          }
-        }
-      }
-    }
-    
-    // Sequential pages (all from first PDF, then all from second, etc.)
-    async function sequentialPages(mixedPdf, pdfDocs, pageRanges) {
-      let pagesProcessed = 0;
-      const totalPages = pageRanges.reduce((sum, range) => sum + range.length, 0);
-      
-      for (let docIndex = 0; docIndex < pdfDocs.length; docIndex++) {
-        for (let i = 0; i < pageRanges[docIndex].length; i++) {
-          const pageIndex = pageRanges[docIndex][i];
-          const [copiedPage] = await mixedPdf.copyPages(pdfDocs[docIndex].doc, [pageIndex]);
-          mixedPdf.addPage(copiedPage);
-          pagesProcessed++;
-          
-          // Update progress
-          const progress = 70 + (pagesProcessed / totalPages * 20);
-          updateProgress(Math.floor(progress), `Adding page ${pagesProcessed} of ${totalPages}`);
-        }
-      }
-    }
-    
-    // Reverse order pages
-    async function reversePages(mixedPdf, pdfDocs, pageRanges) {
-      let pagesProcessed = 0;
-      const totalPages = pageRanges.reduce((sum, range) => sum + range.length, 0);
-      
-      for (let docIndex = pdfDocs.length - 1; docIndex >= 0; docIndex--) {
-        for (let i = pageRanges[docIndex].length - 1; i >= 0; i--) {
-          const pageIndex = pageRanges[docIndex][i];
-          const [copiedPage] = await mixedPdf.copyPages(pdfDocs[docIndex].doc, [pageIndex]);
-          mixedPdf.addPage(copiedPage);
-          pagesProcessed++;
-          
-          // Update progress
-          const progress = 70 + (pagesProcessed / totalPages * 20);
-          updateProgress(Math.floor(progress), `Adding page ${pagesProcessed} of ${totalPages}`);
-        }
-      }
-    }
-    
-    // Add watermark to PDF
-    async function addWatermarkToPdf(pdfDoc, text, opacity) {
-      const pages = pdfDoc.getPages();
-      
-      // Load a standard font
-      const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
-      
-      // Add watermark to each page
-      pages.forEach(page => {
-        const { width, height } = page.getSize();
-        
-        page.drawText(text, {
-          x: width / 2 - (text.length * 5),
-          y: height / 2,
-          size: 48,
-          font: font,
-          color: PDFLib.rgb(0.5, 0.5, 0.5),
-          opacity: opacity,
-          rotate: PDFLib.degrees(-45),
-        });
       });
     }
     
     // Initialize PDF preview
     async function initPreview(blob) {
-      pdfBlob = blob;
-      
       try {
         // Load the PDF for preview
         const arrayBuffer = await blob.arrayBuffer();
@@ -1685,9 +1202,6 @@
         
         // Render first page
         await renderPage(currentPage);
-        
-        // Generate thumbnails
-        await generateThumbnails();
       } catch (error) {
         console.error('Error initializing preview:', error);
         showStatus('Error initializing PDF preview', true);
@@ -1721,81 +1235,10 @@
         // Update button states
         prevPageBtn.disabled = pageNum <= 1;
         nextPageBtn.disabled = pageNum >= pageCount;
-        
-        // Update active thumbnail
-        updateActiveThumbnail();
       } catch (error) {
         console.error('Error rendering page:', error);
         showStatus('Error rendering PDF preview', true);
       }
-    }
-    
-    // Generate thumbnails
-    async function generateThumbnails() {
-      thumbnailContainer.innerHTML = '';
-      
-      // Show loading message
-      const loadingMsg = document.createElement('div');
-      loadingMsg.textContent = 'Generating thumbnails...';
-      thumbnailContainer.appendChild(loadingMsg);
-      
-      try {
-        // Generate thumbnails for first 20 pages (for performance)
-        const maxThumbnails = Math.min(pageCount, 20);
-        
-        for (let i = 1; i <= maxThumbnails; i++) {
-          const page = await pdfDoc.getPage(i);
-          const viewport = page.getViewport({ scale: 0.2 }); // Small scale for thumbnails
-          
-          const thumbnailItem = document.createElement('div');
-          thumbnailItem.className = 'thumbnail-item';
-          if (i === currentPage) thumbnailItem.classList.add('active');
-          thumbnailItem.dataset.page = i;
-          
-          const canvas = document.createElement('canvas');
-          canvas.className = 'thumbnail-canvas';
-          const context = canvas.getContext('2d');
-          
-          canvas.height = viewport.height;
-          canvas.width = viewport.width;
-          
-          await page.render({
-            canvasContext: context,
-            viewport: viewport
-          }).promise;
-          
-          const pageNumber = document.createElement('div');
-          pageNumber.className = 'thumbnail-page-number';
-          pageNumber.textContent = `Page ${i}`;
-          
-          thumbnailItem.appendChild(canvas);
-          thumbnailItem.appendChild(pageNumber);
-          thumbnailContainer.appendChild(thumbnailItem);
-          
-          // Add click event to navigate to page
-          thumbnailItem.addEventListener('click', () => {
-            currentPage = i;
-            renderPage(currentPage);
-          });
-        }
-        
-        // Remove loading message
-        thumbnailContainer.removeChild(loadingMsg);
-      } catch (error) {
-        console.error('Error generating thumbnails:', error);
-        thumbnailContainer.innerHTML = '<div>Thumbnail generation failed</div>';
-      }
-    }
-    
-    // Update active thumbnail
-    function updateActiveThumbnail() {
-      const thumbnails = thumbnailContainer.querySelectorAll('.thumbnail-item');
-      thumbnails.forEach(thumb => {
-        thumb.classList.remove('active');
-        if (parseInt(thumb.dataset.page) === currentPage) {
-          thumb.classList.add('active');
-        }
-      });
     }
     
     // Show previous page
@@ -1830,6 +1273,284 @@
       }
     }
     
+    // Add bookmark
+    function addBookmark() {
+      const title = bookmarkTitle.value.trim();
+      const page = parseInt(bookmarkPage.value);
+      
+      if (!title) {
+        showStatus('Please enter a bookmark title', true);
+        return;
+      }
+      
+      if (isNaN(page) || page < 1 || page > pageCount) {
+        showStatus(`Please enter a valid page number (1-${pageCount})`, true);
+        return;
+      }
+      
+      const newBookmark = {
+        id: Date.now(),
+        title: title,
+        page: page,
+        level: 1
+      };
+      
+      bookmarks.push(newBookmark);
+      renderBookmarks();
+      
+      // Reset form
+      bookmarkTitle.value = '';
+      bookmarkPage.value = currentPage;
+      bookmarkTitle.focus();
+      
+      showStatus('Bookmark added successfully!', false);
+    }
+    
+    // Render bookmarks list
+    function renderBookmarks() {
+      bookmarkList.innerHTML = '';
+      
+      if (bookmarks.length === 0) {
+        bookmarkList.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5);">No bookmarks added yet</div>';
+        return;
+      }
+      
+      // Sort bookmarks by page number
+      bookmarks.sort((a, b) => a.page - b.page);
+      
+      bookmarks.forEach((bookmark, index) => {
+        const bookmarkItem = document.createElement('div');
+        bookmarkItem.className = 'bookmark-item';
+        bookmarkItem.dataset.id = bookmark.id;
+        
+        bookmarkItem.innerHTML = `
+          <div class="bookmark-icon">
+            <i class="fas fa-bookmark"></i>
+          </div>
+          <div class="bookmark-details">
+            <div class="bookmark-title">${bookmark.title}</div>
+            <div class="bookmark-page">Page ${bookmark.page}</div>
+          </div>
+          <div class="bookmark-controls">
+            <button class="bookmark-btn edit" onclick="editBookmark(${bookmark.id})">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="bookmark-btn delete" onclick="deleteBookmark(${bookmark.id})">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        `;
+        
+        bookmarkList.appendChild(bookmarkItem);
+      });
+    }
+    
+    // Edit bookmark
+    function editBookmark(id) {
+      const bookmark = bookmarks.find(b => b.id === id);
+      if (!bookmark) return;
+      
+      // Create modal for editing
+      const modal = document.createElement('div');
+      modal.style.position = 'fixed';
+      modal.style.top = '0';
+      modal.style.left = '0';
+      modal.style.width = '100%';
+      modal.style.height = '100%';
+      modal.style.backgroundColor = 'rgba(0,0,0,0.8)';
+      modal.style.display = 'flex';
+      modal.style.justifyContent = 'center';
+      modal.style.alignItems = 'center';
+      modal.style.zIndex = '2000';
+      modal.style.animation = 'fadeIn 0.3s ease';
+      
+      modal.innerHTML = `
+        <div style="background: rgba(30,30,60,0.9); padding: 2rem; border-radius: 12px; width: 90%; max-width: 500px; border: 1px solid var(--primary);">
+          <h3 style="margin-bottom: 1.5rem; color: var(--primary); display: flex; align-items: center;">
+            <i class="fas fa-edit" style="margin-right: 0.8rem;"></i>
+            Edit Bookmark
+          </h3>
+          <div class="form-group">
+            <label class="form-label">Bookmark Title</label>
+            <input type="text" class="form-control" id="edit-bookmark-title" value="${bookmark.title}">
+          </div>
+          <div class="form-group" style="margin-top: 1rem;">
+            <label class="form-label">Page Number</label>
+            <input type="number" class="form-control" id="edit-bookmark-page" min="1" max="${pageCount}" value="${bookmark.page}">
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+            <button class="btn btn-outline" id="cancel-edit">
+              Cancel
+            </button>
+            <button class="btn" id="save-edit">
+              Save Changes
+            </button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      // Add event listeners
+      modal.querySelector('#cancel-edit').addEventListener('click', () => {
+        document.body.removeChild(modal);
+      });
+      
+      modal.querySelector('#save-edit').addEventListener('click', () => {
+        const newTitle = modal.querySelector('#edit-bookmark-title').value.trim();
+        const newPage = parseInt(modal.querySelector('#edit-bookmark-page').value);
+        
+        if (!newTitle) {
+          showStatus('Bookmark title cannot be empty', true);
+          return;
+        }
+        
+        if (isNaN(newPage) || newPage < 1 || newPage > pageCount) {
+          showStatus(`Invalid page number (1-${pageCount})`, true);
+          return;
+        }
+        
+        bookmark.title = newTitle;
+        bookmark.page = newPage;
+        renderBookmarks();
+        document.body.removeChild(modal);
+        showStatus('Bookmark updated successfully!', false);
+      });
+    }
+    
+    // Delete bookmark
+    function deleteBookmark(id) {
+      bookmarks = bookmarks.filter(b => b.id !== id);
+      renderBookmarks();
+      showStatus('Bookmark deleted', false);
+    }
+    
+    // Toggle auto-generate bookmarks
+    function toggleAutoGenerate() {
+      if (autoGenerateCheckbox.checked && pdfDoc) {
+        autoGenerateBookmarks();
+      }
+    }
+    
+    // Auto-generate bookmarks from headings
+    async function autoGenerateBookmarks() {
+      if (!pdfDoc) return;
+      
+      try {
+        loadingSpinner.style.display = 'block';
+        progressContainer.style.display = 'block';
+        progressStatus.textContent = 'Scanning document for headings...';
+        
+        // Clear existing bookmarks
+        bookmarks = [];
+        
+        // Scan each page for headings (simplified example)
+        for (let i = 1; i <= Math.min(pageCount, 50); i++) { // Limit to first 50 pages for performance
+          const page = await pdfDoc.getPage(i);
+          const textContent = await page.getTextContent();
+          
+          // Simple heuristic to find headings (text with larger font size)
+          const potentialHeadings = textContent.items.filter(item => {
+            return item.str.trim().length > 0 && 
+                   item.transform && 
+                   item.transform[0] > 20; // Font size > 20
+          });
+          
+          // Add bookmarks for potential headings
+          potentialHeadings.forEach(heading => {
+            bookmarks.push({
+              id: Date.now() + Math.random(),
+              title: heading.str.trim(),
+              page: i,
+              level: 1
+            });
+          });
+          
+          // Update progress
+          const progress = Math.floor((i / Math.min(pageCount, 50)) * 100);
+          updateProgress(progress, `Scanning page ${i} of ${Math.min(pageCount, 50)}`);
+        }
+        
+        renderBookmarks();
+        showStatus(`Auto-generated ${bookmarks.length} bookmarks from document headings`, false);
+      } catch (error) {
+        console.error('Error auto-generating bookmarks:', error);
+        showStatus('Error auto-generating bookmarks', true);
+      } finally {
+        loadingSpinner.style.display = 'none';
+        progressContainer.style.display = 'none';
+      }
+    }
+    
+    // Process PDF with bookmarks
+    async function processBookmarks() {
+      if (!pdfBlob || bookmarks.length === 0) {
+        showStatus('Please add at least one bookmark', true);
+        return;
+      }
+      
+      try {
+        // Show loading state
+        loadingSpinner.style.display = 'block';
+        progressContainer.style.display = 'block';
+        statusMessage.style.display = 'none';
+        progressStatus.textContent = 'Adding bookmarks to PDF...';
+        
+        // Load the original PDF
+        const arrayBuffer = await pdfBlob.arrayBuffer();
+        const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+        
+        // Create bookmarks
+        const sortedBookmarks = [...bookmarks].sort((a, b) => a.page - b.page);
+        const pdfBookmarks = [];
+        
+        sortedBookmarks.forEach((bookmark, index) => {
+          const page = pdfDoc.getPages()[bookmark.page - 1]; // pages are 0-indexed
+          const y = page.getHeight() - 50; // Position near top of page
+          
+          pdfBookmarks.push(
+            pdfDoc.addBookmark(bookmark.title, bookmark.page - 1, {
+              y: y,
+              expanded: false
+            })
+          );
+          
+          // Update progress
+          const progress = Math.floor((index / sortedBookmarks.length) * 100);
+          updateProgress(progress, `Adding bookmark ${index + 1} of ${sortedBookmarks.length}`);
+        });
+        
+        // Save the PDF with bookmarks
+        updateProgress(90, 'Finalizing document...');
+        const pdfBytes = await pdfDoc.save();
+        
+        // Create download link
+        const pdfBlobWithBookmarks = new Blob([pdfBytes], { type: 'application/pdf' });
+        const downloadUrl = URL.createObjectURL(pdfBlobWithBookmarks);
+        
+        // Show download section
+        downloadLink.href = downloadUrl;
+        downloadSection.style.display = 'block';
+        
+        // Update UI
+        updateProgress(100, 'Done! Ready to download.');
+        showStatus('PDF with bookmarks created successfully!', false);
+        
+        // Clean up after download
+        downloadLink.onclick = () => {
+          setTimeout(() => {
+            URL.revokeObjectURL(downloadUrl);
+          }, 100);
+        };
+      } catch (error) {
+        console.error('Error processing bookmarks:', error);
+        showStatus('Error adding bookmarks to PDF', true);
+        updateProgress(0);
+      } finally {
+        loadingSpinner.style.display = 'none';
+      }
+    }
+    
     // Update progress
     function updateProgress(percent, message = '') {
       progressBar.style.width = `${percent}%`;
@@ -1850,35 +1571,28 @@
       }
     }
     
-    // Reset tool
-    function resetTool() {
+    // Start new document
+    function startNewDocument() {
+      // Reset file input
       fileInput.value = '';
-      fileList.innerHTML = '';
-      fileData = [];
+      pdfBlob = null;
+      pdfDoc = null;
+      bookmarks = [];
+      
+      // Hide sections
+      editorSection.style.display = 'none';
       previewSection.style.display = 'none';
       downloadSection.style.display = 'none';
       progressContainer.style.display = 'none';
-      statusMessage.style.display = 'none';
-      loadingSpinner.style.display = 'none';
       
-      // Reset options
-      document.querySelector('input[name="mixing-pattern"][value="alternate"]').checked = true;
-      pageRangeSelect.value = 'all';
-      customRangeContainer.style.display = 'none';
-      document.getElementById('optimize-size').checked = false;
-      document.getElementById('preserve-metadata').checked = false;
-      document.getElementById('add-watermark').checked = false;
-      watermarkOptions.style.display = 'none';
+      // Clear bookmarks list
+      bookmarkList.innerHTML = '';
       
-      updateMixButtonState();
-      showStatus('Tool reset. Ready to start new PDF mix.', false);
-    }
-    
-    // Start new mix
-    function startNewMix() {
-      previewSection.style.display = 'none';
-      downloadSection.style.display = 'none';
-      showStatus('Ready to create another PDF mix!', false);
+      // Reset form
+      bookmarkTitle.value = '';
+      bookmarkPage.value = '1';
+      
+      showStatus('Ready to add bookmarks to a new PDF! Upload a file to begin.', false);
     }
   </script>
 </body>
