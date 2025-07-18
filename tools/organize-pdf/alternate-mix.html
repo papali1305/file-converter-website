@@ -823,6 +823,13 @@
       50% { transform: translateY(-10px); }
       100% { transform: translateY(0); }
     }
+
+    /* Process Button */
+    .process-btn-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 2rem;
+    }
   </style>
 </head>
 <body>
@@ -891,6 +898,13 @@
             <i class="fas fa-question-circle"></i>
             <span class="tooltip-text">Automatically detect headings in the PDF and create bookmarks for them</span>
           </div>
+        </div>
+
+        <!-- Process Button -->
+        <div class="process-btn-container">
+          <button class="btn" id="process-btn" style="margin-top: 2rem;">
+            <i class="fas fa-cog"></i> Process PDF with Bookmarks
+          </button>
         </div>
       </div>
 
@@ -1001,6 +1015,7 @@
     const bookmarkPage = document.getElementById('bookmark-page');
     const addBookmarkBtn = document.getElementById('add-bookmark-btn');
     const autoGenerateCheckbox = document.getElementById('auto-generate');
+    const processBtn = document.getElementById('process-btn');
     const progressContainer = document.getElementById('progress-container');
     const progressBar = document.getElementById('progress-bar');
     const progressPercent = document.getElementById('progress-percent');
@@ -1022,6 +1037,7 @@
     fileInput.addEventListener('change', handleFileSelection);
     addBookmarkBtn.addEventListener('click', addBookmark);
     autoGenerateCheckbox.addEventListener('change', toggleAutoGenerate);
+    processBtn.addEventListener('click', processBookmarks);
     prevPageBtn.addEventListener('click', showPrevPage);
     nextPageBtn.addEventListener('click', showNextPage);
     zoomInBtn.addEventListener('click', zoomIn);
@@ -1484,7 +1500,12 @@
     
     // Process PDF with bookmarks
     async function processBookmarks() {
-      if (!pdfBlob || bookmarks.length === 0) {
+      if (!pdfBlob) {
+        showStatus('Please upload a PDF file first', true);
+        return;
+      }
+      
+      if (bookmarks.length === 0) {
         showStatus('Please add at least one bookmark', true);
         return;
       }
@@ -1502,23 +1523,24 @@
         
         // Create bookmarks
         const sortedBookmarks = [...bookmarks].sort((a, b) => a.page - b.page);
-        const pdfBookmarks = [];
         
-        sortedBookmarks.forEach((bookmark, index) => {
+        updateProgress(10, 'Preparing document...');
+        
+        // Add bookmarks
+        for (let i = 0; i < sortedBookmarks.length; i++) {
+          const bookmark = sortedBookmarks[i];
           const page = pdfDoc.getPages()[bookmark.page - 1]; // pages are 0-indexed
           const y = page.getHeight() - 50; // Position near top of page
           
-          pdfBookmarks.push(
-            pdfDoc.addBookmark(bookmark.title, bookmark.page - 1, {
-              y: y,
-              expanded: false
-            })
-          );
+          pdfDoc.addBookmark(bookmark.title, bookmark.page - 1, {
+            y: y,
+            expanded: false
+          });
           
           // Update progress
-          const progress = Math.floor((index / sortedBookmarks.length) * 100);
-          updateProgress(progress, `Adding bookmark ${index + 1} of ${sortedBookmarks.length}`);
-        });
+          const progress = 10 + Math.floor((i / sortedBookmarks.length) * 80);
+          updateProgress(progress, `Adding bookmark ${i + 1} of ${sortedBookmarks.length}`);
+        }
         
         // Save the PDF with bookmarks
         updateProgress(90, 'Finalizing document...');

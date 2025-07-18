@@ -172,8 +172,8 @@
       }
     }
 
-    /* Background Animation */
-    .particles {
+    /* Advanced Background Animation */
+    .interactive-bg {
       position: fixed;
       top: 0;
       left: 0;
@@ -183,21 +183,40 @@
       overflow: hidden;
     }
 
-    .particle {
+    .particle-node {
       position: absolute;
-      background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
-      opacity: 0.3;
+      background: var(--primary);
+      box-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary);
+      opacity: 0.7;
+      transform: translate(-50%, -50%);
+    }
+
+    .particle-connection {
+      position: absolute;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary), transparent);
+      transform-origin: left center;
+      z-index: -1;
+    }
+
+    .file-ghost {
+      position: absolute;
+      font-size: 1.5rem;
+      color: rgba(0, 240, 255, 0.3);
       animation: float 15s infinite linear;
+      z-index: -1;
     }
 
     @keyframes float {
       0% {
         transform: translateY(0) rotate(0deg);
-        opacity: 0.3;
+        opacity: 0.1;
       }
       100% {
-        transform: translateY(-1000px) rotate(720deg);
+        transform: translateY(-1000px) rotate(360deg);
         opacity: 0;
       }
     }
@@ -401,6 +420,145 @@
       text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
     }
 
+    /* Enhanced Futuristic Button */
+    .futuristic-btn {
+      position: relative;
+      display: inline-block;
+      padding: 1.5rem 3rem;
+      margin: 2rem 0;
+      color: var(--light);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-decoration: none;
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.1), rgba(114, 9, 183, 0.1));
+      border: 2px solid var(--primary);
+      border-radius: 50px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.5s ease;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.3),
+                  inset 0 0 10px rgba(0, 240, 255, 0.2);
+      z-index: 1;
+      animation: pulse-glow 3s infinite;
+    }
+
+    .futuristic-btn:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 0 30px rgba(0, 240, 255, 0.5),
+                  inset 0 0 15px rgba(0, 240, 255, 0.3);
+      text-shadow: 0 0 10px rgba(0, 240, 255, 0.8);
+      color: var(--primary);
+    }
+
+    .futuristic-btn:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    .futuristic-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(0, 240, 255, 0.2),
+        transparent
+      );
+      transition: all 0.5s ease;
+      z-index: -1;
+    }
+
+    .futuristic-btn:hover::before {
+      left: 100%;
+    }
+
+    .futuristic-btn::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        to bottom right,
+        transparent,
+        transparent,
+        transparent,
+        rgba(0, 240, 255, 0.1)
+      );
+      transform: rotate(45deg);
+      transition: all 0.8s ease;
+      z-index: -1;
+    }
+
+    .futuristic-btn:hover::after {
+      left: 100%;
+      top: 100%;
+    }
+
+    .btn-sparkle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: var(--primary);
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: 0;
+      box-shadow: 0 0 5px 2px var(--primary);
+      animation: sparkle 1s ease-out forwards;
+    }
+
+    @keyframes sparkle {
+      0% {
+        transform: scale(0);
+        opacity: 0;
+      }
+      50% {
+        opacity: 1;
+      }
+      100% {
+        transform: scale(1.5);
+        opacity: 0;
+      }
+    }
+
+    @keyframes pulse-glow {
+      0% {
+        box-shadow: 0 0 20px rgba(0, 240, 255, 0.3),
+                    inset 0 0 10px rgba(0, 240, 255, 0.2);
+      }
+      50% {
+        box-shadow: 0 0 30px rgba(0, 240, 255, 0.5),
+                    inset 0 0 15px rgba(0, 240, 255, 0.3);
+      }
+      100% {
+        box-shadow: 0 0 20px rgba(0, 240, 255, 0.3),
+                    inset 0 0 10px rgba(0, 240, 255, 0.2);
+      }
+    }
+
+    .btn-ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(0, 240, 255, 0.3);
+      transform: scale(0);
+      pointer-events: none;
+      animation: ripple 1s ease-out;
+    }
+
+    @keyframes ripple {
+      to {
+        transform: scale(2);
+        opacity: 0;
+      }
+    }
+
     /* Upload Modal */
     .modal {
       display: none;
@@ -558,6 +716,11 @@
       .loading-logo {
         font-size: 2rem;
       }
+
+      .futuristic-btn {
+        font-size: 1.2rem;
+        padding: 1.2rem 2rem;
+      }
     }
 
     @media (max-width: 480px) {
@@ -580,6 +743,11 @@
       .loading-progress,
       .loading-stats {
         width: 250px;
+      }
+
+      .futuristic-btn {
+        font-size: 1rem;
+        padding: 1rem 1.5rem;
       }
     }
 
@@ -663,8 +831,8 @@
     </div>
   </div>
 
-  <!-- Background Particles -->
-  <div class="particles" id="particles"></div>
+  <!-- Advanced Interactive Background -->
+  <div class="interactive-bg" id="interactiveBg"></div>
 
   <!-- Header -->
   <header>
@@ -682,40 +850,14 @@
     <h1 class="glow">🔧 File Converter & Editor</h1>
     <p class="subtitle">Professional | Futuristic | All-in-One PDF Suite</p>
     
-    <div class="tools-grid">
-      <a class="tool-btn float" onclick="openModal('PDF to Word')">
-        <i class="fas fa-file-word"></i>
-        PDF to Word
-      </a>
-      <a class="tool-btn float" onclick="openModal('Merge PDF')">
-        <i class="fas fa-file-pdf"></i>
-        Merge PDF
-      </a>
-      <a class="tool-btn float" onclick="openModal('Edit PDF')">
-        <i class="fas fa-edit"></i>
-        Edit PDF
-      </a>
-      <a class="tool-btn float" onclick="openModal('Compress PDF')">
-        <i class="fas fa-compress-alt"></i>
-        Compress PDF
-      </a>
-      <a class="tool-btn float" onclick="openModal('Protect PDF')">
-        <i class="fas fa-lock"></i>
-        Protect PDF
-      </a>
-      <a class="tool-btn float" onclick="openModal('eSign PDF')">
-        <i class="fas fa-signature"></i>
-        eSign PDF
-      </a>
-      <a class="tool-btn float" onclick="openModal('OCR PDF')">
-        <i class="fas fa-text-height"></i>
-        OCR PDF
-      </a>
-      <a class="tool-btn float" onclick="openModal('Batch Convert')">
-        <i class="fas fa-tasks"></i>
-        Batch Convert
+    <!-- Enhanced Futuristic Button -->
+    <div class="btn-container" id="btnContainer">
+      <a href="tools.html" class="futuristic-btn" id="futuristicBtn">
+        <i class="fas fa-file-edit"></i> EDIT YOUR PDF NOW
       </a>
     </div>
+    
+
   </main>
 
   <!-- Upload Modal -->
@@ -743,7 +885,7 @@
   <!-- Footer -->
   <footer>
     <p>&copy; 2025 FilePro. All Rights Reserved.</p>
-    <p>Built with ❤️ by YourName</p>
+    <p>Built with ❤️ by Papali PriyaRatan Sahu</p>
   </footer>
 
   <script>
@@ -817,35 +959,146 @@
       }, 100);
     }
     
-    // Create background particles
-    function createParticles() {
-      const container = document.getElementById('particles');
-      const particleCount = window.innerWidth < 768 ? 15 : 30;
+    // Advanced Interactive Background Animation
+    function createInteractiveBackground() {
+      const container = document.getElementById('interactiveBg');
+      const nodeCount = window.innerWidth < 768 ? 30 : 60;
+      const connectionDistance = 150;
+      const nodes = [];
       
-      for (let i = 0; i < particleCount; i++) {
-        const particle = document.createElement('div');
-        particle.classList.add('particle');
-        
-        // Random size between 5px and 15px
-        const size = Math.random() * 10 + 5;
+      // Create nodes
+      for (let i = 0; i < nodeCount; i++) {
+        const node = document.createElement('div');
+        node.className = 'particle-node';
         
         // Random position
         const posX = Math.random() * 100;
         const posY = Math.random() * 100;
         
-        // Random animation duration and delay
-        const duration = Math.random() * 10 + 10;
-        const delay = Math.random() * 10;
+        // Random movement parameters
+        const speedX = (Math.random() - 0.5) * 0.3;
+        const speedY = (Math.random() - 0.5) * 0.3;
+        const size = Math.random() * 4 + 4;
         
-        particle.style.width = `${size}px`;
-        particle.style.height = `${size}px`;
-        particle.style.left = `${posX}%`;
-        particle.style.top = `${posY}%`;
-        particle.style.animationDuration = `${duration}s`;
-        particle.style.animationDelay = `${delay}s`;
+        node.style.width = `${size}px`;
+        node.style.height = `${size}px`;
+        node.style.left = `${posX}%`;
+        node.style.top = `${posY}%`;
         
-        container.appendChild(particle);
+        container.appendChild(node);
+        
+        nodes.push({
+          element: node,
+          x: posX,
+          y: posY,
+          speedX: speedX,
+          speedY: speedY,
+          size: size
+        });
       }
+      
+      // Create floating file icons
+      const fileTypes = ['pdf', 'word', 'excel', 'image', 'powerpoint'];
+      for (let i = 0; i < 8; i++) {
+        const fileGhost = document.createElement('div');
+        fileGhost.className = 'file-ghost';
+        
+        const fileType = fileTypes[Math.floor(Math.random() * fileTypes.length)];
+        fileGhost.innerHTML = `<i class="fas fa-file-${fileType}"></i>`;
+        
+        const startX = Math.random() * 100;
+        const duration = Math.random() * 20 + 20;
+        const delay = Math.random() * 15;
+        
+        fileGhost.style.left = `${startX}%`;
+        fileGhost.style.animationDuration = `${duration}s`;
+        fileGhost.style.animationDelay = `${delay}s`;
+        
+        container.appendChild(fileGhost);
+      }
+      
+      // Animation loop
+      function animate() {
+        // Update node positions
+        nodes.forEach(node => {
+          node.x += node.speedX;
+          node.y += node.speedY;
+          
+          // Bounce off edges
+          if (node.x < 0 || node.x > 100) node.speedX *= -1;
+          if (node.y < 0 || node.y > 100) node.speedY *= -1;
+          
+          // Apply position
+          node.element.style.left = `${node.x}%`;
+          node.element.style.top = `${node.y}%`;
+        });
+        
+        // Create connections between nearby nodes
+        const existingConnections = document.querySelectorAll('.particle-connection');
+        existingConnections.forEach(conn => conn.remove());
+        
+        for (let i = 0; i < nodes.length; i++) {
+          for (let j = i + 1; j < nodes.length; j++) {
+            const node1 = nodes[i];
+            const node2 = nodes[j];
+            
+            // Calculate distance
+            const dx = (node2.x - node1.x) * (window.innerWidth / 100);
+            const dy = (node2.y - node1.y) * (window.innerHeight / 100);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < connectionDistance) {
+              const connection = document.createElement('div');
+              connection.className = 'particle-connection';
+              
+              // Position between the two nodes
+              const left = Math.min(node1.x, node2.x);
+              const top = Math.min(node1.y, node2.y);
+              
+              // Calculate angle and length
+              const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+              const length = distance / (window.innerWidth / 100);
+              
+              connection.style.left = `${left}%`;
+              connection.style.top = `${top}%`;
+              connection.style.width = `${length}%`;
+              connection.style.transform = `rotate(${angle}deg)`;
+              
+              // Fade based on distance
+              const opacity = 1 - (distance / connectionDistance);
+              connection.style.opacity = opacity * 0.5;
+              
+              container.appendChild(connection);
+            }
+          }
+        }
+        
+        requestAnimationFrame(animate);
+      }
+      
+      animate();
+      
+      // Interactive effects on mouse move
+      container.addEventListener('mousemove', (e) => {
+        const mouseX = (e.clientX / window.innerWidth) * 100;
+        const mouseY = (e.clientY / window.innerHeight) * 100;
+        
+        nodes.forEach(node => {
+          const dx = mouseX - node.x;
+          const dy = mouseY - node.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < 20) {
+            // Repel nodes from mouse
+            const force = 0.5;
+            node.speedX = (node.x - mouseX) * 0.01 * force;
+            node.speedY = (node.y - mouseY) * 0.01 * force;
+            
+            // Make nodes glow when near mouse
+            node.element.style.boxShadow = `0 0 ${10 * (1 - distance/20)}px rgba(0, 240, 255, ${1 - distance/20})`;
+          }
+        });
+      });
     }
     
     // Modal functions
@@ -925,6 +1178,46 @@
       }
     });
     
+    // Create sparkle effect for futuristic button
+    function createSparkle(e) {
+      const btn = document.getElementById('futuristicBtn');
+      const rect = btn.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      const sparkle = document.createElement('span');
+      sparkle.className = 'btn-sparkle';
+      sparkle.style.left = `${x}px`;
+      sparkle.style.top = `${y}px`;
+      
+      btn.appendChild(sparkle);
+      
+      // Remove sparkle after animation completes
+      setTimeout(() => {
+        sparkle.remove();
+      }, 1000);
+    }
+    
+    // Create ripple effect for futuristic button
+    function createRipple(e) {
+      const btn = document.getElementById('futuristicBtn');
+      const rect = btn.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      const ripple = document.createElement('span');
+      ripple.className = 'btn-ripple';
+      ripple.style.left = `${x}px`;
+      ripple.style.top = `${y}px`;
+      
+      btn.appendChild(ripple);
+      
+      // Remove ripple after animation completes
+      setTimeout(() => {
+        ripple.remove();
+      }, 1000);
+    }
+    
     // Initialize
     window.addEventListener('DOMContentLoaded', () => {
       // Show loading screen first
@@ -933,14 +1226,31 @@
       // Start loading simulation
       simulateLoading();
       
-      // Create particles after a short delay
-      setTimeout(createParticles, 500);
+      // Create interactive background after a short delay
+      setTimeout(createInteractiveBackground, 500);
       
       // Add floating animation delay to tool buttons
       const toolButtons = document.querySelectorAll('.tool-btn');
       toolButtons.forEach((btn, index) => {
         btn.style.animationDelay = `${index * 0.1}s`;
       });
+      
+      // Add effects to futuristic button
+      const futuristicBtn = document.getElementById('futuristicBtn');
+      if (futuristicBtn) {
+        futuristicBtn.addEventListener('mousemove', createSparkle);
+        futuristicBtn.addEventListener('click', createRipple);
+        
+        // Add periodic glow effect
+        setInterval(() => {
+          if (document.querySelector(':hover') === futuristicBtn) {
+            createSparkle({
+              clientX: futuristicBtn.getBoundingClientRect().left + Math.random() * futuristicBtn.offsetWidth,
+              clientY: futuristicBtn.getBoundingClientRect().top + Math.random() * futuristicBtn.offsetHeight
+            });
+          }
+        }, 300);
+      }
     });
   </script>
 </body>

@@ -140,84 +140,105 @@
 </head>
 
 <body>
-<header>
-  <div class="logo">⚡ FilePro</div>
-  <nav>
-    <a href="../../index.html">Home</a>
-    <a href="../../tools.html">Tools</a>
-    <a href="../../about.html">About</a>
-    <a href="../../contact.html">Contact</a>
-  </nav>
-</header>
+  <header>
+    <div class="logo">⚡ FilePro</div>
+    <nav>
+      <a href="../../index.html">Home</a>
+      <a href="../../tools.html">Tools</a>
+      <a href="../../about.html">About</a>
+      <a href="../../contact.html">Contact</a>
+    </nav>
+  </header>
 
-<main class="page">
-  <h1>PDF to Excel Converter</h1>
+  <main class="page">
+    <h1>PDF to Excel Converter</h1>
 
-  <div class="upload-area" onclick="document.getElementById('pdf-upload').click();">
-    <input type="file" id="pdf-upload" accept=".pdf" onchange="handlePDFFile()" />
-    <p>Click or Drop PDF File Here</p>
-    <div id="file-name"></div>
-  </div>
+    <div class="upload-area" 
+         onclick="document.getElementById('pdf-upload').click();" 
+         ondrop="handleDrop(event)" 
+         ondragover="event.preventDefault()">
+      <input type="file" id="pdf-upload" accept=".pdf" onchange="handlePDFFile()" />
+      <p>Click or Drag & Drop PDF File Here</p>
+      <div id="file-name"></div>
+    </div>
 
-  <div id="loading">
-    <div class="neon-spinner"></div>
-    <p>Converting your PDF to Excel...</p>
-  </div>
+    <div id="loading">
+      <div class="neon-spinner"></div>
+      <p>Converting your PDF to Excel...</p>
+    </div>
 
-  <div id="download-section">
-    <button class="tool-btn" onclick="downloadExcel()">Download Excel File</button>
-  </div>
-</main>
+    <div id="download-section">
+      <button class="tool-btn" onclick="downloadExcel()">Download Excel File</button>
+    </div>
+  </main>
 
-<footer>
-  &copy; 2025 FilePro. All rights reserved.
-</footer>
+  <footer>
+    &copy; 2025 FilePro. All rights reserved.
+  </footer>
 
-<script>
-  let excelFileUrl = '';
+  <script>
+    let excelFileUrl = '';
 
-  function handlePDFFile() {
-    const input = document.getElementById('pdf-upload');
-    const file = input.files[0];
-    const fileNameDiv = document.getElementById('file-name');
-
-    if (!file) return;
-
-    fileNameDiv.textContent = `Selected: ${file.name}`;
-
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      const pdfData = e.target.result;
-      convertPDFToExcel(pdfData);
-    };
-    reader.readAsArrayBuffer(file);
-  }
-
-  function convertPDFToExcel(pdfData) {
-    document.getElementById('loading').style.display = 'block';
-    document.getElementById('download-section').style.display = 'none';
-
-    // Simulated Conversion (Replace with actual API integration)
-    setTimeout(function () {
-      excelFileUrl = 'https://example.com/converted_excel.xlsx'; // Replace with real conversion URL
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('download-section').style.display = 'block';
-    }, 3000);
-  }
-
-  function downloadExcel() {
-    if (excelFileUrl) {
-      const link = document.createElement('a');
-      link.href = excelFileUrl;
-      link.download = 'converted_sheet.xlsx';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      alert("Conversion is not complete yet.");
+    function handleDrop(event) {
+      event.preventDefault();
+      const file = event.dataTransfer.files[0];
+      if (file) processPDF(file);
     }
-  }
-</script>
 
+    function handlePDFFile() {
+      const input = document.getElementById('pdf-upload');
+      const file = input.files[0];
+      if (file) processPDF(file);
+    }
+
+    function processPDF(file) {
+      const fileNameDiv = document.getElementById('file-name');
+
+      if (file.type !== "application/pdf") {
+        alert("Please upload a valid PDF file.");
+        return;
+      }
+
+      if (file.size > 10 * 1024 * 1024) { // 10 MB
+        alert("File size should be under 10MB.");
+        return;
+      }
+
+      fileNameDiv.textContent = `Selected: ${file.name}`;
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('download-section').style.display = 'none';
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const pdfData = e.target.result;
+        convertPDFToExcel(pdfData);
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function convertPDFToExcel(pdfData) {
+      // Simulated conversion (replace with real API call)
+      setTimeout(function () {
+        // Replace with actual backend URL
+        excelFileUrl = 'https://example.com/converted_excel.xlsx';
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('download-section').style.display = 'block';
+      }, 3000);
+    }
+
+    function downloadExcel() {
+      if (excelFileUrl) {
+        const link = document.createElement('a');
+        link.href = excelFileUrl;
+        link.download = 'converted_excel.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        alert("Conversion not completed yet.");
+      }
+    }
+  </script>
 </body>
 </html>
